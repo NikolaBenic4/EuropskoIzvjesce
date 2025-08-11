@@ -1,0 +1,57 @@
+Uvod
+
+- Nizozemska koristi mobilnu aplikaciju za prijavu štete digitalno
+Link: https://www.alpina.nl/en/car-insurance/claim-form/european/
+
+- Francuska koristi službenu aplikaciju koja omogućuje digitalno ispunjavanje
+Link: https://www.service-public.fr/particuliers/vosdroits/F2149?lang=en
+
+- Španjolska koristi mobilnu aplikaciju, ali je potrebno provjeriti kod osiguravatelja podržava li tu mogućnost
+Link: https://administracion.gob.es/pag_Home/en/Tu-espacio-europeo/derechos-obligaciones/ciudadanos/vehiculos/seguro-obligatorio/accidente-que-hacer.html
+
+- Direktiva 2010/40/EU o inteligentnim transportnim sustavima (Europska komisija, 2010).
+
+- Zakon o sigurnosti prometa na cestama (Narodne novine, 67/23.)
+
+- Ministarstvo pomorstva, prometa i infrastrukture. (2021). Nacionalni plan sigurnosti cestovnog prometa 2021.–2030. Dostupno na: https://mmpi.gov.hr/UserDocsImages/dokumenti/Promet/CestovniPromet/Nacionalni_plan_sigurnosti_cestovnog_prometa_2021-2030.pdf
+
+- MUP RH. (2023). Godišnje izvješće o prometnim nesrećama. Dostupno na: https://mup.gov.hr/UserDocsImages/statistika/2023/godisnje-izvjesce-promet-nesrece-2023.pdf
+
+- Grad Zagreb. (2023). Pametni senzori u prometu. Dostupno na: https://www.zagreb.hr/pametni-senzori-u-prometu/181469
+
+- Istraživanje HAK-a. (2023). Stopa korištenja EAN obrasca u Hrvatskoj. Dostupno na:
+https://www.hak.hr/vijesti/aktualno/2023/stopa-koristenja-ean-obrasca/
+
+-Državni zavod za statistiku. (2023). Statistički ljetopis Republike Hrvatske. Dostupno na: https://www.dzs.hr/Hrv_Eng/ljetopis/2023/sljh2023.pdf
+
+-Istraživanje HAK-a. (2023). Stopa korištenja EAN obrasca u Hrvatskoj. Dostupno na: https://www.hak.hr/vijesti/aktualno/2023/stopa-koristenja-ean-obrasca/
+
+Direktiva 2009/103/EZ Europskog parlamenta i Vijeća od 16. rujna 2009. o osiguranju od građanskopravne odgovornosti u vezi s uporabom motornih vozila i izvršavanju obveze osiguranja od takve odgovornosti. Službeni list Europske unije L 263/11.
+
+Direktiva (EU) 2021/2118 Europskog parlamenta i Vijeća od 24. studenoga 2021. o izmjeni Direktive 2009/103/EZ u odnosu na osiguranje od građanskopravne odgovornosti u pogledu upotrebe motornih vozila i izvršenje obveze osiguranja od takve odgovornosti. Službeni list Europske unije L 430/1.
+
+Zakon o obveznim osiguranjima u prometu. Narodne novine, br. 151/05, 36/09, 75/09, 76/13, 152/14, 61/15, 78/15, 41/18, 47/20, 151/22.
+
+Zakon o sigurnosti prometa na cestama. Narodne novine, br. 67/08, 48/10, 74/11, 80/13, 158/13, 92/14, 64/15, 108/17, 70/19, 42/20, 85/22, 114/22, 133/23.
+
+Insurance Europe (Comité Européen des Assurances – CEA). (2021). European Accident Statement – Guidelines for completion.
+
+HAK. (2024). EU izvješće o prometnoj nezgodi. Dostupno na: https://www.hak.hr/info/korisne-informacije/europsko-izvjesce 
+
+Kompare.hr. (2025). Europsko izvješće o nesreći: Što je i kako ga ispuniti? Dostupno na: https://kompare.hr/savjetnik/europsko-izvjesce-o-prometnoj-nezgodi/ 
+
+Your Europe – Europska komisija. (2022). Pokrivenost automobilskim osiguranjem u inozemstvu. Dostupno na: https://europa.eu/youreurope/citizens/vehicles/insurance/accident/index_hr.htm 
+
+GDPR – Opća uredba o zaštiti podataka (EU) 2016/679.
+
+HANFA (2024). Smjernice za digitalnu obradu odštetnih zahtjeva.
+
+Eurostat. (2024). Digital economy and society statistics - households and individuals. Dostupno na: https://ec.europa.eu/eurostat/statistics-explained... (19.6.2025.)
+
+GSMA Intelligence. (2025). The Mobile Economy Europe 2025. Dostupno na: https://www.gsma.com/solutions-and-impact/connectivity... (19.6.2025.)
+
+MyQRCode. (2025). QR Code Scanner. Preuzeto 25.7.2025., s myqrcode.com/hr/qr-code-scanner
+
+Skenershop.com. (2022). Što je OCR i zašto je neophodan? Preuzeto 25.7.2025., s https://www.skenershop.com/blog/sta-je-ocr-i-zasto-je-neophodan
+
+Medium (2023.), Get Started with the PERN Stack: An Introduction and Implementation Guide, Rita Alves https://medium.com/@ritapalves/get-started-with-the-pern-stack-an-introduction-and-implementation-guide-e33c55d09994
