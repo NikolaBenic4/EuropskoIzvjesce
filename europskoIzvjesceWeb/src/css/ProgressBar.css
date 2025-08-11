@@ -1,0 +1,25 @@
+/* src/components/ProgressBar.css */
+.progress-container {
+  width: 100%;
+  margin-bottom: 24px;
+}
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.progress-label.done {
+  font-weight: bold;
+}
+.progress-bar-background {
+  background: #e0e0e0;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-bar-foreground {
+  background: #007bff;
+  height: 100%;
+  transition: width 0.3s ease;
+}
