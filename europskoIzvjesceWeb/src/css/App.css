@@ -1,37 +1,46 @@
 /* App.css */
-.header {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #fff;
+  color: #000;
 }
 
-.logo {
-  height: 3rem;
-  transition: transform 0.3s ease;
-}
-.logo:hover {
-  transform: rotate(20deg);
-}
-.logo.react {
-  filter: hue-rotate(140deg);
-}
+/* Remove .main if not using: DO NOT style .main if hero is always full screen! */
 
-.main {
-  padding: 2rem;
-  text-align: center;
-}
-
+/* Hide old toggle button */
 .toggle-button {
-  background-color: #007bff;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  margin: 1.5rem 0;
-  transition: background-color 0.3s ease;
+  display: none;
 }
-.toggle-button:hover {
-  background-color: #0056b3;
+
+/* Form overlay modal covers all */
+.form-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+/* Close button styling */
+.close-form {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  background: none;
+  color: #fff;
+  font-size: 2rem;
+  border: none;
+  cursor: pointer;
+  z-index: 1100;
 }

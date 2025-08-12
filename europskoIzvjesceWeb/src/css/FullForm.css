@@ -1,0 +1,38 @@
+/* src/css/FullForm.css */
+.fullform-site {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f7f9fb 0%, #e4effe 100%);
+  padding-top: 32px;
+}
+
+.fullform-header {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.fullform-desc {
+  color: #666;
+  margin-bottom: 28px;
+}
+
+.fullform-content {
+  max-width: 650px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  padding: 20px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .fullform-header, .fullform-content {
+    max-width: 98vw;
+    padding: 8px;
+  }
+}
+@media (max-width: 600px) {
+  .fullform-header h2 { font-size: 1.2rem; }
+  .fullform-content { padding: 7px; border-radius: 6px; }
+}
