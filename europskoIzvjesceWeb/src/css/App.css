@@ -1,46 +1,175 @@
-/* App.css */
-
-html, body, #root {
+/* RESET & BASE */
+* {
   margin: 0;
   padding: 0;
-  width: 100vw;
-  height: 100vh;
-  min-height: 100vh;
+  box-sizing: border-box;
+}
+html, body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #fff;
+  background: #f7f7f7;
   color: #000;
+  line-height: 1.6;
 }
 
-/* Remove .main if not using: DO NOT style .main if hero is always full screen! */
-
-/* Hide old toggle button */
-.toggle-button {
-  display: none;
-}
-
-/* Form overlay modal covers all */
-.form-container {
+/* STICKY HEADER */
+.site-header {
   position: fixed;
   top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 1000;
+  width: 100%;
+  background: #f2f2f2;
+  padding: 0.75rem 2rem;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+  z-index: 100;
+}
+.site-header h1 {
+  font-size: 1.6rem;
+  color: #002060;
+  font-weight: 700;
 }
 
-/* Close button styling */
-.close-form {
-  position: absolute;
-  top: 1.2rem;
-  right: 1.2rem;
-  background: none;
-  color: #fff;
-  font-size: 2rem;
+/* HERO IMAGE CONTAINER */
+.hero-container {
+  margin-top: 64px;        /* space for header */
+  width: 100%;             /* full width */
+  background-color: #fff;  /* white on sides */
+  overflow: hidden;        /* crop overflow */
+}
+
+/* HERO IMAGE: centered, responsive */
+.hero-image {
+  display: block;           /* block-level so margin auto works */
+  width: 100%;              /* fill container horizontally */
+  max-width: 768px;         /* cap on very large screens */
+  height: auto;             /* preserve aspect ratio */
+  max-height: 45vh;         /* limit height */
+  margin: 0 auto;           /* center horizontally */
+  object-fit: cover;        /* fill box without distortion */
+  object-position: center;  /* center image within box */
+}
+
+/* MAIN CONTENT CARD */
+.content-section {
+  background: #ffffff;   /* pure white */
+  color: #000000;        /* pure black text */
+  max-width: 780px;
+  margin: -40px auto 2rem;
+  padding: 2.5rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+  text-align: center;
+}
+.content-title {
+  font-size: 2.2rem;
+  color: #002060;       /* very dark blue for headings */
+  margin-bottom: 0.8rem;
+  font-weight: 800;
+}
+.content-subtitle {
+  font-size: 1.15rem;
+  color: #000;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+/* CALL-TO-ACTION BUTTON */
+.cta-button {
+  display: inline-block;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;        /* white */
+  background-color: #003366; /* dark blue */
   border: none;
-  cursor: pointer;
-  z-index: 1100;
+  border-radius: 5px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  text-decoration: none;
+}
+.cta-button:hover {
+  background-color: #001f4d;  /* darker blue */
+  transform: translateY(-2px);
+}
+
+/* ADDITIONAL CONTENT */
+.additional-content {
+  background: #ffffff;
+  color: #000;
+  max-width: 780px;
+  margin: 0 auto 3rem;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  text-align: center;
+}
+.additional-content h2 {
+  color: #002060;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+.additional-content p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+@media (min-width: 1024px) {
+  .hero-image {
+    max-height: 45vh;
+  }
+}
+
+/* RESPONSIVE ADJUSTMENTS */
+@media (max-width: 480px) {
+  .site-header h1 {
+    font-size: 1.4rem;
+  }
+  .hero-image {
+    max-height: 30vh;
+    margin-top: 56px;
+  }
+  .content-section {
+    margin: -30px auto 1.5rem;
+    padding: 2rem 1.5rem;
+  }
+  .content-title {
+    font-size: 1.9rem;
+  }
+  .content-subtitle {
+    font-size: 1rem;
+  }
+  .cta-button {
+    padding: 0.7rem 1.6rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 240px) {
+  .site-header h1 {
+    font-size: 1.2rem;
+  }
+  .hero-image {
+    max-height: 25vh;
+    margin-top: 48px;
+  }
+  .content-section {
+    margin: -24px auto 1rem;
+    padding: 1.5rem 1rem;
+  }
+  .content-title {
+    font-size: 1.6rem;
+  }
+  .content-subtitle {
+    font-size: 0.9rem;
+  }
+  .cta-button {
+    padding: 0.6rem 1.4rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* SMOOTH SCROLL */
+html {
+  scroll-behavior: smooth;
 }

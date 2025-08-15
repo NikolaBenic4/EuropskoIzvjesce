@@ -1,33 +1,34 @@
-// src/App.jsx
 import { Routes, Route, Link } from 'react-router-dom';
 import './css/App.css';
-import './css/Naslovna.css';
-import NesrecaForm from './pages/NesrecaForm';
+// import FullForm from './pages/FullForm';   // privremeno zakomentirano
 
 function Home() {
   return (
-    <div className="hero-section">
-      <div className="overlay" />
-      <div className="hero-content">
-        <h1 className="hero-title">Digitalno Europsko izvješće</h1>
-        <p className="hero-subtitle">
-          Prijavite i dokumentirajte prometne nesreće na jednostavan i siguran način.
-        </p>
-        <Link to="/prijava" className="hero-button">
-          Započni prijavu
-        </Link>
+    <>
+      <header className="site-header"><h1>Europsko Izvješće</h1></header>
+      <div className="hero-containter">
+        <img
+        src="/public/assets/NesrecaSlika.png"
+        className="hero-image"
+        ></img>
       </div>
-    </div>
+      <section className="content-section">
+        <h1 className="content-title">Digitalno Europsko izvješće</h1>
+        <p className="content-subtitle">
+          Prijavite i dokumentirajte prometnu nesreću na jednostavan i siguran način.
+        </p>
+        {/* dok ne popravite forme, vodimo samo na Home */}
+        <Link to="/" className="cta-button">Započni prijavu</Link>
+      </section>
+    </>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/prijava" element={<NesrecaForm onNext={data => console.log(data)} />} />
+      {/* <Route path="/fullform" element={<FullForm />} /> */}
     </Routes>
   );
 }
-
-export default App;

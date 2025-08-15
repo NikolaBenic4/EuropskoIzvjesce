@@ -5,8 +5,9 @@ import SvjedociForm from './SvjedociForm';
 import VozacPolicaForm from './VozacPolicaForm';
 import VoziloForm from './VoziloForm';
 import OpisForm from './OpisForm';
-import DrustvoForm from './DrustvoForm';
+import OsiguravajuceDrustvoForm from './OsiguravajuceDrustvoForm';
 import PotpisForm from './PotpisForm';
+
 
 // Define step titles
 const stepTitles = [
@@ -37,12 +38,12 @@ export default function FullForm() {
     <VozacPolicaForm onNext={next} onBack={prev} data={data} key={2} />,
     <VoziloForm onNext={next} onBack={prev} data={data} key={3} />,
     <OpisForm onNext={next} onBack={prev} data={data} key={4} />,
-    <DrustvoForm onNext={next} onBack={prev} data={data} key={5} />,
+    <OsiguravajuceDrustvoForm onNext={next} onBack={prev} data={data} key={5} />,
     <PotpisForm onNext={next} onBack={prev} data={data} key={6} />,
   ];
 
   return (
-    <div className="fullform-site">
+    <div className="fullform-site" >
       <div className="fullform-header">
         {/* Progress tracker bar and current stage */}
         <ProgressBar currentStep={step} steps={stepTitles} />
