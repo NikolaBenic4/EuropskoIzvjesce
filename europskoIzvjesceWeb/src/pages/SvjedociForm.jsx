@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import '../css/SvjedociForm.css';
 
-export default function OzljedeStetaSvjedociForm({ onNext }) {
+export default function SvjedociForm({ onNext }) {
   const [formData, setFormData] = useState({
     ozlijedeni: false,
     stetanastvarima: false,
@@ -46,7 +47,7 @@ export default function OzljedeStetaSvjedociForm({ onNext }) {
             checked={formData.stetanastvarima}
             onChange={() => handleCheckbox("stetanastvarima")}
           />
-          Šteta na stvarima
+          Šteta na drugim stvarima
         </label>
         <label className="checkbox-item">
           <input
@@ -55,7 +56,7 @@ export default function OzljedeStetaSvjedociForm({ onNext }) {
             checked={formData.stetanavozilu}
             onChange={() => handleCheckbox("stetanavozilu")}
           />
-          Šteta na vozilu
+          Šteta na drugim vozilima
         </label>
       </div>
 
@@ -109,7 +110,7 @@ export default function OzljedeStetaSvjedociForm({ onNext }) {
               onChange={(e) =>
                 handleChange("svjedokKontakt", e.target.value)
               }
-              placeholder="Telefon ili email"
+              placeholder="Broj mobitela ili telefona"
             />
           </div>
         </div>

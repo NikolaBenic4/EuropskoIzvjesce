@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import '../css/NesrecaForm.css';
 
 // Postavljanje za ispravljanje Leaflet ikona u webpacku
 let DefaultIcon = L.divIcon({
@@ -107,7 +108,7 @@ const NesrecaForm = ({ onNext }) => {
                             ...prev,
                             datum_nesrece: datum,
                             vrijeme_nesrece: vrijeme,
-                            mjesto_nesrece: 'Lokacija nedostupna',
+                            mjesto_nesrece: 'Lokacija nedostupna. Molim te unesi lokaciju na kojoj se nalaziš ili ju opiši.',
                             geolokacija_nesrece: ''
                         }));
                         setLoading(false);
@@ -173,23 +174,26 @@ const NesrecaForm = ({ onNext }) => {
         <div className={`nesreca-container ${isMobile ? 'mobile' : 'desktop'}`}>
             <h2 className="nesreca-title">Prijava prometne nesreće</h2>
 
-            <button
-                onClick={getCurrentData}
-                disabled={loading}
-                className={`auto-load-button ${loading ? 'loading' : ''}`}
-            >
-                {loading ? (
-                    <>
-                        <span className="loading-spinner"></span>
-                        Podaci se učitavaju...
-                    </>
-                ) : (
-                    <>
-                        <span className="location-icon">📍</span>
-                        Automatski učitaj podatke
-                    </>
-                )}
-            </button>   
+            <div className="auto-load-container">
+  <button
+    onClick={getCurrentData}
+    disabled={loading}
+    className={`auto-load-button ${loading ? 'loading' : ''}`}
+  >
+    {loading ? (
+      <>
+        <span className="loading-spinner"></span>
+        Podaci se učitavaju...
+      </>
+    ) : (
+      <>
+        <span className="location-icon"></span>
+        AUTOMATSKI UČITAJ PODATKE
+      </>
+    )}
+  </button>
+</div>
+   
 
             <form onSubmit={handleSubmit} className="nesreca-form">
                 <div className="form-row">
@@ -223,7 +227,7 @@ const NesrecaForm = ({ onNext }) => {
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label">Mjesto nesreće:</label>
+                    <label className="form-label">Mjesto nesreće: *</label>
                     <textarea
                         value={nesrecaData.mjesto_nesrece}
                         onChange={e => setNesrecaData(prev => ({
@@ -284,7 +288,7 @@ const NesrecaForm = ({ onNext }) => {
             )}
 
                 <button type="submit" className="submit-button">
-                    <span className="submit-icon">✅</span>
+                    <span className="submit-icon"></span>
                     Dalje
                 </button>
             </form>

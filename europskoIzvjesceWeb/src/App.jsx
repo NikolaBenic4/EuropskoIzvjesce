@@ -2,6 +2,10 @@ import { Routes, Route, Link } from 'react-router-dom';
 import './css/App.css';
 import { FaQrcode, FaBolt, FaMapMarkerAlt, FaLock, FaRegThumbsUp, FaCarCrash } from "react-icons/fa";
 // import FullForm from './pages/FullForm';
+import SvjedociForm from './pages/SvjedociForm';
+import NesrecaForm from './pages/NesrecaForm';
+
+
 
 function Home() {
   return (
@@ -19,7 +23,7 @@ function Home() {
         <p className="content-subtitle">
           Prijavite i dokumentirajte prometnu nesreću na jednostavan i siguran način.
         </p>
-        <Link to="/" className="cta-button">Započni prijavu</Link>
+        <Link to="/NesrecaForm" className="cta-button">Započni prijavu</Link>
       </section>
       <br/>
       <section className="how-it-works">
@@ -73,7 +77,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      {/* <Route path="/fullform" element={<FullForm />} /> */}
+      <Route path="/NesrecaForm" element={<NesrecaForm />} />
     </Routes>
   );
 }
