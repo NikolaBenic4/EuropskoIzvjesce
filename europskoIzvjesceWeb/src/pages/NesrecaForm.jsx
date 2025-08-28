@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import '../css/NesrecaForm.css';
+import SvjedociForm from './SvjedociForm';
 
 // Postavljanje za ispravljanje Leaflet ikona u webpacku
 let DefaultIcon = L.divIcon({
@@ -289,8 +290,7 @@ const NesrecaForm = ({ onNext }) => {
 
                 <button type="submit" className="submit-button">
                     <span className="submit-icon"></span>
-                    Dalje
-                </button>
+                    </button>
             </form>
         </div>
     );

@@ -210,3 +210,92 @@ input[readonly],
     height: 190px !important;
   }
 }
+
+.car-imagebox {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.car-points-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 18px;
+  justify-items: start;
+  max-width: 320px; /* Povećaj po želji za dugačak tekst */
+  margin: 0 auto;
+}
+
+.car-points-grid label {
+  white-space: normal;
+  line-height: 1.25;
+  font-size: 1.07rem;
+  width: 100%;
+  overflow-wrap: anywhere;
+  display: flex;
+  align-items: flex-start;
+}
+
+.car-points-grid input[type="checkbox"] {
+  margin-right: 7px;
+  vertical-align: center;
+}
+
+.centered-container {
+  display: flex;
+  justify-content: center;  /* horizontalno centriranje */
+  align-items: center;      /* vertikalno centriranje */
+  height: 10vh;            /* zauzima cijelu visinu vidljivog dijela */
+  width: 100%;              /* puni širinu */
+}
+
+.custom-file-upload {
+  cursor: pointer;
+  color: #fff;
+  background-color: #007bff;
+  padding: 8px 15px;
+  border-radius: 5px;
+  display: inline-block;
+  font-weight: 600;
+  text-align: center;
+}
+
+
+.custom-file-upload:hover {
+  background-color: #0056b3;
+}
+
+.info-button {
+  background-color: #a3a2a2; /* tamno siva pozadina */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  user-select: none;
+}
+
+.info-button:hover,
+.info-button:focus {
+  background-color: #5c5c5c; /* tamnija boja na hover/focus */
+  outline: none;
+}
+
+.label-with-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+

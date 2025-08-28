@@ -1,0 +1,153 @@
+/* RESET & BASE */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f7f7f7;
+  color: #000;
+  line-height: 1.6;
+}
+
+/* MAIN FORM CARD */
+.potpis-form {
+  background: #fff;
+  max-width: 580px;
+  margin: 32px auto;
+  padding: 2.5rem 2rem;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(0,32,96,0.09);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* FORM FIELDS */
+.form-group {
+  width: 100%;
+  margin-bottom: 1.7rem;
+}
+
+/* LABELS */
+.form-label {
+  display: block;
+  margin-bottom: 9px;
+  color: #002060;
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+}
+
+/* INPUTS AND TEXTAREA */
+.form-input,
+input[type="date"],
+input[type="time"] {
+  width: 100%;
+  padding: 12px 16px;
+  background: #fcfdff;
+  color: #002060;
+  font-size: 1.13rem;
+  border: 2px solid #003366;
+  border-radius: 8px;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-shadow: none;
+  outline: none;
+}
+
+.form-input:focus,
+input[type="date"]:focus,
+input[type="time"]:focus {
+  border-color: #001f4d;
+  box-shadow: 0 0 0 2px rgba(0,32,96,0.15);
+}
+
+.sigCanvas {
+  display: block;
+  margin: 0 auto;
+  background-color: #fff;
+  touch-action: none;
+}
+
+.submit-button {
+  display: inline-block;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff; /* white */
+  background-color: #003366; /* dark blue */
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.submit-button:hover {
+  background: linear-gradient(90deg, #001f4d 0%, #003366 100%);
+  box-shadow: 0 7px 36px rgba(0,32,96,0.13);
+  transform: translateY(-2px);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+}
+
+/* Scan button - smaller, next to input */
+.scan-group {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.scan-group .form-input {
+  flex: 1;
+}
+
+.scan-button {
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .potpis-form {
+    max-width: 95vw;
+    padding: 1.5rem 1rem;
+    border-radius: 10px;
+  }
+
+  .sigCanvas {
+    width: 100% !important;
+    height: 140px !important;
+  }
+
+  .scan-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .scan-button {
+    width: 100%;
+  }
+}
+
+.scanner-container {
+  margin-top: 16px;
+  border: 2px solid #003366;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Video is fully responsive */
+.scanner-container video {
+  border-radius: 8px;
+  width: 100%;
+  height: auto;
+}

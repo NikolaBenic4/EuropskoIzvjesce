@@ -87,7 +87,7 @@
 }
 
 .form-input:focus {
-  border-color: #003366;
+  border-color: #0f0f0f;
   outline: none;
   box-shadow: 0 0 6px rgba(0, 32, 96, 0.15);
 }

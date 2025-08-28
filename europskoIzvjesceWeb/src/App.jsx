@@ -4,6 +4,11 @@ import { FaQrcode, FaBolt, FaMapMarkerAlt, FaLock, FaRegThumbsUp, FaCarCrash } f
 // import FullForm from './pages/FullForm';
 import SvjedociForm from './pages/SvjedociForm';
 import NesrecaForm from './pages/NesrecaForm';
+import VozacPolicaForm from './pages/VozacPolicaForm';
+import VoziloForm from './pages/VoziloForm';
+import OsiguravajuceDrustvoForm from './pages/OsiguravajuceDrustvoForm';
+import OpisForm from './pages/OpisForm';
+import PotpisForm from './pages/PotpisForm';
 
 
 
@@ -23,7 +28,7 @@ function Home() {
         <p className="content-subtitle">
           Prijavite i dokumentirajte prometnu nesreću na jednostavan i siguran način.
         </p>
-        <Link to="/NesrecaForm" className="cta-button">Započni prijavu</Link>
+        <Link to="/OpisForm" className="cta-button">Započni prijavu</Link>
       </section>
       <br/>
       <section className="how-it-works">
@@ -37,6 +42,7 @@ function Home() {
           <li>Dodajte informacije o sudionicima i vozilima.</li>
           <li>Ako postoje, unesite podatke o svjedocima</li>
           <li>Opišite okolnosti nesreće.</li>
+          <li>Unesite podatke o polici</li>
           <li>Pregledajte i potvrdite izvješće digitalnim potpisom</li>
           <li>Pošaljite izvješće izravno osiguravajućem društvu.</li>
         </ol>
@@ -77,7 +83,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/NesrecaForm" element={<NesrecaForm />} />
+      <Route path="/OpisForm" element={<PotpisForm/>} />
     </Routes>
   );
 }
