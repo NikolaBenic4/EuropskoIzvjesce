@@ -1,3 +1,5 @@
+/* NesrecaForm.css */
+
 /* RESET & BASE */
 * {
   margin: 0;
@@ -16,56 +18,40 @@ html, body {
   width: 100%;
   max-width: 680px;
   margin: 32px auto;
-  padding: 0;
+  padding: 0 1rem;
 }
 
-.nesreca-form {
-  background: #fff;
-  max-width: 580px;
-  margin: 0 auto;
-  padding: 2.5rem 2rem;
-  border-radius: 14px;
-  box-shadow: 0 3px 12px rgba(0,32,96,0.09);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
+/* TITLE */
 .nesreca-title {
   text-align: center;
   color: #002060;
   font-size: 2.3rem;
   font-weight: 800;
   margin-bottom: 2.2rem;
-  letter-spacing: 1.1px;
 }
 
+/* AUTO-LOAD BUTTON */
 .auto-load-container {
-  width: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
   margin: 24px 0;
 }
-
 .auto-load-button {
-  display: inline-block;
   padding: 0.8rem 2rem;
   font-size: 1rem;
   font-weight: 700;
-  color: #ffffff;        /* white */
-  background-color: #003366; /* dark blue */
+  color: #fff;
+  background-color: #003366;
   border: none;
   border-radius: 5px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.2);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   transition: background-color 0.2s ease, transform 0.2s ease;
-  text-decoration: none;
 }
-
-.auto-load-button:hover {
-  background: linear-gradient(90deg, #001f4d, #003366);
+.auto-load-button:hover:not(:disabled) {
+  background-color: #001f4d;
+  transform: translateY(-2px);
 }
 .auto-load-button:disabled {
   background: #dde4ef;
@@ -74,112 +60,65 @@ html, body {
 }
 
 /* FORM FIELDS */
+.nesreca-form {
+  background: #fff;
+  padding: 2.5rem 2rem;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(0,32,96,0.09);
+  display: flex;
+  flex-direction: column;
+}
 .form-group {
-  width: 100%;
   margin-bottom: 1.7rem;
 }
-
 .form-label {
   display: block;
   margin-bottom: 9px;
   color: #002060;
   font-weight: 700;
   font-size: 1.15rem;
-  letter-spacing: 0.02em;
 }
-
-/* INPUTS AND TEXTAREA */
-.form-input,
-input[type="date"],
-input[type="time"] {
+.form-input, .form-textarea {
   width: 100%;
   padding: 12px 16px;
   background: #fcfdff;
-  color: #002060;
-  font-size: 1.13rem;
   border: 2px solid #0f0f0f;
   border-radius: 8px;
   transition: border-color 0.18s, box-shadow 0.18s;
-  box-shadow: none;
 }
-
-input[type="date"],
-input[type="time"] {
-  background: #f7f7f7;
-}
-
-.form-input:focus,
-input[type="date"]:focus,
-input[type="time"]:focus {
-  outline: none;
+.form-input:focus, .form-textarea:focus {
   border-color: #003366;
-  box-shadow: 0 0 0 2px rgba(32, 72, 163, 0.10);
-}
-
-.form-textarea {
-  width: 100%;
-  padding: 12px 16px;
-  background: #fcfdff;
-  color: #002060;
-  font-size: 1.13rem;
-  border: 2px solid #0f0f0f;
-  border-radius: 8px;
-  resize: vertical;
-  min-height: 80px;
-  max-height: 200px;
-  transition: border-color 0.18s, box-shadow 0.18s;
-}
-.form-textarea:focus {
+  box-shadow: 0 0 0 2px rgba(32,72,163,0.1);
   outline: none;
-  border-color: #003366;
-  box-shadow: 0 0 0 2px rgba(32,72,163,0.10);
-}
-
-input[readonly],
-.form-input.readonly {
-  background: #edeef3 !important;
-  color: #999 !important;
-  cursor: not-allowed;
 }
 
 /* SUBMIT BUTTON */
 .submit-button {
-  display: inline-block;
+  align-self: center;
   padding: 0.8rem 2rem;
   font-size: 1rem;
   font-weight: 700;
-  color: #ffffff;        /* white */
-  background-color: #003366; /* dark blue */
+  color: #fff;
+  background-color: #003366;
   border: none;
   border-radius: 5px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.2);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   transition: background-color 0.2s ease, transform 0.2s ease;
-  text-decoration: none;
 }
 .submit-button:hover {
-  background: linear-gradient(90deg, #001f4d 0%, #003366 100%);
-  box-shadow: 0 7px 36px rgba(0,32,96,0.13);
+  background-color: #001f4d;
   transform: translateY(-2px);
 }
-.submit-button:active {
-  transform: translateY(0);
-}
 
-/* MAP SECTION IS ALSO A CARD */
+/* MAP SECTION */
 .map-section {
   background: #fff;
-  border-radius: 10px;
   padding: 18px;
+  border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0,32,96,0.06);
   margin: 20px 0;
-}
-.map-section h3 {
-  margin: 0 0 15px;
-  color: #002060;
-  font-size: 1.13rem;
-  font-weight: 700;
 }
 .map-container {
   width: 100%;
@@ -189,113 +128,107 @@ input[readonly],
   overflow: hidden;
 }
 
+/* TOAST CENTER TOP */
+.toast {
+  position: fixed;
+  top: 10%;
+  left: 50%;
+  padding: 12px 16px;
+  border-radius: 4px;
+  color: white;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  transform: translateX(-50%);
+  max-width: 90vw;
+  box-sizing: border-box;
+  word-break: break-word;
+}
+
+/* ensure toast text wraps and remains visible on small screens */
+@media (max-width: 480px) {
+  .toast {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+}
+
+.toast-success {
+  background-color: #4CAF50;
+}
+
+.toast-error {
+  background-color: #f44336;
+}
+
+.toast-warning {
+  background-color: #f4e51d;
+  color: black; /* dark text for contrast */
+}
+
+.toast-info {
+  background-color: #2196F3;
+}
+
+.toast-show {
+  opacity: 1;
+}
+
+
+
+
 /* RESPONSIVE */
 @media (max-width: 600px) {
-  .nesreca-form {
-    padding: 1.2rem 0.5rem;
-    border-radius: 7px;
-    max-width: 97vw;
+  .nesreca-container {
+    padding: 0 0.5rem;
   }
-  .form-label {
-    font-size: 1rem;
-  }
-  .submit-button {
-    font-size: 1.07rem;
-    padding: 1rem 0;
-    border-radius: 8px;
-    margin-top: 18px;
-  }
-
   .map-container {
-    height: 190px !important;
+    height: 190px;
   }
 }
-
-.car-imagebox {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 18px;
+.form-textarea {
+  color: #000;
 }
 
-.car-points-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px 18px;
-  justify-items: start;
-  max-width: 320px; /* Povećaj po želji za dugačak tekst */
-  margin: 0 auto;
-}
-
-.car-points-grid label {
-  white-space: normal;
-  line-height: 1.25;
-  font-size: 1.07rem;
-  width: 100%;
-  overflow-wrap: anywhere;
-  display: flex;
-  align-items: flex-start;
-}
-
-.car-points-grid input[type="checkbox"] {
-  margin-right: 7px;
-  vertical-align: center;
-}
-
-.centered-container {
-  display: flex;
-  justify-content: center;  /* horizontalno centriranje */
-  align-items: center;      /* vertikalno centriranje */
-  height: 10vh;            /* zauzima cijelu visinu vidljivog dijela */
-  width: 100%;              /* puni širinu */
-}
-
-.custom-file-upload {
-  cursor: pointer;
-  color: #fff;
-  background-color: #007bff;
-  padding: 8px 15px;
-  border-radius: 5px;
+/* Submit button label */
+.submit-button {
   display: inline-block;
-  font-weight: 600;
-  text-align: center;
-}
-
-
-.custom-file-upload:hover {
-  background-color: #0056b3;
-}
-
-.info-button {
-  background-color: #a3a2a2; /* tamno siva pozadina */
-  color: white;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background-color: #003366;
   border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-  transition: background-color 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  user-select: none;
+  border-radius: 5px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+.submit-button:hover {
+  background-color: #001f4d;
+  transform: translateY(-2px);
 }
 
-.info-button:hover,
-.info-button:focus {
-  background-color: #5c5c5c; /* tamnija boja na hover/focus */
-  outline: none;
+/* Full-width geolocation input */
+.nesreca-form .form-group input.readonly {
+  width: 100%;
 }
 
-.label-with-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* If you want all inputs and textareas to be full width */
+.nesreca-form .form-group .form-input,
+.nesreca-form .form-group .form-textarea {
+  width: 100%;
+}
+/* Razmontirajte padding forme samo za ovu grupu */
+.fullwidth-group {
+  margin-left: -2rem;
+  margin-right: -2rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
 }
 
+/* Osigurajte da input i dalje budu 100% svoje .form-group */
+.fullwidth-group .form-input.readonly {
+  width: 100%;
+}

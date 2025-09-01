@@ -1,36 +1,17 @@
 import React from 'react';
+import '../css/ProgressBar.css';
 
-const steps = [
-  'Opće informacije',
-  'Svjedoci',
-  'Vozač i osiguravatelj police',
-  'Vozilo',
-  'Opis nesreće',
-  'Osiguravajuće društvo',
-  'Potpis'
-];
-
-export default function ProgressBar({ currentStep }) {
-  const percent = (currentStep / (steps.length - 1)) * 100;
-
+export default function ProgressBar({ currentStep, steps }) {
   return (
-    <div className="progress-container">
-      <div className="progress-labels">
-        {steps.map((label, i) => (
-          <span
-            key={i}
-            className={`progress-label ${i <= currentStep ? 'done' : ''}`}
-          >
-            {label}
-          </span>
-        ))}
-      </div>
-      <div className="progress-bar-background">
+    <div className="progressbar-container">
+      {steps.map((_, index) => (
         <div
-          className="progress-bar-foreground"
-          style={{ width: `${percent}%` }}
-        />
-      </div>
+          key={index}
+          className={`progress-step ${index <= currentStep ? 'active' : ''}`}
+        >
+          <div className="step-number">{index + 1}</div>
+        </div>
+      ))}
     </div>
   );
 }
