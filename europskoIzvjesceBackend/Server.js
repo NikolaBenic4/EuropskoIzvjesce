@@ -1,53 +1,29 @@
 const express = require('express');
-const { createNesreca } = require('../nesreca');
-const nesrecaRoutes = require('./routes/nesreca');
-const router = express.Router;
-const server = express();
-const PORT = 3001;
-const { Pool } = require('pg');
+const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
 
-const pool = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'Diplomski rad',
-    password: 'diplomski',
-    port: 5432,
+// Prvo učitaj router za adrese:
+const addressesRouter = require('./routes/addressApi'); // <-- naziv isti kao u modulu/ruti
+const svjedokRouter = require('./routes/svjedokApi');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// RUTE API-a uvijeK dolaze PRIJE statičkog servinga!
+app.use('/api', addressesRouter);
+app.use('/api', svjedokRouter);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-server.use('/nesreca', nesrecaRoutes);
-
-module.exports = pool;
-module.exports = router;
-
-server.use(express.json());
-
-//Unos podataka u tablicu nesreca
-router.post('/', async (req, res) => {
-    try{
-        //Prikupljanje podataka iz body-a
-        const nesrecaData = req.body;
-
-        //Pozivanje funkcije za kreiranje
-        const newNesreca = await createNesreca(nesrecaData);
-
-        //Slanje pozitivnog odgovora
-        res.status(201).josn({
-            success: true,
-            data: newNesreca
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-})
-
-server.get('/', (req, res) => {
-    res.json({ message: 'API za izvješćivanje o prometnim nesrećama'});
-});
-
-
-server.listen(PORT, () => {
-    console.log(`Server je pokrenut na http://localhost:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
