@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import '../css/NesrecaForm.css';
 
-const OsiguravajuceDrustvoForm = ({ onSubmit, onBack }) => {
+const OsiguravajuceDrustvoForm = ({ onNext, onBack }) => {
   const [formData, setFormData] = useState({
     naziv_osiguranja: "",
     adresa_osiguranja: "",
@@ -177,6 +177,7 @@ const OsiguravajuceDrustvoForm = ({ onSubmit, onBack }) => {
           <button
             type="submit"
             className="next-button"
+            onClick={onNext}
           >
             DALJE
           </button>

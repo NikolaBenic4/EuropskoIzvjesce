@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import '../css/PolicaForm.css';
 
-const PolicaForm = ({ onSubmit, onBack }) => {
+const PolicaForm = ({ onNext, onBack }) => {
   const [formData, setFormData] = useState({
     brojpolice: "",
     nazivdrustva: "",
+    zelena_karta: false,
     brojzelenekarte: "",
     kaskopokrivastetu: false,
   });
@@ -14,12 +15,13 @@ const PolicaForm = ({ onSubmit, onBack }) => {
     setFormData(prev => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
+      ...(name === "zelena_karta" && !checked ? { brojzelenekarte: "" } : {}),
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (onSubmit) onSubmit(formData);
+    if (onNext) onNext(formData);
   };
 
   return (
@@ -32,7 +34,8 @@ const PolicaForm = ({ onSubmit, onBack }) => {
           <input
             type="text"
             name="brojpolice"
-            maxLength={20}
+            minLength={8}
+            maxLength={12}
             className="form-input"
             value={formData.brojpolice}
             onChange={handleChange}
@@ -53,29 +56,46 @@ const PolicaForm = ({ onSubmit, onBack }) => {
           />
         </div>
 
-        <div className="form-group">
-          <label className="form-label">Broj zelene karte:</label>
+        <div className="form-group" style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <input
-            type="text"
-            name="brojzelenekarte"
-            maxLength={20}
-            className="form-input"
-            value={formData.brojzelenekarte}
+            type="checkbox"
+            id="zelena_karta"
+            name="zelena_karta"
+            checked={formData.zelena_karta}
             onChange={handleChange}
+            style={{ width: 20, height: 20 }} // veći checkbox!
           />
+          <label htmlFor="zelena_karta" className="form-label" style={{ margin: 0 }}>
+            Zelena karta
+          </label>
         </div>
 
-        <div className="form-group">
-          <label className="form-label" htmlFor="kaskopokrivastetu">
-            Kasko pokriva štetu:
-          </label>
+        {formData.zelena_karta && (
+          <div className="form-group">
+            <label className="form-label">Broj zelene karte:</label>
+            <input
+              type="text"
+              name="brojzelenekarte"
+              maxLength={20}
+              className="form-input"
+              value={formData.brojzelenekarte}
+              onChange={handleChange}
+            />
+          </div>
+        )}
+
+        <div className="form-group" style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <input
             type="checkbox"
             id="kaskopokrivastetu"
             name="kaskopokrivastetu"
             checked={formData.kaskopokrivastetu}
             onChange={handleChange}
+            style={{ width: 20, height: 20 }} // veći checkbox!
           />
+          <label htmlFor="kaskopokrivastetu" className="form-label" style={{ margin: 0 }}>
+            Kasko pokriva štetu
+          </label>
         </div>
 
         <div className="navigation-buttons">
@@ -92,6 +112,7 @@ const PolicaForm = ({ onSubmit, onBack }) => {
           <button
             type="submit"
             className="next-button"
+            onClick={onNext}
           >
             DALJE
           </button>

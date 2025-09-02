@@ -265,7 +265,7 @@ export default function OpisForm({ onNext, onBack }) {
               NAZAD
             </button>
           )}
-          <button type="submit" className="next-button">
+          <button type="submit" className="next-button" onClick={onNext}>
             DALJE
           </button>
         </div>

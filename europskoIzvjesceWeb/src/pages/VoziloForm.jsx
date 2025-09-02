@@ -180,7 +180,7 @@ const VoziloForm = ({ onNext, onBack, initialData }) => {
             maxLength={20}
             required
             pattern="[A-ZČĆŽŠĐ]{2}-?\d{3,4}-?[A-ZČĆŽŠĐ]{1,2}"
-            title="Format: 2 slova + 3 ili 4 broja + 1 ili 2 slova. Primjer: ZG1234AB"
+            title="Registarsku oznaku je potrebno unijeti velikim slovima!"
             style={{ textTransform: "uppercase" }}
             autoComplete="off"
             placeholder="Unesi svoju registarsku oznaku"

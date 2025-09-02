@@ -20,3 +20,12 @@
   justify-content: flex-end;
   gap: 12px;
 }
+
+/* Veći checkbox */
+input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  /* Opcionalno: malo prilagodi vertikalno poravnanje */
+  vertical-align: middle;
+}
