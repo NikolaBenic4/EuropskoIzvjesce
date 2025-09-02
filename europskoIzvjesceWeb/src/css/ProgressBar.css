@@ -1,21 +1,31 @@
+/* Centriraj progress bar */
 .progressbar-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 1.5rem;
   position: relative;
   padding: 0 12px;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
+/* Centriraj svaki korak */
 .progress-step {
-  flex: 1 1 0;
+  flex: 0 1 auto;
   position: relative;
   text-align: center;
   cursor: pointer;
   z-index: 1;
   background: transparent;
+  margin-right: 16px;
+}
+.progress-step:last-child {
+  margin-right: 0;
 }
 
+/* Stil za broj koraka */
 .step-number {
   width: 32px;
   height: 32px;
@@ -31,22 +41,20 @@
   transition: background 0.2s, border 0.2s;
   box-shadow: 0 1px 3px rgba(80,110,150,0.04);
 }
-
 .progress-step.complete .step-number {
   background: #6db6ff;
   border-color: #329ef7;
 }
-
 .progress-step.active .step-number {
   background: #005A9C;
   border-color: #005A9C;
 }
-
 .progress-step:hover .step-number {
   background: #2874c4;
   border-color: #2874c4;
 }
 
+/* Label ispod broja */
 .progress-label {
   display: block;
   margin-top: 0.25rem;
@@ -59,6 +67,7 @@
   margin-right: auto;
 }
 
+/* Linija između koraka */
 .progress-step:not(:last-child)::after {
   content: '';
   position: absolute;
@@ -69,26 +78,19 @@
   background: #e0e0e0;
   z-index: 0;
   transform: translateY(-50%);
-  /* Linija je ispod kružića */
 }
-
-.progress-step.complete:not(:last-child)::after {
-  background: #005A9C;
-}
-
+.progress-step.complete:not(:last-child)::after,
 .progress-step.active:not(:last-child)::after {
   background: #005A9C;
 }
 
-/* Veći razmak između kružića */
-.progress-step {
-  margin-right: 16px;
+/* Centriraj info dio */
+.step-info-container {
+  text-align: center;
+  margin-bottom: 18px;
 }
 
-.progress-step:last-child {
-  margin-right: 0;
-}
-
+/* Mobilni prikaz */
 @media (max-width: 700px) {
   .progress-label {
     font-size: 0.90em;

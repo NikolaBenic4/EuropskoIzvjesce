@@ -57,6 +57,7 @@ export default function VozacPolicaForm({ onNext, onBack }) {
   const [osiguranik, setOsiguranik] = useState(OsiguranikInitial);
   const [vozac, setVozac] = useState(VozacInitial);
   const [isti, setIsti] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (isti) {
@@ -94,8 +95,26 @@ export default function VozacPolicaForm({ onNext, onBack }) {
 
   const handleIstiChange = e => setIsti(e.target.checked);
 
+  const validateForm = () => {
+    const imaBrojOsiguranik = /\d/.test(osiguranik.adresa.trim());
+    if (!imaBrojOsiguranik) {
+      setError("Unesite kućni broj u adresu osiguranika.");
+      return false;
+    }
+    if (!isti) {
+      const imaBrojVozac = /\d/.test(vozac.adresa.trim());
+      if (!imaBrojVozac) {
+        setError("Unesite kućni broj u adresu vozača.");
+        return false;
+      }
+    }
+    setError("");
+    return true;
+  };
+
   const handleSubmit = e => {
     e.preventDefault();
+    if (!validateForm()) return;
     onNext?.({ osiguranik, vozac });
   };
 
@@ -103,14 +122,14 @@ export default function VozacPolicaForm({ onNext, onBack }) {
     <form className="nesreca-form" onSubmit={handleSubmit}>
       <h2 className="nesreca-title">Podaci o osiguraniku</h2>
       {['ime', 'prezime', 'adresa', 'poštanski broj', 'država', 'kontakt', 'mail'].map(field => (
-        <div className="form-group" key={"osiguranik-"+field}>
+        <div className="form-group" key={"osiguranik-" + field}>
           <label className="form-label">
             {field === 'mail'
               ? 'Email: *'
               : `${field.charAt(0).toUpperCase() + field.slice(1)}: *`}
           </label>
           {field === 'adresa' ? (
-              <AddressAutocomplete
+            <AddressAutocomplete
               value={osiguranik.adresa}
               onChange={val => setOsiguranik(o => ({ ...o, adresa: val }))}
               onPostalChange={val => setOsiguranik(o => ({ ...o, postanskiBroj: val }))}
@@ -134,14 +153,14 @@ export default function VozacPolicaForm({ onNext, onBack }) {
 
       <div className="form-group">
         <label>
-          <input type="checkbox" checked={isti} onChange={handleIstiChange} style={{ marginRight: '8px' }}/>
+          <input type="checkbox" checked={isti} onChange={handleIstiChange} style={{ marginRight: '8px' }} />
           Vozač je isti kao osiguranik
         </label>
       </div>
 
       <h2 className="nesreca-title">Podaci o vozaču</h2>
       {!isti && ['ime', 'prezime', 'adresa', 'poštanski broj', 'država', 'kontakt', 'mail'].map(field => (
-        <div className="form-group" key={"vozac-"+field}>
+        <div className="form-group" key={"vozac-" + field}>
           <label className="form-label">
             {field === 'mail'
               ? 'Email: *'
@@ -211,6 +230,12 @@ export default function VozacPolicaForm({ onNext, onBack }) {
         />
       </div>
 
+      {error && (
+        <div style={{ color: "#cc0000", marginTop: 10, fontWeight: "bold" }}>
+          {error}
+        </div>
+      )}
+
       <div className="navigation-buttons">
         {onBack && (
           <button
@@ -229,7 +254,6 @@ export default function VozacPolicaForm({ onNext, onBack }) {
           DALJE
         </button>
       </div>
-
     </form>
   );
 }

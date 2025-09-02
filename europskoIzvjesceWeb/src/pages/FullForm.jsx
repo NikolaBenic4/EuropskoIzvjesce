@@ -61,18 +61,19 @@ export default function FullForm() {
       onNext={next}
       onBack={prev}
     />,
-    <VoziloForm
-      key="vozilo"
-      data={data}
-      onNext={next}
-      onBack={prev}
-    />,
     <OpisForm
       key="opis"
       data={data}
       onNext={next}
       onBack={prev}
     />,
+    <VoziloForm
+      key="vozilo"
+      data={data}
+      onNext={next}
+      onBack={prev}
+    />,
+    
     <OsiguravajuceDrustvoForm
       key="osiguranje"
       data={data}

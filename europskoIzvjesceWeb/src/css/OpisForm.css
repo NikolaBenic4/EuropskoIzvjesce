@@ -80,31 +80,67 @@ body {
   font-size: 1em;
 }
 
-/* INFO GROUP & BUTTONS */
-.label-with-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.info-button {
-  background: #222834;
+.info-button-round {
+  width: 25px;
+  height: 25px;
+  min-width: 25px;
+  min-height: 25px;
+  padding: 0;
+  border-radius: 50%;
+  background: #2268ed;
   color: #fff;
-  font-size: 1.15em;
-  width: 32px;
-  height: 32px;
+  font-weight: 600;
+  font-size: 16px;
   border: none;
-  border-radius: 6px;
-  box-shadow: 0 2px 5px rgba(0,32,96,0.07);
+  outline: none;
   cursor: pointer;
-  transition: background 0.18s;
-  font-weight: 700;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  box-shadow: 0 1px 3px rgba(30,30,50,0.11);
+  margin-left: 8px;
+  position: relative;
+  transition: background 0.18s, color 0.18s;
 }
-.info-button:hover {
-  background: #003366;
+.info-button-round:hover,
+.info-button-round:focus {
+  background: #1752bb;
+  color: #fff;
+  outline: none;
+}
+
+/* INFO TOOLTIP: Plava nijansa i prikaz ispod dugmeta */
+.info-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  background: #f5f7fd;
+  color: #111;
+  text-align: left;
+  border-radius: 5px;
+  padding: 11px 15px;
+  position: absolute;
+  z-index: 999;
+  bottom: 120%;
+  left: -110px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.11);
+  font-size: 13.5px;
+  font-weight: 400;
+  width: 240px;
+  pointer-events: none;
+  transition: all 0.17s;
+}
+
+/* DODATNO: Tooltip "aktiviran" (npr. kada je visibleTooltip.reg === true u Reactu) */
+.info-tooltip-active {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Za kraće tooltipove (auto prilagodba, opcionalno) */
+.info-button-round--short .info-tooltip {
+  width: 180px;
+  left: -80px;
+  padding: 10px 13px;
 }
 
 /* UPLOADING IMAGES LIST */
@@ -244,4 +280,29 @@ body {
 input:-webkit-autofill, textarea:-webkit-autofill {
   box-shadow: 0 0 0px 1000px #fcfdff inset;
   -webkit-text-fill-color: #002060;
+}
+
+.slikaj-ucitaj-button {
+  padding: 0.8rem 2.2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, #2268ed 0%, #1752bb 100%);
+  border: none;
+  border-radius: 7px;
+  box-shadow: 0 3px 12px rgba(34, 104, 237, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background 0.22s, transform 0.17s;
+  cursor: pointer;
+  outline: none;
+}
+
+.slikaj-ucitaj-button:hover {
+  background: linear-gradient(90deg, #1752bb 0%, #0b3a8a 100%);
+  transform: translateY(-2px);
+}
+
+.slikaj-ucitaj-button:active {
+  background: #0e2c6f;
 }

@@ -11,23 +11,46 @@ export default function SvjedociForm({ onNext, onBack }) {
     hasSvjedoci: false,
     svjedokImePrezime: "",
     svjedokUlica: "",
-    svjedokBroj: "",
     svjedokKontakt: ""
   });
+  const [error, setError] = useState("");
 
   const handleCheckbox = (field) => {
     setFormData((p) => ({ ...p, [field]: !p[field] }));
+    if (field === "hasSvjedoci") setError("");
   };
 
   const handleChange = (field, value) => {
     setFormData((p) => ({ ...p, [field]: value }));
+    setError("");
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError("");
+
+    if (formData.hasSvjedoci) {
+      const ulica = formData.svjedokUlica.trim();
+      const imaBroj = /\d/.test(ulica);
+
+      if (
+        formData.svjedokImePrezime.trim() === "" ||
+        ulica === "" ||
+        formData.svjedokKontakt.trim() === ""
+      ) {
+        setError("Molim te ispuni sva polja za svjedoka");
+        return;
+      }
+
+      if (!imaBroj) {
+        setError("Molim te još upiši kućni broj u adresu");
+        return;
+      }
+    }
+
     const formToSend = {
       ...formData,
-      svjedokAdresa: formData.svjedokUlica + (formData.svjedokBroj ? " " + formData.svjedokBroj : "")
+      svjedokAdresa: formData.svjedokUlica
     };
     onNext?.(formToSend);
   };
@@ -39,7 +62,6 @@ export default function SvjedociForm({ onNext, onBack }) {
       setSug(Array.isArray(list) ? list.slice(0, 2) : []);
       setShow(true);
     } catch (e) {
-      console.error(e);
       setSug([]);
       setShow(true);
     } finally {
@@ -101,14 +123,15 @@ export default function SvjedociForm({ onNext, onBack }) {
               value={formData.svjedokImePrezime}
               onChange={(e) => handleChange("svjedokImePrezime", e.target.value)}
               placeholder="Unesite ime i prezime"
+              required
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Ulica</label>
+            <label className="form-label">Ulica i kućni broj</label>
             <AddressAutocomplete
               value={formData.svjedokUlica}
               onChange={(val) => handleChange("svjedokUlica", val)}
-              placeholder="Počnite tipkati ulicu..."
+              placeholder="Primjer: Ilica 15"
               className="form-input"
               searchFunction={searchAddresses}
             />
@@ -121,8 +144,14 @@ export default function SvjedociForm({ onNext, onBack }) {
               value={formData.svjedokKontakt}
               onChange={(e) => handleChange("svjedokKontakt", e.target.value)}
               placeholder="Broj mobitela ili telefona"
+              required
             />
           </div>
+        </div>
+      )}
+      {error && (
+        <div style={{ color: "#cc0000", marginTop: 10, fontWeight: "bold" }}>
+          {error}
         </div>
       )}
       <div className="navigation-buttons" style={{ marginTop: 20 }}>

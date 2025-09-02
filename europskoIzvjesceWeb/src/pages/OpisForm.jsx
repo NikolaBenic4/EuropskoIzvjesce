@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import MjestoUdarcaVozilo, { VEHICLE_CONFIG } from "../components/MjestoUdarcaVozila";
-import "../css/NesrecaForm.css";
+import "../css/OpisForm.css";
 
 const OKOLNOSTI_OPTIONS = [
   "Sudar s vozilom koje je uključilo skretanje",
@@ -29,6 +29,7 @@ export default function OpisForm({ onNext, onBack }) {
   });
 
   const [modalIndeks, setModalIndeks] = useState(null);
+  const [tooltipVisible, setTooltipVisible] = useState(false);
 
   function formirajPoziciju() {
     const { points } = VEHICLE_CONFIG[formData.vrstaVozila];
@@ -101,9 +102,11 @@ export default function OpisForm({ onNext, onBack }) {
     if (onNext) onNext(zaSlanje);
   }
 
+  const toggleTooltip = () => setTooltipVisible((v) => !v);
+
   return (
     <div className="nesreca-container">
-      <form className="nesreca-form" on={handleNext}>
+      <form className="nesreca-form" onSubmit={handleNext}>
         <h2 className="nesreca-title">Opis Nesreće</h2>
 
         <div className="form-group">
@@ -208,13 +211,10 @@ export default function OpisForm({ onNext, onBack }) {
             gap: 12,
             justifyContent: "center",
             marginBottom: 20,
+            position: "relative",
           }}
         >
-          <label
-            htmlFor="file-upload"
-            className="custom-file-upload"
-            style={{ margin: 0 }}
-          >
+          <label htmlFor="file-upload" className="slikaj-ucitaj-button" style={{ margin: 0, cursor: "pointer" }}>
             Slikaj i učitaj
           </label>
           <input
@@ -229,14 +229,15 @@ export default function OpisForm({ onNext, onBack }) {
           />
           <button
             type="button"
-            className="info-button"
-            onClick={() =>
-              alert("Za pregled slike i uklanjanje klikni na nju!")
-            }
+            className="info-button-round"
+            onClick={toggleTooltip}
             aria-label="Informacije"
           >
             i
           </button>
+          <div className={`info-tooltip ${tooltipVisible ? "info-tooltip-active" : ""}`}>
+            Za pregled slike i uklanjanje klikni na nju!
+          </div>
         </div>
 
         <div className="uploaded-images-list">
@@ -254,24 +255,20 @@ export default function OpisForm({ onNext, onBack }) {
         </div>
         {modalIndeks !== null && (
           <div className="modal" onClick={() => setModalIndeks(null)}>
-            <img
-              src={formData.slike[modalIndeks].pregled}
-              alt={`Slika ${modalIndeks + 1}`}
-            />
+            <img src={formData.slike[modalIndeks].pregled} alt={`Slika ${modalIndeks + 1}`} />
           </div>
         )}
 
         <div className="navigation-buttons">
-  {onBack && (
-    <button type="button" className="back-button" onClick={onBack}>
-      NAZAD
-    </button>
-  )}
-  <button type="submit" className="next-button"onClick={onNext}>
-    DALJE
-  </button>
-</div>
-
+          {onBack && (
+            <button type="button" className="back-button" onClick={onBack}>
+              NAZAD
+            </button>
+          )}
+          <button type="submit" className="next-button">
+            DALJE
+          </button>
+        </div>
       </form>
     </div>
   );

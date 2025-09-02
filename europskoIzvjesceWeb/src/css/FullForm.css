@@ -1,6 +1,51 @@
+.fullform-site {
+  width: 100%;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.fullform-header {
+  width: 100%;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.fullform-title {
+  margin-top: 16px;
+  font-size: 2em;
+  font-weight: 700;
+  color: #1b2540;
+  text-align: center;
+}
+
+.fullform-desc {
+  margin-top: 4px;
+  margin-bottom: 22px;
+  color: #505575;
+  font-size: 1.08em;
+  text-align: center;
+}
+
+.fullform-content {
+  width: 100%;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 10px rgba(30,65,130,0.04);
+  padding: 20px 12px;
+  margin-bottom: 18px;
+}
+
+/* Progress bar container */
 .progressbar-container {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin: 32px 0 24px 0;
   padding: 0 10px;
@@ -11,7 +56,7 @@
   margin-right: auto;
 }
 
-/* Horizontalna linija iza svih kružića */
+/* Horizontal line behind steps */
 .progressbar-container::before {
   content: '';
   position: absolute;
@@ -31,7 +76,7 @@
   flex: 0 0 auto;
 }
 
-/* Samo kružić s brojem */
+/* Step number (circle) styling */
 .step-number {
   width: 32px;
   height: 32px;
@@ -66,9 +111,7 @@
   border-color: #2874c4;
 }
 
-/* Bez teksta ispod! */
-
-/* Optimiziraj za mobitel */
+/* Responsive for mobile */
 @media (max-width: 600px) {
   .progressbar-container {
     max-width: 99vw;
@@ -78,5 +121,15 @@
     width: 25px;
     height: 25px;
     font-size: 1em;
+  }
+  .fullform-header, .fullform-content {
+    max-width: 99vw;
+    padding: 0 4px;
+  }
+  .fullform-title {
+    font-size: 1.2em;
+  }
+  .fullform-desc {
+    font-size: 0.95em;
   }
 }
