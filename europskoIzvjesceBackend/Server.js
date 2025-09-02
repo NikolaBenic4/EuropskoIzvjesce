@@ -6,17 +6,21 @@ require('dotenv').config();
 // Prvo učitaj router za adrese:
 const addressesRouter = require('./routes/addressApi'); // <-- naziv isti kao u modulu/ruti
 const svjedokRouter = require('./routes/svjedokApi');
+const osiguranjeApi = require('./routes/osiguranjeApi');
+const nesrecaApi = require('./routes/nesrecaApi');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.SERVERPORT || 3000 ;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+
 // RUTE API-a uvijeK dolaze PRIJE statičkog servinga!
 app.use('/api', addressesRouter);
 app.use('/api', svjedokRouter);
+app.use('/api', osiguranjeApi);
 
 app.use(express.static(path.join(__dirname, 'public')));
 

@@ -1,26 +1,55 @@
-import pool from '../db.js';
+import db from '../db.js'; // tvoj modul za konekciju
 
-// Dohvati sve nezgode
 export async function getAll(req, res) {
   try {
-    const result = await pool.query('SELECT * FROM nesreca ORDER BY datum_nesrece DESC');
+    const result = await db.query('SELECT * FROM nesreca ORDER BY datum_nesrece DESC');
     res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching nesreca records.' });
   }
 }
 
-// Dodaj novu nezgodu
 export async function create(req, res) {
-  const { datum_nesrece, vrijeme_nesrece, mjesto_nesrece, ozlijedeneososbe, stetanavozilima, stetanastvarima } = req.body;
   try {
-    const result = await pool.query(
-      `INSERT INTO nesreca (datum_nesrece, vrijeme_nesrece, mjesto_nesrece, ozlijedeneososbe, stetanavozilima, stetanastvarima)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [datum_nesrece, vrijeme_nesrece, mjesto_nesrece, ozlijedeneososbe, stetanavozilima, stetanastvarima]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const {
+      datum_nesrece,
+      vrijeme_nesrece,
+      mjesto_nesrece,
+      geolokacija_nesrece,
+      ozlijedeneosobe,
+      stetanavozila,
+      stetanastvarima
+    } = req.body;
+
+    const query = `
+      INSERT INTO nesreca (
+        datum_nesrece,
+        vrijeme_nesrece,
+        mjesto_nesrece,
+        geolokacija_nesrece,
+        ozlijedeneosobe,
+        stetanavozilima,
+        stetanastvarima
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id_nesrece
+    `;
+
+    const values = [
+      datum_nesrece,
+      vrijeme_nesrece,
+      mjesto_nesrece,
+      geolokacija_nesrece || null,
+      ozlijedeneosobe,
+      stetanavozila,
+      stetanastvarima
+    ];
+
+    const result = await db.query(query, values);
+    res.status(201).json({ message: 'Nesreca zapis kreiran', id: result.rows[0].id_nesrece });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Greška pri spremanju nesreće' });
   }
 }

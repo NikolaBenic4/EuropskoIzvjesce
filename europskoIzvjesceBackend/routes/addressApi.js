@@ -4,7 +4,7 @@ const fetch = require('cross-fetch');
 const router = express.Router();
 
 // Učitaj API ključ
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY || 'AIzaSyA6UbahYEMqXanpPslM-t4zfcaA11cmrkA';
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 
 router.get('/addresses', async (req, res) => {
   const query = req.query.q || '';
