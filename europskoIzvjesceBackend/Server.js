@@ -8,6 +8,8 @@ const addressesRouter = require('./routes/addressApi'); // <-- naziv isti kao u 
 const svjedokRouter = require('./routes/svjedokApi');
 const osiguranjeApi = require('./routes/osiguranjeApi');
 const nesrecaApi = require('./routes/nesrecaApi');
+const voziloRouter = require('./routes/voziloApi');
+
 
 const app = express();
 const PORT = process.env.SERVERPORT || 3000 ;
@@ -21,6 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api', addressesRouter);
 app.use('/api', svjedokRouter);
 app.use('/api', osiguranjeApi);
+app.use('/api', voziloRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
