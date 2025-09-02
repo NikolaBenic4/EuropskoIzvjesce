@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import MjestoUdarcaVozilo, { VEHICLE_CONFIG } from "../components/MjestoUdarcaVozila";
-import '../css/NesrecaForm.css';
+import "../css/NesrecaForm.css";
 
 const OKOLNOSTI_OPTIONS = [
   "Sudar s vozilom koje je uključilo skretanje",
@@ -17,337 +17,262 @@ const OKOLNOSTI_OPTIONS = [
   "Ostale okolnosti"
 ];
 
-const OpisForm = ({ onSubmit }) => {
+export default function OpisForm({ onNext, onBack }) {
   const [formData, setFormData] = useState({
-    tip_okolnost: [],
-    opis_okolnost: "",
-    vehicleType: "car",
-    selectedUdaracPoints: [],
-    polozaj_ostecenja: "",
-    opis_ostecenja: "",
-    slike: []
+    okolnosti: [],
+    opisOkolnosti: "",
+    vrstaVozila: "car",
+    odabraniUdarci: [],
+    pozicijaOstecenja: "",
+    opisOstecenja: "",
+    slike: [],
   });
 
-  const [modalImageIndex, setModalImageIndex] = useState(null);
+  const [modalIndeks, setModalIndeks] = useState(null);
 
-  const getPolozajOstecenjaString = () => {
-    const { points } = VEHICLE_CONFIG[formData.vehicleType];
-    return formData.selectedUdaracPoints
-      .map(id => {
-        const found = points.find(p => p.id === id);
-        return found ? found.label : "";
+  function formirajPoziciju() {
+    const { points } = VEHICLE_CONFIG[formData.vrstaVozila];
+    return formData.odabraniUdarci
+      .map((id) => {
+        const t = points.find((p) => p.id === id);
+        return t ? t.label : "";
       })
       .filter(Boolean)
       .join("; ");
-  };
+  }
 
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      polozaj_ostecenja: getPolozajOstecenjaString()
+    setFormData((staro) => ({
+      ...staro,
+      pozicijaOstecenja: formirajPoziciju(),
     }));
-  }, [formData.vehicleType, formData.selectedUdaracPoints]);
+    // eslint-disable-next-line
+  }, [formData.vrstaVozila, formData.odabraniUdarci]);
 
-  const handleChange = (e) => {
+  function promjenaVrijednosti(e) {
     const { name, value, type } = e.target;
     if (type !== "file") {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData((staro) => ({ ...staro, [name]: value }));
     }
-  };
+  }
 
-  // Multi-select handler za dropdown
-  const handleOkolnostChange = (e) => {
-    const options = e.target.options;
-    const selected = [];
-    for (let i = 0; i < options.length; i++) {
-      if (options[i].selected) selected.push(options[i].value);
+  function promjenaOkolnosti(e) {
+    const opcije = e.target.options;
+    const odabrane = [];
+    for (let i = 0; i < opcije.length; i++) {
+      if (opcije[i].selected) odabrane.push(opcije[i].value);
     }
-    setFormData(prev => ({ ...prev, tip_okolnost: selected }));
-  };
+    setFormData((staro) => ({ ...staro, okolnosti: odabrane }));
+  }
 
-  const handleFilesChange = (e) => {
-    const files = Array.from(e.target.files);
-
-    const newSlike = files.map(file => {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const lokalnoVrijeme = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-      const previewUrl = URL.createObjectURL(file);
-
+  function dodajSlike(e) {
+    const datoteke = Array.from(e.target.files);
+    const nove = datoteke.map((dat) => {
+      const sad = new Date();
+      const godina = sad.getFullYear();
+      const mj = String(sad.getMonth() + 1).padStart(2, "0");
+      const dan = String(sad.getDate()).padStart(2, "0");
+      const h = String(sad.getHours()).padStart(2, "0");
+      const m = String(sad.getMinutes()).padStart(2, "0");
+      const lokalno = `${godina}-${mj}-${dan}T${h}:${m}`;
       return {
-        naziv_slike: file.name,
-        podatak_slike: file,
-        vrijeme_slikanja: lokalnoVrijeme,
-        previewUrl
+        ime: dat.name,
+        podatak: dat,
+        vrijeme: lokalno,
+        pregled: URL.createObjectURL(dat),
       };
     });
+    setFormData((staro) => ({ ...staro, slike: [...staro.slike, ...nove] }));
+  }
 
-    setFormData(prev => ({
-      ...prev,
-      slike: [...prev.slike, ...newSlike]
-    }));
-  };
+  function ukloniSliku(idx) {
+    URL.revokeObjectURL(formData.slike[idx].pregled);
+    setModalIndeks(null);
+    const azurirano = formData.slike.filter((_, i) => i !== idx);
+    setFormData((staro) => ({ ...staro, slike: azurirano }));
+  }
 
-  const handleRemoveImage = (index) => {
-    URL.revokeObjectURL(formData.slike[index].previewUrl);
-    setModalImageIndex(null);
-
-    const updatedSlike = formData.slike.filter((_, idx) => idx !== index);
-    setFormData(prev => ({
-      ...prev,
-      slike: updatedSlike
-    }));
-  };
-
-  const handleSubmit = (e) => {
+  function handleNext(e) {
     e.preventDefault();
-    const submitData = {
+    const zaSlanje = {
       ...formData,
-      polozaj_ostecenja: getPolozajOstecenjaString()
+      pozicijaOstecenja: formirajPoziciju(),
     };
-    if (onSubmit) onSubmit(submitData);
-  };
+    if (onNext) onNext(zaSlanje);
+  }
 
   return (
     <div className="nesreca-container">
-      <form className="nesreca-form" onSubmit={handleSubmit}>
+      <form className="nesreca-form" on={handleNext}>
         <h2 className="nesreca-title">Opis Nesreće</h2>
 
-        {/* Multi-select dropdown za tip okolnosti */}
         <div className="form-group">
-          <label className="form-label" htmlFor="tip_okolnost">Tip okolnosti</label>
+          <label htmlFor="okolnosti" className="form-label">
+            Tip okolnosti
+          </label>
           <select
-            id="tip_okolnost"
-            name="tip_okolnost"
+            id="okolnosti"
+            name="okolnosti"
             multiple
-            className="form-input"
-            value={formData.tip_okolnost}
-            onChange={handleOkolnostChange}
             size={Math.min(OKOLNOSTI_OPTIONS.length, 6)}
+            value={formData.okolnosti}
+            onChange={promjenaOkolnosti}
+            className="form-input"
           >
-            {OKOLNOSTI_OPTIONS.map((option, idx) => (
-              <option key={idx} value={option}>
-                {option}
+            {OKOLNOSTI_OPTIONS.map((opt, i) => (
+              <option key={i} value={opt}>
+                {opt}
               </option>
             ))}
           </select>
-          {/* Ispis odabranih okolnosti */}
-          {formData.tip_okolnost.length > 0 && (
-            <div style={{ margin: '8px 0', fontSize: '1.08rem', color: '#002060' }}>
+          {formData.okolnosti.length > 0 && (
+            <div
+              style={{
+                margin: "8px 0",
+                fontSize: "1.08rem",
+                color: "#002060",
+              }}
+            >
               <strong>Odabrane okolnosti:</strong>
-              <ul style={{ paddingLeft: '18px', marginTop: '4px' }}>
-                {formData.tip_okolnost.map((ok, i) => (
-                  <li key={i}>{ok}</li>
+              <ul style={{ paddingLeft: "18px", marginTop: 4 }}>
+                {formData.okolnosti.map((opt, i) => (
+                  <li key={i}>{opt}</li>
                 ))}
               </ul>
             </div>
           )}
         </div>
-        
+
         <div className="form-group">
-        <div className="label-with-info">
-          <label className="form-label" htmlFor="opis_okolnost" style={{ margin: 0 }}>
+          <label htmlFor="opisOkolnosti" className="form-label">
             Opis okolnosti
           </label>
-          <button
-            type="button"
-            className="info-button"
-            onClick={() => alert("Ovdje opiši što detaljnije okolnosti nezgode!\nNa primjer: Vozilo A izletjelo je s kolnika i pogodilo je vozilo B.")}
-            aria-label="Informacije"
-          >
-            i
-          </button>
+          <textarea
+            id="opisOkolnosti"
+            name="opisOkolnosti"
+            className="form-textarea"
+            value={formData.opisOkolnosti}
+            onChange={promjenaVrijednosti}
+          />
         </div>
-        <br></br>
-        <textarea
-          name="opis_okolnost"
-          className="form-textarea"
-          value={formData.opis_okolnost}
-          onChange={handleChange}
-          id="opis_okolnost"
-        />
-      </div>
-
-
 
         <MjestoUdarcaVozilo
-          vehicleType={formData.vehicleType}
-          selectedPoints={formData.selectedUdaracPoints}
-          onChange={next => setFormData(prev => ({ ...prev, selectedUdaracPoints: next }))}
-          onVehicleTypeChange={vehicleType => setFormData(prev => ({ ...prev, vehicleType, selectedUdaracPoints: [] }))}
+          vehicleType={formData.vrstaVozila}
+          selectedPoints={formData.odabraniUdarci}
+          onChange={(sljedeci) =>
+            setFormData((staro) => ({
+              ...staro,
+              odabraniUdarci: sljedeci,
+            }))
+          }
+          onVehicleTypeChange={(vrsta) =>
+            setFormData((staro) => ({
+              ...staro,
+              vrstaVozila: vrsta,
+              odabraniUdarci: [],
+            }))
+          }
         />
 
         <div className="form-group">
-          <label className="form-label">Položaj oštećenja</label>
+          <label htmlFor="pozicijaOstecenja" className="form-label">
+            Pozicija oštećenja
+          </label>
           <input
-            type="text"
-            name="polozaj_ostecenja"
-            maxLength={100}
+            id="pozicijaOstecenja"
+            name="pozicijaOstecenja"
             className="form-input"
-            value={formData.polozaj_ostecenja}
+            value={formData.pozicijaOstecenja}
             readOnly
           />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Opis oštećenja</label>
+          <label htmlFor="opisOstecenja" className="form-label">
+            Opis oštećenja
+          </label>
           <textarea
-            name="opis_ostecenja"
+            id="opisOstecenja"
+            name="opisOstecenja"
             className="form-textarea"
-            value={formData.opis_ostecenja}
-            onChange={handleChange}
+            value={formData.opisOstecenja}
+            onChange={promjenaVrijednosti}
           />
         </div>
 
-        <div className="centered-container" style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center', marginBottom: 20 }}>
-          <label htmlFor="file-upload" className="custom-file-upload" style={{ margin: 0 }}>
+        <div
+          className="centered-container"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            justifyContent: "center",
+            marginBottom: 20,
+          }}
+        >
+          <label
+            htmlFor="file-upload"
+            className="custom-file-upload"
+            style={{ margin: 0 }}
+          >
             Slikaj i učitaj
           </label>
           <input
             id="file-upload"
+            name="file-upload"
             type="file"
             accept="image/*"
             multiple
-            capture="environment"
-            style={{ display: 'none' }}
-            onChange={handleFilesChange}
+            capture
+            style={{ display: "none" }}
+            onChange={dodajSlike}
           />
           <button
             type="button"
             className="info-button"
-            onClick={() => alert("Za pregled slike i uklanjenje klikni na sliku!")}
+            onClick={() =>
+              alert("Za pregled slike i uklanjanje klikni na nju!")
+            }
             aria-label="Informacije"
           >
             i
           </button>
         </div>
 
-        <div className="uploaded-images-list" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {formData.slike.map((img, index) => (
+        <div className="uploaded-images-list">
+          {formData.slike.map((slika, idx) => (
             <div
-              key={index}
-              className="uploaded-image-item"
-              style={{
-                position: 'relative',
-                width: 120,
-                height: 120,
-                cursor: 'pointer',
-                borderRadius: 8,
-                overflow: 'hidden',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-              }}
-              title={`Naziv: ${img.naziv_slike}\nVrijeme: ${img.vrijeme_slikanja}`}
-              onClick={() => setModalImageIndex(index)}
+              key={idx}
+              className="uploaded-image"
+              title={`Naziv: ${slika.ime}\nVrijeme: ${slika.vrijeme}`}
+              onClick={() => setModalIndeks(idx)}
             >
-              <img
-                src={img.previewUrl}
-                alt={img.naziv_slike}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  background: 'rgba(0, 0, 0, 0.5)',
-                  color: 'white',
-                  fontSize: 10,
-                  padding: '4px 6px',
-                  backdropFilter: 'blur(4px)',
-                  userSelect: 'none'
-                }}
-              >
-                <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {img.naziv_slike}
-                </div>
-                <div>{img.vrijeme_slikanja.replace('T', ' ')}</div>
-              </div>
+              <img src={slika.pregled} alt={`Slika ${idx + 1}`} />
+              <button type="button" onClick={() => ukloniSliku(idx)}>Ukloni</button>
             </div>
           ))}
         </div>
-
-        {modalImageIndex !== null && (
-          <div
-            onClick={() => setModalImageIndex(null)}
-            style={{
-              position: 'fixed',
-              top: 0, left: 0, right: 0, bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.7)',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              zIndex: 1000,
-              cursor: 'pointer'
-            }}
-          >
-            <div
-              onClick={e => e.stopPropagation()}
-              style={{
-                position: 'relative',
-                backgroundColor: '#fff',
-                padding: 20,
-                borderRadius: 8,
-                maxWidth: '90%',
-                maxHeight: '90%',
-                boxShadow: '0 0 15px rgba(0,0,0,0.5)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center'
-              }}
-            >
-              <img
-                src={formData.slike[modalImageIndex].previewUrl}
-                alt={formData.slike[modalImageIndex].naziv_slike}
-                style={{ maxWidth: '100%', maxHeight: '70vh', marginBottom: 16, borderRadius: 8 }}
-              />
-              <button
-                onClick={() => {
-                  handleRemoveImage(modalImageIndex);
-                }}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#c00',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 6,
-                  cursor: 'pointer'
-                }}
-              >
-                Ukloni sliku
-              </button>
-              <button
-                onClick={() => setModalImageIndex(null)}
-                style={{
-                  marginTop: 10,
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#555',
-                  fontSize: 16,
-                  textDecoration: 'underline'
-                }}
-              >
-                Zatvori
-              </button>
-            </div>
+        {modalIndeks !== null && (
+          <div className="modal" onClick={() => setModalIndeks(null)}>
+            <img
+              src={formData.slike[modalIndeks].pregled}
+              alt={`Slika ${modalIndeks + 1}`}
+            />
           </div>
         )}
 
-        <button type="submit" className="submit-button" style={{ marginTop: 20 }}>
-          Spremi Opis
-        </button>
+        <div className="navigation-buttons">
+  {onBack && (
+    <button type="button" className="back-button" onClick={onBack}>
+      NAZAD
+    </button>
+  )}
+  <button type="submit" className="next-button"onClick={onNext}>
+    DALJE
+  </button>
+</div>
+
       </form>
     </div>
   );
-};
-
-export default OpisForm;
+}

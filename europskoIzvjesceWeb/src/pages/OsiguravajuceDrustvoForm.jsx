@@ -1,24 +1,77 @@
 import React, { useState } from "react";
 import '../css/NesrecaForm.css';
 
-const OsiguravajuceDrustvoForm = ({ onSubmit }) => {
+const OsiguravajuceDrustvoForm = ({ onSubmit, onBack }) => {
   const [formData, setFormData] = useState({
-    id_osiguranje: "",
     naziv_osiguranja: "",
     adresa_osiguranja: "",
     drzava_osiguranja: "",
     mail_osiguranja: "",
     kontaktbroj_osiguranja: "",
-    kaskopokrivastetu: false,
-    id_osiguranika: ""
   });
+  const [suggestions, setSuggestions] = useState([]);
+  const [autoFilled, setAutoFilled] = useState(false);
 
+  // Promjena naziva osiguranja
+  const handleNazivChange = async (e) => {
+    const value = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      naziv_osiguranja: value,
+      adresa_osiguranja: "",
+      drzava_osiguranja: "",
+      mail_osiguranja: "",
+      kontaktbroj_osiguranja: "",
+    }));
+    setAutoFilled(false);
+    if (value.length > 1) {
+      try {
+        const res = await fetch(`/api/osiguranje/suggestions?q=${encodeURIComponent(value)}`);
+        if (res.ok) {
+          setSuggestions(await res.json());
+        } else {
+          setSuggestions([]);
+        }
+      } catch {
+        setSuggestions([]);
+      }
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  // Odabir iz prijedloga
+  const handleSuggestionClick = async (naziv) => {
+    setFormData(prev => ({
+      ...prev,
+      naziv_osiguranja: naziv
+    }));
+    setSuggestions([]);
+    try {
+      const res = await fetch(`/api/osiguranje?naziv=${encodeURIComponent(naziv)}`);
+      if (res.ok) {
+        const podaci = await res.json();
+        setFormData(prev => ({
+          ...prev,
+          adresa_osiguranja: podaci.adresa_osiguranja || "",
+          drzava_osiguranja: podaci.drzava_osiguranja || "",
+          mail_osiguranja: podaci.mail_osiguranja || "",
+          kontaktbroj_osiguranja: podaci.kontaktbroj_osiguranja || "",
+        }));
+        setAutoFilled(true);
+      }
+    } catch {}
+  };
+
+  // Svaka ručna izmjena (osim na naziv_osiguranja) NE omogućuje uređivanje dok je autofilled
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
+    // Samo kad se mijenja naziv, otključaj
+    if (name === "naziv_osiguranja") setAutoFilled(false);
   };
 
   const handleSubmit = (e) => {
@@ -27,11 +80,11 @@ const OsiguravajuceDrustvoForm = ({ onSubmit }) => {
   };
 
   return (
-    <div className="nesreca-container">
+    <div className="nesreca-container" style={{ position: "relative" }}>
       <form className="nesreca-form" onSubmit={handleSubmit}>
         <h2 className="nesreca-title">Osiguravajuće društvo</h2>
 
-        <div className="form-group">
+        <div className="form-group" style={{ position: "relative" }}>
           <label className="form-label">Naziv osiguravajućeg društva: *</label>
           <input
             type="text"
@@ -39,20 +92,19 @@ const OsiguravajuceDrustvoForm = ({ onSubmit }) => {
             maxLength={50}
             className="form-input"
             value={formData.naziv_osiguranja}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="form-group">
-          <label className="form-label">ID osiguranja: *</label>
-          <input
-            type="number"
-            name="id_osiguranje"
+            onChange={handleNazivChange}
             required
-            className="form-input"
-            value={formData.id_osiguranje}
-            onChange={handleChange}
+            autoComplete="off"
           />
+          {suggestions.length > 0 && (
+            <ul className="suggestions-list">
+              {suggestions.map(s => (
+                <li key={s} onClick={() => handleSuggestionClick(s)}>
+                  {s}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className="form-group">
@@ -64,6 +116,8 @@ const OsiguravajuceDrustvoForm = ({ onSubmit }) => {
             className="form-input"
             value={formData.adresa_osiguranja}
             onChange={handleChange}
+            readOnly={autoFilled}
+            required
           />
         </div>
 
@@ -76,6 +130,8 @@ const OsiguravajuceDrustvoForm = ({ onSubmit }) => {
             className="form-input"
             value={formData.drzava_osiguranja}
             onChange={handleChange}
+            readOnly={autoFilled}
+            required
           />
         </div>
 
@@ -88,6 +144,8 @@ const OsiguravajuceDrustvoForm = ({ onSubmit }) => {
             className="form-input"
             value={formData.mail_osiguranja}
             onChange={handleChange}
+            readOnly={autoFilled}
+            required
           />
         </div>
 
@@ -100,34 +158,29 @@ const OsiguravajuceDrustvoForm = ({ onSubmit }) => {
             className="form-input"
             value={formData.kontaktbroj_osiguranja}
             onChange={handleChange}
+            readOnly={autoFilled}
+            required
           />
         </div>
 
-        <div className="form-group">
-          <label className="form-label">
-            <input
-              type="checkbox"
-              name="kaskopokrivastetu"
-              checked={formData.kaskopokrivastetu}
-              onChange={handleChange}
-              style={{ marginRight: "8px" }}
-            />
-            Kasko pokriva štetu
-          </label>
+        <div className="navigation-buttons">
+          {onBack && (
+            <button
+              type="button"
+              className="back-button"
+              onClick={onBack}
+              style={{ marginRight: 12 }}
+            >
+              NAZAD
+            </button>
+          )}
+          <button
+            type="submit"
+            className="next-button"
+          >
+            DALJE
+          </button>
         </div>
-
-        <div className="form-group">
-          <label className="form-label">ID osiguranika: *</label>
-          <input
-            type="number"
-            name="id_osiguranika"
-            className="form-input"
-            value={formData.id_osiguranika}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button type="submit" className="submit-button">Spremi društvo</button>
       </form>
     </div>
   );

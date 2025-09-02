@@ -138,3 +138,45 @@
     border-radius: 10px;
   }
 }
+/* NAVIGACIJSKI GUMBI: NAZAD i DALJE */
+.navigation-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 2rem;
+}
+
+.next-button,
+.back-button {
+  display: inline-block;
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background-color: #003366;
+  border: none;
+  border-radius: 5px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.next-button:hover,
+.back-button:hover {
+  background-color: #001f4d;
+  transform: translateY(-2px);
+}
+
+.next-button:active,
+.back-button:active {
+  background-color: #002060;
+}
+
+.back-button {
+  background-color: #476ca3;
+}
+.back-button:hover {
+  background-color: #3b587d;
+}

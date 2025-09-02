@@ -11,10 +11,12 @@ export default function AddressAutocomplete({
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [locked, setLocked] = useState(false); // <-- NOVO!
   const inputRef = useRef();
 
   useEffect(() => {
-    if (value.length > 2 && typeof searchFunction === "function") {
+    // Pokreni search samo ako nije lockirano (nakon odabira)
+    if (value.length > 2 && typeof searchFunction === "function" && !locked) {
       setIsLoading(true);
       const timer = setTimeout(() => {
         searchFunction(
@@ -33,7 +35,7 @@ export default function AddressAutocomplete({
       setSuggestions([]);
       setShowSuggestions(false);
     }
-  }, [value, searchFunction]);
+  }, [value, searchFunction, locked]);
 
   // Sakrij prijedloge na klik izvan komponente
   useEffect(() => {
@@ -46,9 +48,18 @@ export default function AddressAutocomplete({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Kada korisnik odabere iz popisa, lockiraj autocomplete dok ne promijeni input!
   const handleSelect = (item) => {
     onChange(item.formatted);
     setShowSuggestions(false);
+    setSuggestions([]);
+    setLocked(true); // <-- postavi lock!
+  };
+
+  // Kada korisnik mijenja (tipka) tekst, odlockiraj
+  const handleInputChange = (e) => {
+    onChange(e.target.value);
+    setLocked(false); // <-- svaka izmjena otključava listu
   };
 
   return (
@@ -57,10 +68,10 @@ export default function AddressAutocomplete({
         type="text"
         className={className}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleInputChange} // <-- koristi novi handler!
         onKeyDown={(e) => e.key === "Escape" && setShowSuggestions(false)}
         onFocus={() => {
-          if (suggestions.length > 0) setShowSuggestions(true);
+          if (suggestions.length > 0 && !locked) setShowSuggestions(true);
         }}
         placeholder={placeholder}
         autoComplete="off"
@@ -78,7 +89,6 @@ export default function AddressAutocomplete({
           ))}
         </ul>
       )}
-
       {showSuggestions && !isLoading && suggestions.length === 0 && (
         <div className="no-results">Nema rezultata za "{value}"</div>
       )}

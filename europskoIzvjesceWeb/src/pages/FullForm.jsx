@@ -1,4 +1,3 @@
-// FullForm.js
 import React, { useState } from 'react';
 import ProgressBar from '../components/ProgressBar';
 import NesrecaForm from './NesrecaForm';
@@ -7,6 +6,7 @@ import VozacOsiguranikForm from './VozacOsiguranikForm';
 import VoziloForm from './VoziloForm';
 import OpisForm from './OpisForm';
 import OsiguravajuceDrustvoForm from './OsiguravajuceDrustvoForm';
+import PolicaForm from './PolicaForm';
 import PotpisForm from './PotpisForm';
 import '../css/FullForm.css';
 
@@ -14,21 +14,33 @@ const stepTitles = [
   'Opće informacije',
   'Svjedoci',
   'Osiguranik i vozač',
-  'Vozilo',
   'Opis nesreće',
-  'Osiguranje i polica',
+  'Podaci o vozilu',
+  'Osiguravajuće društvo',
+  'Polica osiguranja',
   'Potpis'
 ];
 
 export default function FullForm() {
   const [step, setStep] = useState(0);
   const [data, setData] = useState({});
+  const [completedSteps, setCompletedSteps] = useState([0]); // početni korak je uvijek "completed"
 
   const next = partial => {
     setData(prev => ({ ...prev, ...partial }));
-    setStep(s => Math.min(s + 1, stepTitles.length - 1));
+    setStep(s => {
+      const nextStep = Math.min(s + 1, stepTitles.length - 1);
+      setCompletedSteps(prevSteps =>
+        prevSteps.includes(nextStep) ? prevSteps : [...prevSteps, nextStep]
+      );
+      return nextStep;
+    });
   };
   const prev = () => setStep(s => Math.max(s - 1, 0));
+
+  const goToStep = idx => {
+    if (completedSteps.includes(idx)) setStep(idx);
+  };
 
   const forms = [
     <NesrecaForm
@@ -67,6 +79,12 @@ export default function FullForm() {
       onNext={next}
       onBack={prev}
     />,
+    <PolicaForm
+      key="polica"
+      data={data}
+      onNext={next}
+      onBack={prev}
+    />,
     <PotpisForm
       key="potpis"
       data={data}
@@ -78,7 +96,12 @@ export default function FullForm() {
   return (
     <div className="fullform-site">
       <div className="fullform-header">
-        <ProgressBar currentStep={step} steps={stepTitles} />
+        <ProgressBar
+          currentStep={step}
+          steps={stepTitles}
+          onStepClick={goToStep}
+          completedSteps={completedSteps}
+        />
         <h2 className="fullform-title">{stepTitles[step]}</h2>
         <p className="fullform-desc">
           Korak {step + 1} od {stepTitles.length}

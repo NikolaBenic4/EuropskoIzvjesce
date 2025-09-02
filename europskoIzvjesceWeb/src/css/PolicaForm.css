@@ -1,0 +1,22 @@
+/* Uključi sve iz NesrecaForm.css */
+@import './NesrecaForm.css';
+
+/* Dodaj specifične stilove za PolicaForm komponentu OVDJE */
+.polica-form-title {
+  font-size: 1.7em;
+  margin-bottom: 20px;
+  color: #264a7b;
+  text-align: center;
+}
+
+/* Po želji dodatno stiliziraj label ili input ove forme */
+.polica-form-group {
+  margin-bottom: 18px;
+}
+
+/* Primjer za navigacijske gumbe */
+.polica-navigation-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

@@ -3,7 +3,7 @@ import "../css/SvjedociForm.css";
 import AddressAutocomplete from "../components/AddressAutocomplete";
 import { fetchAddressesDGU } from "../services/addressService";
 
-export default function SvjedociForm({ onNext }) {
+export default function SvjedociForm({ onNext, onBack }) {
   const [formData, setFormData] = useState({
     ozlijedeni: false,
     stetanastvarima: false,
@@ -25,7 +25,6 @@ export default function SvjedociForm({ onNext }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Spoji ulica i broj u jedno polje adrese kad šalješ podatke
     const formToSend = {
       ...formData,
       svjedokAdresa: formData.svjedokUlica + (formData.svjedokBroj ? " " + formData.svjedokBroj : "")
@@ -33,28 +32,24 @@ export default function SvjedociForm({ onNext }) {
     onNext?.(formToSend);
   };
 
-  // Autocomplete za ulicu, prijedlozi za dio ulice
   const searchAddresses = async (query, setSug, setLoad, setShow) => {
-  setLoad(true);
-  try {
-    const list = await fetchAddressesDGU(query);
-    // Ako rezultat nije array, uvijek stavi prazni array
-    setSug(Array.isArray(list) ? list.slice(0, 2) : []);
-    setShow(true);
-  } catch (e) {
-    console.error(e);
-    setSug([]);
-    setShow(true);
-  } finally {
-    setLoad(false);
-  }
-};
-
+    setLoad(true);
+    try {
+      const list = await fetchAddressesDGU(query);
+      setSug(Array.isArray(list) ? list.slice(0, 2) : []);
+      setShow(true);
+    } catch (e) {
+      console.error(e);
+      setSug([]);
+      setShow(true);
+    } finally {
+      setLoad(false);
+    }
+  };
 
   return (
     <form className="nesreca-form" onSubmit={handleSubmit}>
       <h2 className="nesreca-title">Podaci o šteti i svjedocima</h2>
-
       <div className="checkbox-group">
         <label className="checkbox-item">
           <input
@@ -84,7 +79,6 @@ export default function SvjedociForm({ onNext }) {
           Šteta na drugim vozilima
         </label>
       </div>
-
       <div className="checkbox-group">
         <label className="checkbox-item">
           <input
@@ -96,11 +90,9 @@ export default function SvjedociForm({ onNext }) {
           Postoje svjedoci
         </label>
       </div>
-
       {formData.hasSvjedoci && (
         <div className="svjedoci-section">
           <h3>Podaci o svjedoku</h3>
-
           <div className="form-group">
             <label className="form-label">Ime i prezime</label>
             <input
@@ -111,7 +103,6 @@ export default function SvjedociForm({ onNext }) {
               placeholder="Unesite ime i prezime"
             />
           </div>
-
           <div className="form-group">
             <label className="form-label">Ulica</label>
             <AddressAutocomplete
@@ -122,18 +113,6 @@ export default function SvjedociForm({ onNext }) {
               searchFunction={searchAddresses}
             />
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Broj</label>
-            <input
-              type="text"
-              className="form-input"
-              value={formData.svjedokBroj}
-              onChange={(e) => handleChange("svjedokBroj", e.target.value)}
-              placeholder="Kućni broj"
-            />
-          </div>
-
           <div className="form-group">
             <label className="form-label">Kontakt</label>
             <input
@@ -146,10 +125,24 @@ export default function SvjedociForm({ onNext }) {
           </div>
         </div>
       )}
-
-      <button type="submit" className="submit-button">
-        Spremi i nastavi
-      </button>
+      <div className="navigation-buttons" style={{ marginTop: 20 }}>
+        {onBack && (
+          <button
+            type="button"
+            className="back-button"
+            onClick={onBack}
+            style={{ marginRight: 12 }}
+          >
+            NAZAD
+          </button>
+        )}
+        <button
+          type="submit"
+          className="next-button"
+        >
+          DALJE
+        </button>
+      </div>
     </form>
   );
 }

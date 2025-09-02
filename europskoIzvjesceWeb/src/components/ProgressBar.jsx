@@ -1,17 +1,22 @@
 import React from 'react';
 import '../css/ProgressBar.css';
 
-export default function ProgressBar({ currentStep, steps }) {
-  return (
-    <div className="progressbar-container">
-      {steps.map((_, index) => (
+const ProgressBar = ({ currentStep, steps, onStepClick, completedSteps }) => (
+  <div className="progressbar-container">
+    {steps.map((_, idx) => {
+      const isClickable = completedSteps.includes(idx) || idx === currentStep;
+      return (
         <div
-          key={index}
-          className={`progress-step ${index <= currentStep ? 'active' : ''}`}
+          key={idx}
+          className={`progress-step${idx === currentStep ? ' active' : ''}${idx < currentStep ? ' complete' : ''}`}
+          onClick={() => isClickable && onStepClick && onStepClick(idx)}
+          style={{ cursor: isClickable ? 'pointer' : 'default', opacity: isClickable ? 1 : 0.6 }}
         >
-          <div className="step-number">{index + 1}</div>
+          <span className="step-number">{idx + 1}</span>
         </div>
-      ))}
-    </div>
-  );
-}
+      );
+    })}
+  </div>
+);
+
+export default ProgressBar;

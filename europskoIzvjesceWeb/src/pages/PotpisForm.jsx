@@ -341,6 +341,26 @@ const PotpisForm = () => {
           placeholder="Automatski detektirana banka"
         />
       </div>
+
+      <div className="navigation-buttons">
+        {onBack && (
+          <button
+            type="button"
+            className="back-button"
+            aria-label="Nazad na prethodni korak"
+            onClick={onBack}
+            style={{ marginRight: 12 }}
+          >
+            NAZAD
+          </button>
+        )}
+        <button
+          type="submit"
+          className="next-button"
+        >
+          DALJE
+        </button>
+      </div>
     </form>
   );
 };

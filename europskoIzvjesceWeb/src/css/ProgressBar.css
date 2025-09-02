@@ -1,39 +1,99 @@
 .progressbar-container {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding: 0 12px;
 }
+
 .progress-step {
-  flex: 1;
+  flex: 1 1 0;
   position: relative;
   text-align: center;
+  cursor: pointer;
+  z-index: 1;
+  background: transparent;
 }
-.progress-step:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: -50%;
-  width: 100%;
-  height: 4px;
-  background: #e0e0e0;
-  transform: translateY(-50%);
-  z-index: 0;
-}
-.progress-step.active:not(:last-child)::after {
-  background: #005A9C;
-}
+
 .step-number {
-  width: 28px;
-  height: 28px;
-  line-height: 28px;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
   border-radius: 50%;
   background: #e0e0e0;
   display: inline-block;
   color: #fff;
   font-weight: bold;
-  z-index: 1;
-  position: relative;
+  font-size: 1.1em;
+  border: 2px solid #dae5ef;
+  margin: 0 auto;
+  transition: background 0.2s, border 0.2s;
+  box-shadow: 0 1px 3px rgba(80,110,150,0.04);
 }
+
+.progress-step.complete .step-number {
+  background: #6db6ff;
+  border-color: #329ef7;
+}
+
 .progress-step.active .step-number {
   background: #005A9C;
+  border-color: #005A9C;
+}
+
+.progress-step:hover .step-number {
+  background: #2874c4;
+  border-color: #2874c4;
+}
+
+.progress-label {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.98em;
+  color: #333;
+  word-break: break-word;
+  min-width: 80px;
+  max-width: 110px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.progress-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 60%;
+  width: 100%;
+  height: 4px;
+  background: #e0e0e0;
+  z-index: 0;
+  transform: translateY(-50%);
+  /* Linija je ispod kružića */
+}
+
+.progress-step.complete:not(:last-child)::after {
+  background: #005A9C;
+}
+
+.progress-step.active:not(:last-child)::after {
+  background: #005A9C;
+}
+
+/* Veći razmak između kružića */
+.progress-step {
+  margin-right: 16px;
+}
+
+.progress-step:last-child {
+  margin-right: 0;
+}
+
+@media (max-width: 700px) {
+  .progress-label {
+    font-size: 0.90em;
+    min-width: 0;
+    max-width: 55px;
+    padding: 0 2px;
+  }
 }

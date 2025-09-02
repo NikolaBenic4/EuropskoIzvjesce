@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../css/NesrecaForm.css';
+import AddressAutocomplete from '../components/AddressAutocomplete';
+import { fetchAddressesDGU } from '../services/addressService';
 
 const OsiguranikInitial = {
   ime: "",
@@ -23,12 +25,39 @@ const VozacInitial = {
   valjanostVozacke: ""
 };
 
-export default function VozacPolicaForm({ onNext }) {
+const searchAddresses = async (query, setSug, setLoad, setShow) => {
+  setLoad(true);
+  try {
+    const list = await fetchAddressesDGU(query);
+    setSug(Array.isArray(list) ? list.slice(0, 2) : []);
+    setShow(true);
+  } catch (e) {
+    setSug([]);
+    setShow(true);
+  } finally {
+    setLoad(false);
+  }
+};
+
+const placeholders = {
+  ime: "Unesite ime",
+  prezime: "Unesite prezime",
+  adresa: "Unesite adresu",
+  "poštanski broj": "Unesite poštanski broj",
+  postanskiBroj: "Unesite poštanski broj",
+  država: "Unesite državu",
+  kontakt: "Unesite kontakt telefon",
+  mail: "Unesite email",
+  brojVozacke: "Unesite broj vozačke dozvole",
+  kategorijaVozacke: "Odaberite kategoriju vozačke dozvole",
+  valjanostVozacke: "Odaberite valjanost vozačke dozvole"
+};
+
+export default function VozacPolicaForm({ onNext, onBack }) {
   const [osiguranik, setOsiguranik] = useState(OsiguranikInitial);
   const [vozac, setVozac] = useState(VozacInitial);
   const [isti, setIsti] = useState(true);
 
-  // Sinkronizacija osiguranik → vozac
   useEffect(() => {
     if (isti) {
       setVozac(v => ({
@@ -43,6 +72,12 @@ export default function VozacPolicaForm({ onNext }) {
       }));
     }
   }, [isti, osiguranik]);
+
+  useEffect(() => {
+    if (!isti) {
+      setVozac(VozacInitial);
+    }
+  }, [isti]);
 
   const handleOsiguranikChange = e => {
     const { name, value } = e.target;
@@ -67,49 +102,71 @@ export default function VozacPolicaForm({ onNext }) {
   return (
     <form className="nesreca-form" onSubmit={handleSubmit}>
       <h2 className="nesreca-title">Podaci o osiguraniku</h2>
-
-      {['ime','prezime','adresa','Poštanski broj','država','kontakt','mail'].map(field => (
-        <div className="form-group" key={field}>
+      {['ime', 'prezime', 'adresa', 'poštanski broj', 'država', 'kontakt', 'mail'].map(field => (
+        <div className="form-group" key={"osiguranik-"+field}>
           <label className="form-label">
             {field === 'mail'
               ? 'Email: *'
               : `${field.charAt(0).toUpperCase() + field.slice(1)}: *`}
           </label>
-          <input
-            name={field}
-            type={field === 'mail' ? 'email' : 'text'}
-            className="form-input"
-            value={osiguranik[field]}
-            onChange={handleOsiguranikChange}
-            required
-          />
+          {field === 'adresa' ? (
+              <AddressAutocomplete
+              value={osiguranik.adresa}
+              onChange={val => setOsiguranik(o => ({ ...o, adresa: val }))}
+              onPostalChange={val => setOsiguranik(o => ({ ...o, postanskiBroj: val }))}
+              placeholder={placeholders.adresa}
+              className="form-input"
+              searchFunction={searchAddresses}
+            />
+          ) : (
+            <input
+              name={field}
+              type={field === 'mail' ? 'email' : 'text'}
+              className="form-input"
+              placeholder={placeholders[field] || ""}
+              value={osiguranik[field]}
+              onChange={handleOsiguranikChange}
+              required
+            />
+          )}
         </div>
       ))}
 
       <div className="form-group">
         <label>
-          <input type="checkbox" checked={isti} onChange={handleIstiChange} />
+          <input type="checkbox" checked={isti} onChange={handleIstiChange} style={{ marginRight: '8px' }}/>
           Vozač je isti kao osiguranik
         </label>
       </div>
 
       <h2 className="nesreca-title">Podaci o vozaču</h2>
-
-      {!isti && ['ime','prezime','adresa','postanskiBroj','drzava','kontakt','mail'].map(field => (
-        <div className="form-group" key={field}>
+      {!isti && ['ime', 'prezime', 'adresa', 'poštanski broj', 'država', 'kontakt', 'mail'].map(field => (
+        <div className="form-group" key={"vozac-"+field}>
           <label className="form-label">
             {field === 'mail'
               ? 'Email: *'
               : `${field.charAt(0).toUpperCase() + field.slice(1)}: *`}
           </label>
-          <input
-            name={field}
-            type={field === 'mail' ? 'email' : 'text'}
-            className="form-input"
-            value={vozac[field]}
-            onChange={handleVozacChange}
-            required
-          />
+          {field === 'adresa' ? (
+            <AddressAutocomplete
+              value={vozac.adresa}
+              onChange={val => setVozac(v => ({ ...v, adresa: val }))}
+              onPostalChange={val => setVozac(v => ({ ...v, postanskiBroj: val }))}
+              placeholder={placeholders.adresa}
+              className="form-input"
+              searchFunction={searchAddresses}
+            />
+          ) : (
+            <input
+              name={field}
+              type={field === 'mail' ? 'email' : 'text'}
+              className="form-input"
+              placeholder={placeholders[field] || ""}
+              value={vozac[field]}
+              onChange={handleVozacChange}
+              required
+            />
+          )}
         </div>
       ))}
 
@@ -118,6 +175,7 @@ export default function VozacPolicaForm({ onNext }) {
         <input
           name="brojVozacke"
           className="form-input"
+          placeholder={placeholders.brojVozacke}
           value={vozac.brojVozacke}
           onChange={handleVozacChange}
           required
@@ -133,8 +191,8 @@ export default function VozacPolicaForm({ onNext }) {
           className="form-input"
           required
         >
-          <option value="">Odaberi...</option>
-          {['AM','A1','A2','A','B','BE','C','CE','D','DE','F','G','M','H'].map(opt => (
+          <option value="">{placeholders.kategorijaVozacke}</option>
+          {['AM', 'A1', 'A2', 'A', 'B', 'BE', 'C', 'CE', 'D', 'DE', 'F', 'G', 'M', 'H'].map(opt => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
@@ -146,15 +204,32 @@ export default function VozacPolicaForm({ onNext }) {
           name="valjanostVozacke"
           type="date"
           className="form-input"
+          placeholder={placeholders.valjanostVozacke}
           value={vozac.valjanostVozacke}
           onChange={handleVozacChange}
           required
         />
       </div>
 
-      <button type="submit" className="submit-button">
-        Spremi i nastavi
-      </button>
+      <div className="navigation-buttons">
+        {onBack && (
+          <button
+            type="button"
+            className="back-button"
+            onClick={onBack}
+            style={{ marginRight: 12 }}
+          >
+            NAZAD
+          </button>
+        )}
+        <button
+          type="submit"
+          className="next-button"
+        >
+          DALJE
+        </button>
+      </div>
+
     </form>
   );
 }

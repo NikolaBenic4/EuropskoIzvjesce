@@ -1,3 +1,4 @@
+// addressService.jsx
 export async function fetchAddressesDGU(query) {
   if (!query || query.trim().length < 2) return [];
   const response = await fetch(`/api/addresses?q=${encodeURIComponent(query)}`);
