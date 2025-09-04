@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import imageCompression from "browser-image-compression";
 import MjestoUdarcaVozilo, { VEHICLE_CONFIG } from "../components/MjestoUdarcaVozila";
 import "../css/OpisForm.css";
 
@@ -14,22 +15,34 @@ const OKOLNOSTI_OPTIONS = [
   "Sukob na parkiralištu",
   "Sudar tijekom pretjecanja",
   "Sudar uslijed kvara na vozilu",
-  "Ostale okolnosti"
+  "Ostale okolnosti",
 ];
 
-export default function OpisForm({ onNext, onBack }) {
-  const [formData, setFormData] = useState({
-    okolnosti: [],
-    opisOkolnosti: "",
-    vrstaVozila: "car",
-    odabraniUdarci: [],
-    pozicijaOstecenja: "",
-    opisOstecenja: "",
-    slike: [],
-  });
+const initialState = {
+  okolnosti: [],
+  opisOkolnosti: "",
+  vrstaVozila: "car",
+  odabraniUdarci: [],
+  pozicijaOstecenja: "",
+  opisOstecenja: "",
+  slike: [],
+};
 
+export default function OpisForm({ data, onNext, onBack }) {
+  const [formData, setFormData] = useState(() => ({
+    ...initialState,
+    ...(data || {}),
+  }));
   const [modalIndeks, setModalIndeks] = useState(null);
   const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...initialState,
+      ...data,
+    }));
+  }, [data]);
 
   function formirajPoziciju() {
     const { points } = VEHICLE_CONFIG[formData.vrstaVozila];
@@ -66,24 +79,30 @@ export default function OpisForm({ onNext, onBack }) {
     setFormData((staro) => ({ ...staro, okolnosti: odabrane }));
   }
 
-  function dodajSlike(e) {
+  async function dodajSlike(e) {
+    e.preventDefault();
     const datoteke = Array.from(e.target.files);
-    const nove = datoteke.map((dat) => {
-      const sad = new Date();
-      const godina = sad.getFullYear();
-      const mj = String(sad.getMonth() + 1).padStart(2, "0");
-      const dan = String(sad.getDate()).padStart(2, "0");
-      const h = String(sad.getHours()).padStart(2, "0");
-      const m = String(sad.getMinutes()).padStart(2, "0");
-      const lokalno = `${godina}-${mj}-${dan}T${h}:${m}`;
-      return {
-        ime: dat.name,
-        podatak: dat,
-        vrijeme: lokalno,
-        pregled: URL.createObjectURL(dat),
-      };
-    });
-    setFormData((staro) => ({ ...staro, slike: [...staro.slike, ...nove] }));
+    const komprimirane = [];
+    for (let dat of datoteke) {
+      try {
+        const komprimiranaSlika = await imageCompression(dat, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+        });
+        const sad = new Date();
+        const lokalno = sad.toISOString().slice(0, 16);
+        komprimirane.push({
+          ime: komprimiranaSlika.name,
+          podatak: komprimiranaSlika,
+          vrijeme: lokalno,
+          pregled: URL.createObjectURL(komprimiranaSlika),
+        });
+      } catch (error) {
+        console.error("Greška kod kompresije slike:", error);
+      }
+    }
+    setFormData((staro) => ({ ...staro, slike: [...staro.slike, ...komprimirane] }));
+    e.target.value = null;
   }
 
   function ukloniSliku(idx) {
@@ -93,8 +112,30 @@ export default function OpisForm({ onNext, onBack }) {
     setFormData((staro) => ({ ...staro, slike: azurirano }));
   }
 
+  function validate() {
+    const noviErrors = {};
+    if (formData.okolnosti.length === 0) {
+      noviErrors.okolnosti = "Molimo odaberite tip okolnosti.";
+    }
+    if (!formData.opisOkolnosti.trim()) {
+      noviErrors.opisOkolnosti = "Molimo unesite opis okolnosti.";
+    }
+    if (!formData.pozicijaOstecenja.trim()) {
+      noviErrors.pozicijaOstecenja = "Pozicija oštećenja ne može biti prazna.";
+    }
+    if (!formData.opisOstecenja.trim()) {
+      noviErrors.opisOstecenja = "Molimo unesite opis oštećenja.";
+    }
+    if (formData.slike.length < 6) {
+      noviErrors.slike = "Molimo učitajte minimalno 6 slika.";
+    }
+    setErrors(noviErrors);
+    return Object.keys(noviErrors).length === 0;
+  }
+
   function handleNext(e) {
     e.preventDefault();
+    if (!validate()) return;
     const zaSlanje = {
       ...formData,
       pozicijaOstecenja: formirajPoziciju(),
@@ -104,6 +145,10 @@ export default function OpisForm({ onNext, onBack }) {
 
   const toggleTooltip = () => setTooltipVisible((v) => !v);
 
+  function onModalContentClick(e) {
+    e.stopPropagation();
+  }
+
   return (
     <div className="nesreca-container">
       <form className="nesreca-form" onSubmit={handleNext}>
@@ -111,7 +156,7 @@ export default function OpisForm({ onNext, onBack }) {
 
         <div className="form-group">
           <label htmlFor="okolnosti" className="form-label">
-            Tip okolnosti
+            Tip okolnosti:*
           </label>
           <select
             id="okolnosti"
@@ -120,7 +165,7 @@ export default function OpisForm({ onNext, onBack }) {
             size={Math.min(OKOLNOSTI_OPTIONS.length, 6)}
             value={formData.okolnosti}
             onChange={promjenaOkolnosti}
-            className="form-input"
+            className={`form-input ${errors.okolnosti ? "input-error" : ""}`}
           >
             {OKOLNOSTI_OPTIONS.map((opt, i) => (
               <option key={i} value={opt}>
@@ -128,6 +173,7 @@ export default function OpisForm({ onNext, onBack }) {
               </option>
             ))}
           </select>
+          {errors.okolnosti && <div className="error-message">{errors.okolnosti}</div>}
           {formData.okolnosti.length > 0 && (
             <div
               style={{
@@ -136,7 +182,7 @@ export default function OpisForm({ onNext, onBack }) {
                 color: "#002060",
               }}
             >
-              <strong>Odabrane okolnosti:</strong>
+              <strong>Odabrane okolnosti:*</strong>
               <ul style={{ paddingLeft: "18px", marginTop: 4 }}>
                 {formData.okolnosti.map((opt, i) => (
                   <li key={i}>{opt}</li>
@@ -148,17 +194,19 @@ export default function OpisForm({ onNext, onBack }) {
 
         <div className="form-group">
           <label htmlFor="opisOkolnosti" className="form-label">
-            Opis okolnosti
+            Opis okolnosti:*
           </label>
           <textarea
             id="opisOkolnosti"
             name="opisOkolnosti"
-            className="form-textarea"
+            className={`form-textarea ${errors.opisOkolnosti ? "input-error" : ""}`}
             value={formData.opisOkolnosti}
             onChange={promjenaVrijednosti}
           />
+          {errors.opisOkolnosti && <div className="error-message">{errors.opisOkolnosti}</div>}
         </div>
 
+        {/* Mjesto udarca vozila */}
         <MjestoUdarcaVozilo
           vehicleType={formData.vrstaVozila}
           selectedPoints={formData.odabraniUdarci}
@@ -179,52 +227,63 @@ export default function OpisForm({ onNext, onBack }) {
 
         <div className="form-group">
           <label htmlFor="pozicijaOstecenja" className="form-label">
-            Pozicija oštećenja
+            Pozicija oštećenja:*
           </label>
           <input
             id="pozicijaOstecenja"
             name="pozicijaOstecenja"
-            className="form-input"
+            className={`form-input ${errors.pozicijaOstecenja ? "input-error" : ""}`}
             value={formData.pozicijaOstecenja}
             readOnly
           />
+          {errors.pozicijaOstecenja && <div className="error-message">{errors.pozicijaOstecenja}</div>}
         </div>
 
         <div className="form-group">
           <label htmlFor="opisOstecenja" className="form-label">
-            Opis oštećenja
+            Opis oštećenja:*
           </label>
           <textarea
             id="opisOstecenja"
             name="opisOstecenja"
-            className="form-textarea"
+            className={`form-textarea ${errors.opisOstecenja ? "input-error" : ""}`}
             value={formData.opisOstecenja}
             onChange={promjenaVrijednosti}
           />
+          {errors.opisOstecenja && <div className="error-message">{errors.opisOstecenja}</div>}
         </div>
 
+        {/* ISPRAVNO! Gumbi Slikaj/Učitaj izgledaju kao pravi gumbi */}
         <div
           className="centered-container"
           style={{
-            display: "flex",
+            flexDirection: "row",
             alignItems: "center",
-            gap: 12,
-            justifyContent: "center",
-            marginBottom: 20,
-            position: "relative",
+            gap: "18px",
+            marginBottom: 20
           }}
         >
-          <label htmlFor="file-upload" className="slikaj-ucitaj-button" style={{ margin: 0, cursor: "pointer" }}>
-            Slikaj i učitaj
+          <label htmlFor="camera-upload" className="slikaj-ucitaj-button">
+            Slikaj
+          </label>
+          <input
+            id="camera-upload"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: "none" }}
+            multiple
+            onChange={dodajSlike}
+          />
+          <label htmlFor="file-upload" className="slikaj-ucitaj-button" style={{marginLeft: "0"}}>
+            Učitaj
           </label>
           <input
             id="file-upload"
-            name="file-upload"
             type="file"
             accept="image/*"
-            multiple
-            capture
             style={{ display: "none" }}
+            multiple
             onChange={dodajSlike}
           />
           <button
@@ -236,9 +295,15 @@ export default function OpisForm({ onNext, onBack }) {
             i
           </button>
           <div className={`info-tooltip ${tooltipVisible ? "info-tooltip-active" : ""}`}>
-            Za pregled slike i uklanjanje klikni na nju!
+            Molim te slikaj vozilo iz svih kuteva i posebno slikaj štetu. Minimalno 6 fotografija.
           </div>
         </div>
+
+        {errors.slike && (
+          <div className="error-message" style={{ textAlign: "center", marginBottom: 10 }}>
+            {errors.slike}
+          </div>
+        )}
 
         <div className="uploaded-images-list">
           {formData.slike.map((slika, idx) => (
@@ -249,23 +314,62 @@ export default function OpisForm({ onNext, onBack }) {
               onClick={() => setModalIndeks(idx)}
             >
               <img src={slika.pregled} alt={`Slika ${idx + 1}`} />
-              <button type="button" onClick={() => ukloniSliku(idx)}>Ukloni</button>
             </div>
           ))}
         </div>
+
         {modalIndeks !== null && (
-          <div className="modal" onClick={() => setModalIndeks(null)}>
-            <img src={formData.slike[modalIndeks].pregled} alt={`Slika ${modalIndeks + 1}`} />
+          <div
+            className="modal"
+            onClick={() => setModalIndeks(null)}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.8)",
+              zIndex: 1000,
+              padding: 20,
+              cursor: "pointer",
+            }}
+          >
+            <img
+              src={formData.slike[modalIndeks].pregled}
+              alt={`Slika ${modalIndeks + 1}`}
+              onClick={onModalContentClick}
+              style={{ maxHeight: "80vh", maxWidth: "90vw", marginBottom: 16, cursor: "auto" }}
+            />
+            <div style={{ display: "flex", gap: 12 }}>
+              <button
+                type="button"
+                onClick={() => setModalIndeks(null)}
+                style={{ cursor: "pointer", backgroundColor: "#0275d8", color: "white", border: "none", padding: "8px 16px", borderRadius: 4 }}
+              >
+                Izlaz
+              </button>
+              <button
+                type="button"
+                onClick={() => ukloniSliku(modalIndeks)}
+                style={{ cursor: "pointer", backgroundColor: "#d9534f", color: "white", border: "none", padding: "8px 16px", borderRadius: 4 }}
+              >
+                Ukloni
+              </button>
+            </div>
           </div>
         )}
 
         <div className="navigation-buttons">
           {onBack && (
-            <button type="button" className="back-button" onClick={onBack}>
+            <button type="button" className="back-button button-standard" onClick={onBack}>
               NAZAD
             </button>
           )}
-          <button type="submit" className="next-button" onClick={onNext}>
+          <button type="submit" className="next-button button-standard">
             DALJE
           </button>
         </div>

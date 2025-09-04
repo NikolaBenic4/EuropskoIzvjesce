@@ -1,0 +1,114 @@
+/* RESET & BASE */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: #f7f7f7;
+  color: #002060;
+  line-height: 1.6;
+}
+
+/* CENTRAL CONTAINER (sve forme i odabiri) */
+.odabir-container {
+  max-width: 680px;
+  margin: 40px auto 0 auto;
+  padding: 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fff; /* Dodano: bijela pozadina */
+  border-radius: 22px; /* Dodano: zaobljeni kutovi */
+  box-shadow: 0 3px 16px rgba(0,32,96,0.10); /* Dodano: suptilna sjena */
+}
+
+
+/* CENTRAL CARD */
+.odabir-card {
+  background: #fff;
+  padding: 2.5rem 2rem;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(0,32,96,0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  align-items: center;
+}
+
+.odabir-title {
+  font-size: 2rem;
+  color: #002060;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.odabir-desc {
+  font-size: 1.1rem;
+  color: #002060;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.odabir-section {
+  width: 100%;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+/* GUMB za odabir */
+.odabir-button {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  background: #173d70;
+  border: none;
+  border-radius: 7px;
+  box-shadow: 0 2px 8px rgba(0,32,96,0.10);
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-bottom: 14px;
+  transition: background 0.22s, transform 0.18s;
+}
+.odabir-button:hover {
+  background: linear-gradient(90deg, #245094 0%, #153265 100%);
+  transform: translateY(-2px);
+}
+.odabir-button:active {
+  background: #112544;
+}
+
+/* Responsive za mobilne */
+@media (max-width: 600px) {
+  .odabir-container {
+    max-width: 99vw;
+    padding: 0.4rem 0.4rem;
+    margin: 21px auto 0 auto;
+    background: #fff;       /* ostaje bijela i na mobitelu */
+    border-radius: 16px;    /* malo manji radius za mobitel */
+    box-shadow: 0 2px 12px rgba(0,32,96,0.12);
+  }
+  .odabir-card {
+    padding: 1.1rem 0.5rem;
+    border-radius: 11px;
+    max-width: 99vw;
+    box-shadow: 0 2px 8px rgba(0,32,96,0.13);
+  }
+  .odabir-title { font-size: 1.25rem; }
+  .odabir-desc { font-size: 0.99rem; }
+  .odabir-section { margin-bottom: 13px; }
+  .odabir-button {
+    min-width: 85vw;
+    max-width: 99vw;
+    font-size: 0.98rem;
+    height: 44px;
+    margin-bottom: 9px;
+  }
+}

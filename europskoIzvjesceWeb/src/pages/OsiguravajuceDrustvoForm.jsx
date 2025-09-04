@@ -1,18 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import '../css/NesrecaForm.css';
 
-const OsiguravajuceDrustvoForm = ({ onNext, onBack }) => {
-  const [formData, setFormData] = useState({
-    naziv_osiguranja: "",
-    adresa_osiguranja: "",
-    drzava_osiguranja: "",
-    mail_osiguranja: "",
-    kontaktbroj_osiguranja: "",
-  });
+const initialState = {
+  naziv_osiguranja: "",
+  adresa_osiguranja: "",
+  drzava_osiguranja: "",
+  mail_osiguranja: "",
+  kontaktbroj_osiguranja: "",
+};
+
+const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
+  // Session-friendly state!
+  const [formData, setFormData] = useState(() => ({
+    ...initialState,
+    ...(data || {})
+  }));
   const [suggestions, setSuggestions] = useState([]);
   const [autoFilled, setAutoFilled] = useState(false);
 
-  // Promjena naziva osiguranja
+  // sinkronizacija iz parenta ako promijene korak
+  useEffect(() => {
+    setFormData({ ...initialState, ...(data || {}) });
+  }, [data]);
+
   const handleNazivChange = async (e) => {
     const value = e.target.value;
     setFormData(prev => ({
@@ -40,7 +50,6 @@ const OsiguravajuceDrustvoForm = ({ onNext, onBack }) => {
     }
   };
 
-  // Odabir iz prijedloga
   const handleSuggestionClick = async (naziv) => {
     setFormData(prev => ({
       ...prev,
@@ -63,20 +72,19 @@ const OsiguravajuceDrustvoForm = ({ onNext, onBack }) => {
     } catch {}
   };
 
-  // Svaka ručna izmjena (osim na naziv_osiguranja) NE omogućuje uređivanje dok je autofilled
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-    // Samo kad se mijenja naziv, otključaj
     if (name === "naziv_osiguranja") setAutoFilled(false);
   };
 
+  // Form submit šalje sve parentu!
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (onSubmit) onSubmit(formData);
+    if (onNext) onNext(formData);
   };
 
   return (
@@ -169,15 +177,13 @@ const OsiguravajuceDrustvoForm = ({ onNext, onBack }) => {
               type="button"
               className="back-button"
               onClick={onBack}
-              style={{ marginRight: 12 }}
             >
-              NAZAD
+              POVRATAK
             </button>
           )}
           <button
             type="submit"
             className="next-button"
-            onClick={onNext}
           >
             DALJE
           </button>

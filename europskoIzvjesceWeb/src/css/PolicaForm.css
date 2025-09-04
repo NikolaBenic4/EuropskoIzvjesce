@@ -1,31 +1,93 @@
-/* Uključi sve iz NesrecaForm.css */
 @import './NesrecaForm.css';
 
-/* Dodaj specifične stilove za PolicaForm komponentu OVDJE */
-.polica-form-title {
-  font-size: 1.7em;
-  margin-bottom: 20px;
-  color: #264a7b;
-  text-align: center;
-}
-
-/* Po želji dodatno stiliziraj label ili input ove forme */
-.polica-form-group {
-  margin-bottom: 18px;
-}
-
-/* Primjer za navigacijske gumbe */
-.polica-navigation-buttons {
+/* Checkbox style & layout */
+.polica-checkbox-row {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;        /* razmak između checkboxa i teksta */
+  margin-bottom: 15px;
+}
+.polica-checkbox-label {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #002060;
+  margin: 0;
 }
 
-/* Veći checkbox */
-input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
+input[type="checkbox"].custom-checkbox {
+  width: 22px;
+  height: 22px;
   cursor: pointer;
-  /* Opcionalno: malo prilagodi vertikalno poravnanje */
-  vertical-align: middle;
+  accent-color: #002060;
+  margin: 0;
+  margin-right: 0;   /* dodatno: nema razmaka između više checkboxova */
 }
+
+@media (max-width: 480px) {
+  .polica-checkbox-row {
+    gap: 7px;
+    margin-bottom: 11px;
+  }
+  input[type="checkbox"].custom-checkbox {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.infobutton {
+  width: 25px;
+  height: 25px;
+  min-width: 25px;
+  min-height: 25px;
+  padding: 0;
+  border-radius: 50%;
+  background: #2268ed;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(30,30,50,0.11);
+  margin-left: 8px;
+  position: relative;
+  transition: background 0.18s, color 0.18s;
+}
+.infobutton:hover,
+.infobutton:focus {
+  background: #1752bb;
+  color: #fff;
+  outline: none;
+}
+.tooltip {
+  visibility: hidden;
+  opacity: 0;
+  background: #f5f7fd;
+  color: #111;
+  text-align: left;
+  border-radius: 7px;
+  padding: 18px 22px;
+  position: fixed;
+  z-index: 9999;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4px 24px rgba(0,32,96,0.14);
+  font-size: 15px;
+  font-weight: 400;
+  width: 290px;
+  max-width: 96vw;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.tooltip-active {
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto;
+}
+
+/* Prethodni postojeći kod možeš ostaviti */

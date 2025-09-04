@@ -99,3 +99,52 @@
     padding: 0 2px;
   }
 }
+
+@media (max-width: 700px) {
+  .progressbar-container {
+    padding: 0 6px; /* još manji padding sa strane */
+    width: 100%; /* puni ekran */
+    margin-bottom: 1rem;
+  }
+  .progress-step {
+    margin-right: 6px; /* manji razmak između koraka */
+    flex: 1 1 auto;
+    min-width: 36px; /* smanjena minimalna širina koraka */
+  }
+  .progress-step:last-child {
+    margin-right: 0; /* ukloni marginu na zadnjem */
+  }
+  .step-number {
+    width: 26px;  /* još manja veličina kruga */
+    height: 26px;
+    line-height: 26px;
+    z-index: 1;
+    font-size: 0.9em; /* manji font */
+  }
+  .progress-label {
+    font-size: 0.8em; /* smanjen font za oznaku */
+    max-width: 60px; /* uži labeli */
+    padding: 0 2px;
+  }
+  .progress-step:not(:last-child)::after {
+    left: 50%;
+    width: 75%; /* kraća linija između koraka */
+  }
+}
+.progress-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(100% - 30px); /* počinje malo desno od kraja koraka (kruga) */
+  width: calc(100% + 10px); /* seže do početka sledećeg kruga */
+  height: 4px;
+  background: #e0e0e0;
+  z-index: -1;
+  transform: translateY(-50%);
+}
+
+.progress-step.complete:not(:last-chiSSSld)::after,
+.progress-step.active:not(:last-child)::after {
+  background: #005A9C;
+}
+

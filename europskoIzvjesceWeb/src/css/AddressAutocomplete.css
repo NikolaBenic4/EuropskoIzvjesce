@@ -64,3 +64,25 @@
   font-style: italic;
   z-index: 999;
 }
+
+@media (max-width: 480px) {
+  .address-autocomplete-container {
+    width: 100%;
+  }
+  .suggestions-list {
+    max-height: 150px; /* niža lista za bolje uklapanje na ekrane */
+    font-size: 0.9rem;
+    border-radius: 0 0 6px 6px;
+    padding: 0;
+  }
+  .suggestion-item {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+  .loading-indicator,
+  .no-results {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+}
+

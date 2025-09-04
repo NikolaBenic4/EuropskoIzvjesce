@@ -30,9 +30,10 @@ export default function Home() {
         <p className="content-subtitle">
           Prijavite i dokumentirajte prometnu nesreću na jednostavan i siguran način.
         </p>
-        <Link to="/izvjesce" className="cta-button">
+        <Link to="/odabir" className="cta-button">
           Započni prijavu
         </Link>
+
       </section>
 
       <section className="how-it-works">

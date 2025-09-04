@@ -25,20 +25,6 @@ const VozacInitial = {
   valjanostVozacke: ""
 };
 
-const searchAddresses = async (query, setSug, setLoad, setShow) => {
-  setLoad(true);
-  try {
-    const list = await fetchAddressesDGU(query);
-    setSug(Array.isArray(list) ? list.slice(0, 2) : []);
-    setShow(true);
-  } catch (e) {
-    setSug([]);
-    setShow(true);
-  } finally {
-    setLoad(false);
-  }
-};
-
 const placeholders = {
   ime: "Unesite ime",
   prezime: "Unesite prezime",
@@ -53,11 +39,33 @@ const placeholders = {
   valjanostVozacke: "Odaberite valjanost vozačke dozvole"
 };
 
-export default function VozacPolicaForm({ onNext, onBack }) {
-  const [osiguranik, setOsiguranik] = useState(OsiguranikInitial);
-  const [vozac, setVozac] = useState(VozacInitial);
-  const [isti, setIsti] = useState(true);
+const searchAddresses = async (query, setSug, setLoad, setShow) => {
+  setLoad(true);
+  try {
+    const list = await fetchAddressesDGU(query);
+    setSug(Array.isArray(list) ? list.slice(0, 2) : []);
+    setShow(true);
+  } catch (e) {
+    setSug([]);
+    setShow(true);
+  } finally {
+    setLoad(false);
+  }
+};
+
+export default function VozacPolicaForm({ data, onNext, onBack }) {
+  // 1. Lokalni state za formu, inicijaliziran iz props.data
+  const [osiguranik, setOsiguranik] = useState({ ...OsiguranikInitial, ...(data?.osiguranik || {}) });
+  const [vozac, setVozac] = useState({ ...VozacInitial, ...(data?.vozac || {}) });
+  const [isti, setIsti] = useState(!(data && data.vozac && data.vozac.ime !== data.osiguranik?.ime));
   const [error, setError] = useState("");
+
+  // 2. Sinkroniziraj kad se promijeni props.data (npr. povratak na formu)
+  useEffect(() => {
+    setOsiguranik({ ...OsiguranikInitial, ...(data?.osiguranik || {}) });
+    setVozac({ ...VozacInitial, ...(data?.vozac || {}) });
+    setIsti(!(data && data.vozac && data.vozac.ime !== data.osiguranik?.ime));
+  }, [data]);
 
   useEffect(() => {
     if (isti) {
@@ -153,7 +161,13 @@ export default function VozacPolicaForm({ onNext, onBack }) {
 
       <div className="form-group">
         <label>
-          <input type="checkbox" checked={isti} onChange={handleIstiChange} style={{ marginRight: '8px' }} />
+          <input
+            type="checkbox"
+            checked={isti}
+            onChange={handleIstiChange}
+            className="custom-checkbox"
+            style={{ marginRight: '8px' }}
+          />
           Vozač je isti kao osiguranik
         </label>
       </div>

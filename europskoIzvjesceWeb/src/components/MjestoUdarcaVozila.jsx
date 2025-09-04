@@ -2,6 +2,7 @@ import React from "react";
 import CarPicture from "../assets/CarPicture.png";
 import MotorbikePicture from "../assets/MotorbikePicture.png";
 import TruckPicture from "../assets/TruckPicture.png";
+import '../css/MjestoUdarcaVozila.css';
 
 const VEHICLE_CONFIG = {
   car: {
@@ -134,6 +135,7 @@ const MjestoUdarcaVozilo = ({
           {visibleArrows}
         </div>
         <br></br>
+        <br></br>
       </div>
       <div className="car-points-grid">
         {points.map((point) => (
@@ -149,6 +151,7 @@ const MjestoUdarcaVozilo = ({
               value={point.id}
               checked={selectedPoints.includes(point.id)}
               onChange={handleCheckbox}
+              className="car-points-checkbox"
               style={{ marginRight: "7px" }}
             />
             {point.label}

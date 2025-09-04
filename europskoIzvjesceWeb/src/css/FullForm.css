@@ -6,12 +6,14 @@
   align-items: center;
 }
 
-.fullform-header {
+.fullform-header,
+.fullform-content {
   width: 100%;
-  max-width: 540px;
+  max-width: 520px;       /* MANJE nego prije, da je konsistentno na desktopu */
   margin-left: auto;
   margin-right: auto;
-  text-align: center;
+  padding: 0 16px;        /* Lagano povećan padding za sve ekrane */
+  box-sizing: border-box;
 }
 
 .fullform-title {
@@ -31,18 +33,13 @@
 }
 
 .fullform-content {
-  width: 100%;
-  max-width: 540px;
-  margin-left: auto;
-  margin-right: auto;
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 1px 10px rgba(30,65,130,0.04);
-  padding: 20px 12px;
+  padding: 20px 16px;             /* Uvijek isti padding */
   margin-bottom: 18px;
 }
 
-/* Progress bar container */
 .progressbar-container {
   display: flex;
   justify-content: center;
@@ -51,18 +48,17 @@
   padding: 0 10px;
   position: relative;
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;              /* Usklađeno s formom */
   margin-left: auto;
   margin-right: auto;
 }
 
-/* Horizontal line behind steps */
 .progressbar-container::before {
   content: '';
   position: absolute;
   top: 50%;
-  left: 8%;
-  right: 8%;
+  left: 6%;
+  right: 6%;
   height: 4px;
   background: #e0e0e0;
   z-index: 0;
@@ -76,7 +72,6 @@
   flex: 0 0 auto;
 }
 
-/* Step number (circle) styling */
 .step-number {
   width: 32px;
   height: 32px;
@@ -111,25 +106,22 @@
   border-color: #2874c4;
 }
 
-/* Responsive for mobile */
-@media (max-width: 600px) {
-  .progressbar-container {
+@media (max-width: 720px) {
+  .progressbar-container,
+  .fullform-header,
+  .fullform-content {
     max-width: 99vw;
-    padding: 0 3px;
-  }
-  .step-number {
-    width: 25px;
-    height: 25px;
-    font-size: 1em;
-  }
-  .fullform-header, .fullform-content {
-    max-width: 99vw;
-    padding: 0 4px;
+    padding: 0 8px;  /* malo više nego desktop, ali i dalje jednako svakoj sekciji */
   }
   .fullform-title {
     font-size: 1.2em;
   }
   .fullform-desc {
     font-size: 0.95em;
+  }
+  .step-number {
+    width: 25px;
+    height: 25px;
+    font-size: 1em;
   }
 }

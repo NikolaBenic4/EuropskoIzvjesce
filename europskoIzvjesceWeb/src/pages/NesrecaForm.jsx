@@ -1,29 +1,48 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
+import { useNavigate } from "react-router-dom";
 import "leaflet/dist/leaflet.css";
 import "../css/NesrecaForm.css";
 
 const DefaultIcon = L.divIcon({
   html: "<span class='big-pin'>📍</span>",
-  iconSize: [30, 30], // ili više po potrebi
+  iconSize: [30, 30],
   className: "custom-div-icon",
 });
-
 L.Marker.prototype.options.icon = DefaultIcon;
 
 const NesrecaForm = ({ data, onNext, onBack }) => {
-  const [nesrecaData, setNesrecaData] = useState({
+  const navigate = useNavigate();
+
+  // 1. Session-sync state
+  const [nesrecaData, setNesrecaData] = useState(() => ({
     datum_nesrece: data?.datum_nesrece || "",
     vrijeme_nesrece: data?.vrijeme_nesrece || "",
     mjesto_nesrece: data?.mjesto_nesrece || "",
     geolokacija_nesrece: data?.geolokacija_nesrece || "",
-    ozlijeneosobe: data?.ozlijeneosobe || null,
-    stetanavozila: data?.stetanavozila || null,
-    stetanastava: data?.stetanastava || null,
+    ozlijeneosobe: data?.ozlijeneosobe ?? null,
+    stetanavozila: data?.stetanavozila ?? null,
+    stetanastava: data?.stetanastava ?? null,
     mapPosition: data?.mapPosition || null,
     showMap: data?.showMap || false,
-  });
+  }));
+
+  // 2. Kad god dobiješ nove "data" iz parenta (povratak korak), popuni lokalni state
+  useEffect(() => {
+    setNesrecaData({
+      datum_nesrece: data?.datum_nesrece || "",
+      vrijeme_nesrece: data?.vrijeme_nesrece || "",
+      mjesto_nesrece: data?.mjesto_nesrece || "",
+      geolokacija_nesrece: data?.geolokacija_nesrece || "",
+      ozlijeneosobe: data?.ozlijeneosobe ?? null,
+      stetanavozila: data?.stetanavozila ?? null,
+      stetanastava: data?.stetanastava ?? null,
+      mapPosition: data?.mapPosition || null,
+      showMap: data?.showMap || false,
+    });
+  }, [data]);
+
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const mapRef = useRef(null);
@@ -70,7 +89,8 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
     }, 3000);
   };
 
-  const getCoordinatesString = (lat, lng) => `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+  const getCoordinatesString = (lat, lng) =>
+    `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
 
   async function getCurrentLocation() {
     setLoading(true);
@@ -83,19 +103,18 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
       }
       let lat = null,
         lng = null,
-        mjesto = "Adresa nije pronađena! Molim unesi adresu ili opiši gdje se nalaziš.";
+        mjesto =
+          "Adresa nije pronađena! Molim unesi adresu ili opiši gdje se nalaziš.";
 
       try {
         const pos = await getPosition();
         lat = pos.coords.latitude;
         lng = pos.coords.longitude;
-
         setNesrecaData((prev) => ({
           ...prev,
           mapPosition: [lat, lng],
           showMap: true,
         }));
-
         const response = await fetch(
           `https://us1.locationiq.com/v1/reverse.php?key=pk.e22af6b8336ffc79ccebbf47c17c1c76&lat=${lat}&lon=${lng}&format=json&accept-language=hr`
         );
@@ -244,7 +263,7 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
               ref={mapRef}
             >
               <TileLayer
-                attribution='&copy; OpenStreetMap contributors'
+                attribution="&copy; OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               <Marker position={mapPosition}>
@@ -255,17 +274,16 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
         )}
 
         <div className="navigation-buttons">
-          {onBack && (
-            <button
-              type="button"
-              className="back-button"
-              onClick={onBack}
-              style={{ marginRight: 10 }}
-            >
-              NAZAD
+          {onBack ? (
+            <button type="button" className="back-button" onClick={onBack}>
+              POVRATAK
+            </button>
+          ) : (
+            <button type="button" className="back-button" onClick={() => navigate('/')}>
+              POVRATAK
             </button>
           )}
-          <button type="submit" className="submit-button">
+          <button type="submit" className="next-button">
             DALJE
           </button>
         </div>

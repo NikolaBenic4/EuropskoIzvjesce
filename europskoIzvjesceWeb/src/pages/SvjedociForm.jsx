@@ -1,19 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../css/SvjedociForm.css";
 import AddressAutocomplete from "../components/AddressAutocomplete";
 import { fetchAddressesDGU } from "../services/addressService";
 
-export default function SvjedociForm({ onNext, onBack }) {
-  const [formData, setFormData] = useState({
-    ozlijedeni: false,
-    stetanastvarima: false,
-    stetanavozilu: false,
-    hasSvjedoci: false,
-    svjedokImePrezime: "",
-    svjedokUlica: "",
-    svjedokKontakt: ""
-  });
+export default function SvjedociForm({ data, onNext, onBack }) {
+  // 1. Lokalni state: uvijek iz parenta!
+  const [formData, setFormData] = useState(() => ({
+    ozlijedeni: data?.ozlijedeni || false,
+    stetanastvarima: data?.stetanastvarima || false,
+    stetanavozilu: data?.stetanavozilu || false,
+    hasSvjedoci: data?.hasSvjedoci || false,
+    svjedokImePrezime: data?.svjedokImePrezime || "",
+    svjedokUlica: data?.svjedokUlica || "",
+    svjedokKontakt: data?.svjedokKontakt || ""
+  }));
   const [error, setError] = useState("");
+
+  // 2. Svaki put kad se `data` promijeni (povratak na korak ili session refresh), popuni local state
+  useEffect(() => {
+    setFormData({
+      ozlijedeni: data?.ozlijedeni || false,
+      stetanastvarima: data?.stetanastvarima || false,
+      stetanavozilu: data?.stetanavozilu || false,
+      hasSvjedoci: data?.hasSvjedoci || false,
+      svjedokImePrezime: data?.svjedokImePrezime || "",
+      svjedokUlica: data?.svjedokUlica || "",
+      svjedokKontakt: data?.svjedokKontakt || ""
+    });
+  }, [data]);
 
   const handleCheckbox = (field) => {
     setFormData((p) => ({ ...p, [field]: !p[field] }));

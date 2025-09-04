@@ -1,0 +1,135 @@
+body {
+  background: #f7faff;
+}
+
+.nesreca-container {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 8px 38px 0 rgba(0,32,96,0.18);
+  max-width: 700px;
+  margin: 70px auto 0 auto;
+  padding: 2.2rem 2.7rem 2.2rem 2.7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.confirmation-box {
+  background: #f7faff;
+  border: 2px solid #d3dfef;
+  border-radius: 16px;
+  padding: 2.0rem 1.5rem 1.4rem 1.5rem;
+  font-size: 1.19rem;
+  color: #002060;
+  line-height: 1.8;
+  margin-bottom: 38px;
+  box-shadow: 0 2px 14px rgba(21,60,123,0.09);
+}
+
+.confirmation-box h2 {
+  text-align: center;
+  color: #002060;
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 2.3rem;
+  letter-spacing: 1px;
+}
+
+.confirmation-box p {
+  margin: 0 0 0.7rem 0;
+  text-align: left;
+}
+
+.confirmation-box strong {
+  font-weight: 800;
+  color: #0d347a;
+  font-size: 1.09em;
+}
+
+.confirmation-box span {
+  font-weight: 400;
+  color: #162154;
+}
+
+.confirmation-box hr {
+  border: none;
+  border-bottom: 1.4px solid #e2e7f0;
+  margin: 18px 0 20px 0;
+}
+
+.thankyou-info {
+  margin: 0 0 36px 0;
+  font-size: 1.16rem;
+  text-align: center;
+  color: #002060;
+  font-weight: 500;
+}
+
+.final-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+}
+
+.next-button,
+.back-button {
+  width: 96%;
+  max-width: 420px;
+  padding: 1.10rem 0;
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  box-shadow: 0 2px 18px rgba(0,32,96,0.10);
+  margin: 0;
+  transition: background 0.16s, box-shadow 0.16s;
+}
+
+.next-button {
+  background: #13306a;
+}
+.next-button:hover {
+  background: linear-gradient(90deg, #3461a6 0%, #13306a 100%);
+  transform: translateY(-2px);
+}
+
+.back-button {
+  background: linear-gradient(90deg, #4e6ca3 0%, #6a83b5 100%);
+}
+.back-button:hover {
+  background: #27476f;
+}
+
+@media (max-width: 700px) {
+  .nesreca-container.final-confirm {
+    max-width: 99vw;
+    padding: 1.1rem 0.18rem 1.5rem 0.18rem;
+    border-radius: 14px;
+  }
+  .confirmation-box {
+    padding: 1.14rem 0.5rem 1.02rem 0.5rem;
+    border-radius: 10px;
+    font-size: 1.01rem;
+    margin-bottom: 14px;
+  }
+  .confirmation-box h2 {
+    font-size: 1.21rem;
+    margin-bottom: 1.08rem;
+  }
+  .thankyou-info {
+    font-size: 1.00rem;
+    margin-bottom: 13px;
+  }
+  .final-buttons {
+    gap: 10px;
+  }
+  .next-button, .back-button {
+    width: 100%;
+    font-size: 1.02rem;
+    border-radius: 10px;
+  }
+}

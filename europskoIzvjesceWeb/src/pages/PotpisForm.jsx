@@ -11,7 +11,7 @@ const BANKS_BY_IBAN_PREFIX = {
   "2386": "Podravska banka",
   "2390": "Hrvatska poštanska banka",
   "2400": "Karlovačka banka",
-  "2402": "Erste&Steiermärkische Bank", // ✅ ISPRAVKA: 2402, ne 3600
+  "2402": "Erste&Steiermärkische Bank",
   "2403": "Samoborska banka",
   "2407": "OTP banka Hrvatska",
   "2408": "Partner banka",
@@ -19,7 +19,7 @@ const BANKS_BY_IBAN_PREFIX = {
   "2412": "Slatinska banka",
   "2481": "Agram banka (Kreditna banka Zagreb)",
   "2483": "Štedbanka",
-  "2484": "Raiffeisenbank Austria", // ✅ ISPRAVKA: 2484, ne 2400
+  "2484": "Raiffeisenbank Austria",
   "2485": "Croatia banka",
   "2488": "BKS Bank",
   "2489": "J&T banka (Vaba d.d. Banka Varaždin)",
@@ -35,12 +35,20 @@ const BANKS_BY_IBAN_PREFIX = {
   "4133": "Banka Kovanica"
 };
 
+const initialState = {
+  signatureData: null,
+  signatureDate: null,
+  iban: "",
+  banka: ""
+};
 
-const PotpisForm = () => {
-  const [signatureData, setSignatureData] = useState(null);
-  const [signatureDate, setSignatureDate] = useState(null);
-  const [iban, setIban] = useState("");
-  const [banka, setBanka] = useState("");
+const PotpisForm = ({ data, onNext, onBack }) => {
+  // Inicijalizacija i sinkronizacija
+  const [formData, setFormData] = useState(() => ({
+    ...initialState,
+    ...(data || {})
+  }));
+
   const [scanActive, setScanActive] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [loadingScan, setLoadingScan] = useState(false);
@@ -51,8 +59,13 @@ const PotpisForm = () => {
   const scanIntervalRef = useRef(null);
   const tesseractWorkerRef = useRef(null);
 
+  // Sync from parent data change
+  useEffect(() => {
+    setFormData({ ...initialState, ...(data || {}) });
+  }, [data]);
+
   const detectBankaFromIban = (ibanInput) => {
-    const cleaned = ibanInput.replace(/\s+/g, "").toUpperCase();
+    const cleaned = (ibanInput || "").replace(/\s+/g, "").toUpperCase();
     if (cleaned.startsWith("HR") && cleaned.length >= 8) {
       const bankCode = cleaned.substring(4, 8);
       return BANKS_BY_IBAN_PREFIX[bankCode] || "Nepoznata banka";
@@ -61,41 +74,47 @@ const PotpisForm = () => {
   };
 
   function extractIban(text) {
-    // Dozvola blage greške: "HR" + 19 brojeva, ignoriraj razmake
     const match = text.replace(/\s+/g, "").match(/HR\d{19}/i);
     return match ? match[0].replace(/(.{4})/g, "$1 ").trim() : "";
   }
 
   useEffect(() => {
-    if (iban.length >= 8) {
-      setBanka(detectBankaFromIban(iban));
-    } else {
-      setBanka("");
-    }
-  }, [iban]);
+    setFormData((prev) => ({
+      ...prev,
+      banka: formData.iban.length >= 8 ? detectBankaFromIban(formData.iban) : ""
+    }));
+    // eslint-disable-next-line
+  }, [formData.iban]);
 
   const handleEndSignature = () => {
     if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
-      setSignatureData(sigCanvas.current.toDataURL());
-      setSignatureDate(new Date().toISOString());
-    }
-  };
-  const handleClearSignature = () => {
-    if (sigCanvas.current) {
-      sigCanvas.current.clear();
-      setSignatureData(null);
-      setSignatureDate(null);
+      setFormData(f => ({
+        ...f,
+        signatureData: sigCanvas.current.toDataURL(),
+        signatureDate: new Date().toISOString()
+      }));
     }
   };
 
-  // --- OPTIMALNI OCR LOOP ---
+  const handleClearSignature = () => {
+    if (sigCanvas.current) {
+      sigCanvas.current.clear();
+      setFormData(f => ({
+        ...f,
+        signatureData: null,
+        signatureDate: null
+      }));
+    }
+  };
+
+  // OCR - scanActive
   useEffect(() => {
     const startCamera = async () => {
       setCameraError("");
       setScanMessage("");
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "environment" },
+          video: { facingMode: "environment" }
         });
         if (videoRef.current) videoRef.current.srcObject = stream;
         setLoadingScan(true);
@@ -108,7 +127,6 @@ const PotpisForm = () => {
           const video = videoRef.current;
           if (!video || video.videoWidth < 2) return;
 
-          // Crop samo sredinu: 60% širine / 30% visine
           const cropW = video.videoWidth * 0.6;
           const cropH = video.videoHeight * 0.3;
           const cropX = (video.videoWidth - cropW) / 2;
@@ -124,15 +142,17 @@ const PotpisForm = () => {
             const { data: { text } } = await worker.recognize(canvas);
             const detectedIban = extractIban(text);
             if (detectedIban) {
-              setIban(detectedIban);
+              setFormData((f) => ({
+                ...f,
+                iban: detectedIban
+              }));
               setScanMessage("✅ IBAN je uspješno prepoznat!");
               setScanActive(false);
             }
           } catch (err) {
-            // Možeš po želji prikazati scanMessage s greškom
             console.error("OCR error:", err);
           }
-        }, 400); // 2.5x brže!
+        }, 400);
       } catch (err) {
         setCameraError("Greška s kamerom: " + err.message);
       }
@@ -169,13 +189,29 @@ const PotpisForm = () => {
         videoRef.current.srcObject = null;
       }
     };
+    // eslint-disable-next-line
   }, [scanActive]);
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(f => ({
+      ...f,
+      [name]: value
+    }));
+    if (name === "iban") setScanMessage("");
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (onNext) onNext(formData);
+  };
+
   return (
-    <form className="potpis-form">
-            <h2 style={{ textAlign: "center", color: "#002060", marginBottom: "1rem" }}>
-      Potpis i podaci o banci
-    </h2>
+    <form className="potpis-form" onSubmit={handleSubmit}>
+      <h2 style={{ textAlign: "center", color: "#002060", marginBottom: "1rem" }}>
+        Potpis i podaci o banci
+      </h2>
+
       <div className="form-group">
         <label className="form-label">Potpis:</label>
         <SignatureCanvas
@@ -184,7 +220,7 @@ const PotpisForm = () => {
             width: 400,
             height: 150,
             className: "sigCanvas",
-            style: { border: "2px solid #003366", borderRadius: "8px" },
+            style: { border: "2px solid #003366", borderRadius: "8px" }
           }}
           ref={sigCanvas}
           onEnd={handleEndSignature}
@@ -199,10 +235,10 @@ const PotpisForm = () => {
         </button>
       </div>
 
-      {signatureDate && (
+      {formData.signatureDate && (
         <p>
           <strong>Datum potpisa:</strong>{" "}
-          {new Date(signatureDate).toLocaleString()}
+          {new Date(formData.signatureDate).toLocaleString()}
         </p>
       )}
 
@@ -212,39 +248,33 @@ const PotpisForm = () => {
         </label>
         <input
           id="ibanInput"
+          name="iban"
           type="text"
           className="form-input"
-          value={iban}
-          onChange={(e) => {
-            setIban(e.target.value);
-            setScanMessage("");
-          }}
+          value={formData.iban}
+          onChange={handleInputChange}
           placeholder="HR12 3456 7890 ..."
           autoComplete="off"
           style={{ width: "340px", fontSize: "1.15em" }}
         />
-
-        {/* Gumb za skeniranje - ispod inputa */}
         <button
-  type="button"
-  className="submit-button scan-button"
-  onClick={() => {
-    setScanActive((prev) => !prev);
-    setScanMessage("");
-  }}
-  style={{ width: "100%", marginTop: "15px", fontSize: "1.09em" }}
->
-  {scanActive
-    ? "Zatvori skener"
-    : <>
-        <span role="img" aria-label="kamera" style={{ marginRight: "7px" }}>
-          📷
-        </span>
-        SKENIRAJ IBAN
-      </>}
-</button>
-
-
+          type="button"
+          className="submit-button scan-button"
+          onClick={() => {
+            setScanActive((prev) => !prev);
+            setScanMessage("");
+          }}
+          style={{ width: "100%", marginTop: "15px", fontSize: "1.09em" }}
+        >
+          {scanActive
+            ? "Zatvori skener"
+            : <>
+              <span role="img" aria-label="kamera" style={{ marginRight: "7px" }}>
+                📷
+              </span>
+              SKENIRAJ IBAN
+            </>}
+        </button>
         {scanMessage && (
           <p
             style={{
@@ -266,7 +296,6 @@ const PotpisForm = () => {
             </div>
           ) : (
             <>
-              {/* Overlay hint */}
               <div
                 style={{
                   position: "absolute",
@@ -289,7 +318,7 @@ const PotpisForm = () => {
                   width: "100%",
                   maxHeight: "360px",
                   borderRadius: "8px",
-                  background: "#222",
+                  background: "#222"
                 }}
                 muted
                 playsInline
@@ -320,7 +349,7 @@ const PotpisForm = () => {
                     color: "white",
                     background: "rgba(0,0,0,0.6)",
                     padding: "5px 10px",
-                    borderRadius: "6px",
+                    borderRadius: "6px"
                   }}
                 >
                   ⏳ Skeniram IBAN…
@@ -337,13 +366,13 @@ const PotpisForm = () => {
           type="text"
           className="form-input"
           readOnly
-          value={banka}
+          value={formData.banka}
           placeholder="Automatski detektirana banka"
         />
       </div>
 
       <div className="navigation-buttons">
-        {onBack && (
+        {typeof onBack === "function" && (
           <button
             type="button"
             className="back-button"
