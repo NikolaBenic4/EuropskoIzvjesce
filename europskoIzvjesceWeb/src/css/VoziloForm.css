@@ -1,0 +1,278 @@
+/* RESET & BASE */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f7f7f7;
+  color: #000;
+  line-height: 1.6;
+}
+
+/* FORM WRAPPER */
+.vozilo-container {
+  width: 100%;
+  max-width: 720px;
+  margin: 32px auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  border: none;
+  background: none;
+}
+.vozilo-form {
+  max-width: 720px;
+  margin: 1rem auto;
+  padding: 1.4rem 0.7rem;
+  background: #fff;
+  border-radius: 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #002060;
+  box-shadow: 0 2.5px 9px rgba(32,32,64,0.06);
+}
+
+@media (max-width: 600px) {
+  .vozilo-container, .vozilo-form {
+    max-width: 100vw;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .vozilo-form { padding: 1.1rem 0.5rem; }
+}
+
+.vozilo-title {
+  text-align: center;
+  color: #002060;
+  font-size: 2.15rem;
+  font-weight: bold;
+  margin-bottom: 2.1rem;
+  letter-spacing: 1.2px;
+}
+@media (max-width: 600px) {
+  .vozilo-title { font-size: 1.55rem; margin-bottom: 1rem; }
+}
+
+/* Polja & Label */
+.form-group {
+  width: 100%;
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+.form-label {
+  display: block;
+  margin-bottom: 0.33rem;
+  font-weight: 600;
+  color: #002060;
+  font-size: 1.10rem;
+}
+@media (max-width: 600px) {
+  .form-group { margin-bottom: 0.9rem; }
+  .form-label { font-size: 0.96rem; margin-bottom: 0.3rem; }
+}
+
+/* Inputi & Select */
+.form-input, .form-textarea, select {
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  font-size: 1.02rem;
+  background: #fcfdff;
+  border: 1.7px solid #d0d6e1;
+  border-radius: 6px;
+  transition: border-color 0.19s, box-shadow 0.18s;
+  outline-offset: 2px;
+  color: #001841;
+}
+.form-input:focus, .form-textarea:focus, select:focus {
+  border-color: #002060;
+  box-shadow: 0 0 6px rgba(0,32,96,0.13);
+  outline: none;
+}
+.form-input::placeholder, .form-textarea::placeholder {
+  color: #6980a7;
+  font-size: 1rem;
+  opacity: 1;
+}
+.form-textarea { min-height: 80px; }
+@media (max-width: 600px) {
+  .form-input, .form-textarea, select { font-size: 0.96rem; padding: 0.37rem 0.5rem; }
+}
+
+/* Info button za tooltip */
+.info-button-round {
+  width: 25px;
+  height: 25px;
+  min-width: 25px;
+  min-height: 25px;
+  padding: 0;
+  border-radius: 50%;
+  background: #2268ed;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(30,30,50,0.11);
+  margin-left: 8px;
+  position: relative;
+  transition: background 0.18s, color 0.18s;
+}
+.info-button-round:hover,
+.info-button-round:focus {
+  background: #1752bb;
+  color: #fff;
+  outline: none;
+}
+.info-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  background: #f5f7fd;
+  color: #111;
+  text-align: left;
+  border-radius: 6px;
+  padding: 10px 14px;
+  position: absolute;
+  z-index: 99;
+  bottom: 120%;
+  left: -110px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.11);
+  font-size: 13.3px;
+  font-weight: 400;
+  width: 226px;
+  pointer-events: none;
+  transition: all 0.16s;
+}
+.info-tooltip-active {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+@media (max-width: 600px) {
+  .info-button-round {
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    margin-left: 6px;
+  }
+  .info-tooltip { width: 180px; left: -70px; font-size: 12px; padding: 8px 11px; }
+}
+
+/* Checkbox */
+.form-group.checkbox-group {
+  margin-bottom: 1.25rem;
+  width: 100%;
+  padding: 0;
+  display: flex;
+  align-items: flex-start;
+  /* margin-left: 0 important! */
+  margin-left: 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: #002060;
+  gap: 14px;            /* OVDJE povećaj ili smanji udaljenost! */
+  font-size: 1.10rem;
+  width: 100%;
+  margin-bottom: 0;
+  padding-left: 0;
+}
+.checkbox-input {
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  border: 1.5px solid #002060;
+  border-radius: 5px;
+  background-color: white;
+  accent-color: #1d82e8;
+  margin-right: 0;      /* Ovdje neka ostane 0 kad koristiš gap */
+  margin-left: 0;
+}
+
+.checkbox-input:checked {
+  border-color: #1d82e8;
+  background-color: #1d82e8;
+}
+
+
+/* Error */
+.error-message, .form-group .error-message,
+.form-error, .form-group .form-error {
+  color: #cc0000;
+  font-weight: bold;
+  margin-top: 8px;
+  font-size: 1.06rem;
+  text-align: center;
+}
+
+/* Navigacijski gumbi */
+.navigation-buttons {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 2.3rem;
+}
+.navigation-buttons .back-button,
+.navigation-buttons .next-button {
+  flex: 1 1 0;
+  min-width: 150px;
+  max-width: 340px;
+  width: 100%;
+  padding: 0.82rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.55px;
+  border: none;
+  cursor: pointer;
+  background-color: #003366;
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.14);
+  transition: background-color 0.22s, color 0.14s, transform 0.12s;
+}
+.navigation-buttons .back-button:hover,
+.navigation-buttons .next-button:hover {
+  background-color: #001f4d;
+  transform: translateY(-2px);
+}
+@media (max-width: 600px) {
+  .navigation-buttons {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 1.2rem;
+  }
+  .navigation-buttons .back-button,
+  .navigation-buttons .next-button {
+    min-width: 0;
+    max-width: 100vw;
+    width: 100%;
+    padding: 1rem 0;
+    font-size: 1rem;
+    border-radius: 10px;
+    margin-top: 6px;
+    box-shadow: none;
+  }
+}
+
+/* Placeholder boja */
+.form-input::placeholder {
+  color: #7996be;
+  font-size: 1rem;
+  opacity: 1;
+}
+
+/* Animacija ažuriranja kilometraže */
+.km-update-info {
+  color: #2268ed;
+  margin-top: 8px;
+}

@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import React, { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useNavigate } from "react-router-dom";
 import "leaflet/dist/leaflet.css";
 import "../css/NesrecaForm.css";
 
+const GOOGLE_API_KEY_MAP = "AIzaSyCWIaJB-eynUWVVq63fNioRuDGEIr-puRM";
 const DefaultIcon = L.divIcon({
   html: "<span class='big-pin'>📍</span>",
   iconSize: [30, 30],
@@ -12,40 +13,82 @@ const DefaultIcon = L.divIcon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
+function parseCoords(geo) {
+  if (!geo) return null;
+  const match = geo.match(/\(?\s*([-\d.]+),\s*([-\d.]+)\s*\)?/);
+  if (!match) return null;
+  return [parseFloat(match[1]), parseFloat(match[2])];
+}
+
+// Ova funkcija sada uzima callback za postavljanje obavijesti
+async function reverseGeocode([lat, lng], setAddress, setManualAddressMsg) {
+  if (lat == null || lng == null) {
+    setAddress("");
+    setManualAddressMsg("");
+    return;
+  }
+  try {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY_MAP}&language=hr`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status === "OK" && data.results.length > 0) {
+      setManualAddressMsg("");
+      setAddress(data.results[0].formatted_address);
+    } else {
+      setManualAddressMsg("Adresa nije pronađena. Upišite ručno.");
+      setAddress("");
+    }
+  } catch {
+    setManualAddressMsg("Adresa nije pronađena. Upišite ručno.");
+    setAddress("");
+  }
+}
+
+// Hook uzima novi callback za postavljanje obavijesti
+function useAutoAddress(geolokacija_nesrece, setMjestoNesrece, setManualAddressMsg) {
+  useEffect(() => {
+    const coords = parseCoords(geolokacija_nesrece);
+    if (coords) reverseGeocode(coords, setMjestoNesrece, setManualAddressMsg);
+    // Čisti poruku kad nema geolokacije
+    else setManualAddressMsg("");
+  }, [geolokacija_nesrece, setMjestoNesrece, setManualAddressMsg]);
+}
+
+const DEFAULT_CENTER = [45.815, 15.9819]; // Zagreb
+
+function MapRecenter({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.setView(center, map.getZoom(), { animate: true });
+    }
+  }, [center, map]);
+  return null;
+}
+
 const NesrecaForm = ({ data, onNext, onBack }) => {
   const navigate = useNavigate();
-
-  // 1. Session-sync state
   const [nesrecaData, setNesrecaData] = useState(() => ({
     datum_nesrece: data?.datum_nesrece || "",
     vrijeme_nesrece: data?.vrijeme_nesrece || "",
     mjesto_nesrece: data?.mjesto_nesrece || "",
     geolokacija_nesrece: data?.geolokacija_nesrece || "",
-    ozlijeneosobe: data?.ozlijeneosobe ?? null,
-    stetanavozila: data?.stetanavozila ?? null,
-    stetanastava: data?.stetanastava ?? null,
     mapPosition: data?.mapPosition || null,
-    showMap: data?.showMap || false,
+    showMap: data?.showMap ?? true,
   }));
-
-  // 2. Kad god dobiješ nove "data" iz parenta (povratak korak), popuni lokalni state
-  useEffect(() => {
-    setNesrecaData({
-      datum_nesrece: data?.datum_nesrece || "",
-      vrijeme_nesrece: data?.vrijeme_nesrece || "",
-      mjesto_nesrece: data?.mjesto_nesrece || "",
-      geolokacija_nesrece: data?.geolokacija_nesrece || "",
-      ozlijeneosobe: data?.ozlijeneosobe ?? null,
-      stetanavozila: data?.stetanavozila ?? null,
-      stetanastava: data?.stetanastava ?? null,
-      mapPosition: data?.mapPosition || null,
-      showMap: data?.showMap || false,
-    });
-  }, [data]);
-
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const mapRef = useRef(null);
+  const [manualAddressMsg, setManualAddressMsg] = useState(""); // Za poruku korisniku
+
+  useAutoAddress(nesrecaData.geolokacija_nesrece,
+    (adresa) =>
+      setNesrecaData((prev) =>
+        prev.mjesto_nesrece !== adresa && !!adresa
+          ? { ...prev, mjesto_nesrece: adresa }
+          : prev
+      ),
+    setManualAddressMsg
+  );
 
   useEffect(() => {
     const updateMobile = () => {
@@ -80,6 +123,23 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
       maxWidth: "90vw",
       boxSizing: "border-box",
       wordBreak: "break-word",
+      position: 'fixed',
+      top: '20px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 10000,
+      padding: '10px 18px',
+      borderRadius: '8px',
+      backgroundColor:
+        type === "success"
+          ? "#4caf50"
+          : type === "error"
+          ? "#f44336"
+          : "#2196f3",
+      color: "#fff",
+      fontWeight: "600",
+      textAlign: "center",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
     });
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add("toast-show"), 10);
@@ -89,9 +149,6 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
     }, 3000);
   };
 
-  const getCoordinatesString = (lat, lng) =>
-    `(${lat.toFixed(4)}, ${lng.toFixed(4)})`;
-
   async function getCurrentLocation() {
     setLoading(true);
     const now = new Date();
@@ -99,40 +156,29 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
     const vrijeme = now.toTimeString().split(" ")[0];
     try {
       if (!navigator.geolocation) {
-        throw new Error("Geolocation not supported by this device");
+        throw new Error("Geolokacija nije podržana na ovom uređaju");
       }
       let lat = null,
-        lng = null,
-        mjesto =
-          "Adresa nije pronađena! Molim unesi adresu ili opiši gdje se nalaziš.";
-
+        lng = null;
       try {
         const pos = await getPosition();
         lat = pos.coords.latitude;
         lng = pos.coords.longitude;
         setNesrecaData((prev) => ({
           ...prev,
+          datum_nesrece: datum,
+          vrijeme_nesrece: vrijeme,
           mapPosition: [lat, lng],
           showMap: true,
+          geolokacija_nesrece: `(${lat.toFixed(4)}, ${lng.toFixed(4)})`,
         }));
-        const response = await fetch(
-          `https://us1.locationiq.com/v1/reverse.php?key=pk.e22af6b8336ffc79ccebbf47c17c1c76&lat=${lat}&lon=${lng}&format=json&accept-language=hr`
-        );
-        const geo = await response.json();
-        if (geo.display_name) mjesto = geo.display_name;
-      } catch (error) {
-        mjesto = "Lokacija nedostupna. Molim te unesi je ručno ili opiši.";
+      } catch {
+        setNesrecaData((prev) => ({
+          ...prev,
+          datum_nesrece: datum,
+          vrijeme_nesrece: vrijeme,
+        }));
       }
-      const geoStr = lat && lng ? getCoordinatesString(lat, lng) : "";
-
-      setNesrecaData((prev) => ({
-        ...prev,
-        datum_nesrece: datum,
-        vrijeme_nesrece: vrijeme,
-        mjesto_nesrece: mjesto,
-        geolokacija_nesrece: geoStr,
-      }));
-
       showToast("Podaci su automatski učitani!", "success");
     } catch (error) {
       showToast(error.message, "error");
@@ -141,145 +187,148 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
     }
   }
 
-  const [mapPosition, setMapPosition] = useState(nesrecaData.mapPosition);
-  const [showMap, setShowMap] = useState(nesrecaData.showMap);
-
-  useEffect(() => {
-    setMapPosition(nesrecaData.mapPosition);
-    setShowMap(nesrecaData.showMap);
-  }, [nesrecaData.mapPosition, nesrecaData.showMap]);
-
-  // Sync mapPosition changes to nesrecaData
-  useEffect(() => {
-    setNesrecaData((prev) => ({
-      ...prev,
-      mapPosition: mapPosition,
-      showMap: showMap,
-    }));
-  }, [mapPosition, showMap]);
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!nesrecaData.datum_nesrece || !nesrecaData.vrijeme_nesrece) {
-      return showToast("Molimo unesite datum i vrijeme.", "error");
+    if (!nesrecaData.datum_nesrece || nesrecaData.datum_nesrece.trim() === "") {
+      showToast("Molimo unesite datum nesreće.", "error");
+      return;
+    }
+    if (!nesrecaData.vrijeme_nesrece || nesrecaData.vrijeme_nesrece.trim() === "") {
+      showToast("Molimo unesite vrijeme nesreće.", "error");
+      return;
+    }
+    // Mora biti popunjeno i custom mjesto (bez automatske poruke)
+    if (!nesrecaData.mjesto_nesrece ||
+        nesrecaData.mjesto_nesrece.trim() === "" ||
+        nesrecaData.mjesto_nesrece === "Adresa nije pronađena. Upišite ručno.") {
+      showToast("Molimo upišite mjesto nesreće.", "error");
+      return;
     }
     onNext(nesrecaData);
   };
 
+  const mapCenter = nesrecaData.mapPosition || DEFAULT_CENTER;
+
   return (
     <div className={`nesreca-container ${isMobile ? "mobile" : "desktop"}`}>
       <h2 className="nesreca-title">Prijava prometne nesreće</h2>
-      <div className="auto-load-container">
-        <button
-          type="button"
-          onClick={getCurrentLocation}
-          disabled={loading}
-          className={`auto-load-button ${loading ? "loading" : ""}`}
-        >
-          {loading ? (
-            <>
-              <span className="loading-spinner" /> Podaci se učitavaju...
-            </>
-          ) : (
-            <>
-              <span className="location-icon" /> AUTOMATSKI UČITAJ
-            </>
-          )}
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="nesreca-form">
+      <button
+        type="button"
+        onClick={getCurrentLocation}
+        disabled={loading}
+        className={`auto-load-button ${loading ? "loading" : ""}`}
+      >
+        {loading ? (
+          <>
+            <span className="loading-spinner" /> Podaci se učitavaju...
+          </>
+        ) : (
+          <>
+            <span className="location-icon" /> AUTOMATSKI UČITAJ
+          </>
+        )}
+      </button>
+      <br />
+      <form onSubmit={handleSubmit} noValidate>
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Datum nesreće: *</label>
+            <label className="form-label" htmlFor="datum_nesrece">
+              Datum nesreće: *
+            </label>
             <input
+              id="datum_nesrece"
               type="date"
               value={nesrecaData.datum_nesrece}
               onChange={(e) =>
-                setNesrecaData((prev) => ({
-                  ...prev,
-                  datum_nesrece: e.target.value,
-                }))
+                setNesrecaData((prev) => ({ ...prev, datum_nesrece: e.target.value }))
               }
               className="form-input"
               required
             />
           </div>
-
           <div className="form-group">
-            <label className="form-label">Vrijeme nesreće: *</label>
+            <label className="form-label" htmlFor="vrijeme_nesrece">
+              Vrijeme nesreće: *
+            </label>
             <input
+              id="vrijeme_nesrece"
               type="time"
               value={nesrecaData.vrijeme_nesrece}
               onChange={(e) =>
-                setNesrecaData((prev) => ({
-                  ...prev,
-                  vrijeme_nesrece: e.target.value,
-                }))
+                setNesrecaData((prev) => ({ ...prev, vrijeme_nesrece: e.target.value }))
               }
               className="form-input"
               required
             />
           </div>
         </div>
-
+        <br></br>
         <div className="form-group">
-          <label className="form-label">Mjesto nesreće: *</label>
+          <label className="form-label" htmlFor="mjesto_nesrece">
+            Mjesto nesreće: *
+          </label>
+          {manualAddressMsg && (
+            <div className="manual-address-msg">{manualAddressMsg}</div>
+          )}
           <textarea
+            id="mjesto_nesrece"
             value={nesrecaData.mjesto_nesrece}
             onChange={(e) =>
-              setNesrecaData((prev) => ({
-                ...prev,
-                mjesto_nesrece: e.target.value,
-              }))
+              setNesrecaData((prev) => ({ ...prev, mjesto_nesrece: e.target.value }))
             }
             className="form-textarea"
             placeholder="Unesi adresu ili opis mjesta nesreće..."
+            required
           />
         </div>
-
-        <div className="form-group fullwidth-group">
-          <label className="form-label">Geolokacija:</label>
+        <div className="form-group">
+          <label className="form-label" htmlFor="geolokacija_nesrece">
+            Geolokacija:
+          </label>
           <input
+            id="geolokacija_nesrece"
             type="text"
             value={nesrecaData.geolokacija_nesrece}
             readOnly
-            className="form-input readonly"
+            className="form-input"
             placeholder="Geolokacija će biti prikazana ovdje"
           />
         </div>
-
-        {showMap && mapPosition && (
+        {nesrecaData.showMap && (
           <div className="map-section">
             <h3>Lokacija nesreće na karti:</h3>
             <MapContainer
-              center={mapPosition}
+              center={mapCenter}
               zoom={isMobile ? 13 : 16}
-              scrollWheelZoom={!isMobile}
-              dragging
-              tap={isMobile}
-              touchZoom={isMobile}
+              scrollWheelZoom={false}
+              dragging={false}
+              doubleClickZoom={false}
+              tap={false}
+              touchZoom={false}
+              boxZoom={false}
+              keyboard={false}
               style={{ height: isMobile ? 250 : 350, width: "100%", borderRadius: 12 }}
-              ref={mapRef}
             >
+              <MapRecenter center={mapCenter} />
               <TileLayer
                 attribution="&copy; OpenStreetMap contributors"
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              <Marker position={mapPosition}>
-                <Popup>{nesrecaData.mjesto_nesrece}</Popup>
-              </Marker>
+              {nesrecaData.mapPosition && (
+                <Marker position={nesrecaData.mapPosition}>
+                  <Popup>{nesrecaData.mjesto_nesrece}</Popup>
+                </Marker>
+              )}
             </MapContainer>
           </div>
         )}
-
         <div className="navigation-buttons">
           {onBack ? (
             <button type="button" className="back-button" onClick={onBack}>
               POVRATAK
             </button>
           ) : (
-            <button type="button" className="back-button" onClick={() => navigate('/')}>
+            <button type="button" className="back-button" onClick={() => navigate("/")}>
               POVRATAK
             </button>
           )}

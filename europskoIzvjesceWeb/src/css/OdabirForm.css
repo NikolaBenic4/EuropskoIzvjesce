@@ -76,6 +76,9 @@ body {
   cursor: pointer;
   margin-bottom: 14px;
   transition: background 0.22s, transform 0.18s;
+  padding-left: 28px;
+  padding-right: 28px;
+  box-sizing: border-box;
 }
 .odabir-button:hover {
   background: linear-gradient(90deg, #245094 0%, #153265 100%);
@@ -103,12 +106,21 @@ body {
   }
   .odabir-title { font-size: 1.25rem; }
   .odabir-desc { font-size: 0.99rem; }
-  .odabir-section { margin-bottom: 13px; }
+  .odabir-section { margin-bottom: 13px;}
   .odabir-button {
-    min-width: 85vw;
-    max-width: 99vw;
-    font-size: 0.98rem;
-    height: 44px;
-    margin-bottom: 9px;
+    width: 95vw;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.vertical-buttons {
+    width: 99vw;
+    gap: 12px;
+  }
+  .submit-button {
+    width: 95vw; /* skroz do ruba, ako želiš, ili ostavi 100% */
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 0.99rem;
   }
 }

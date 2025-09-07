@@ -30,13 +30,59 @@
 /* Responsive prilagodba za slike na mobilnim uređajima */
 @media (max-width: 600px) {
   .car-imagebox > div {
-    width: 100%;          /* zauzima punu širinu roditelja */
+    width: 75%;          /* zauzima punu širinu roditelja */
     max-width: 280px;     /* maksimalna širina kao osnovna */
     height: auto;         /* proportionalna visina */
   }
   
   .car-imagebox img {
-    width: 100%;          /* adaptacija na širinu kontejnera */
+    width: 75%;          /* adaptacija na širinu kontejnera */
     height: auto;         /* proporcija se čuva */
   }
+}
+select.form-input {
+  width: 100%;
+  max-width: 380px;     /* uskladi s inputima */
+  font-size: 1rem;
+  background: #fcfdff;
+  color: #001841;
+  border: 2px solid #002060;
+  border-radius: 9px;
+  box-sizing: border-box;
+  outline-offset: 2px;
+  height: 48px;
+  transition: border-color 0.2s, box-shadow 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none;
+  display: block;        /* Ovo treba biti block, NE flex! */
+  text-align: left;      /* Osigurava tekst s lijeva */
+  margin: 0;             /* Nema auto ili centriranja */
+  padding: 0.48rem 0.7rem;
+}
+
+
+/* Efekt na fokus */
+select.form-input:focus {
+  border-color: #1d82e8;
+  box-shadow: 0 0 8px rgba(29,130,232,0.10);
+  outline: none;
+}
+
+/* Placeholder stil (prvi <option>) */
+select.form-input option[disabled][value=""] {
+  color: #69728c;
+}
+.odabrane-pozicije-lista {
+  color: #002060;
+  font-size: 1.08rem;
+  margin-top: 8px;
+}
+.odabrane-pozicije-lista ul {
+  margin-top: 6px;
+  padding-left: 18px;
+}
+.odabrane-pozicije-lista li {
+  margin-bottom: 3px;
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "../css/NesrecaForm.css";
+import "../css/VoziloForm.css";
 
 const initialState = {
   registarskaoznaka_vozila: "",
@@ -19,7 +19,6 @@ const regexBrojSasije = /^[A-HJ-NPR-Z0-9]{17}$/i;
 const regexDrzava = /^[A-Za-zčćžšđ \-]{2,}$/u;
 
 const VoziloForm = ({ data, onNext, onBack }) => {
-  // Lokalni state se inicijalizira iz parenta (session, global state)
   const [formData, setFormData] = useState(() => ({
     ...initialState,
     ...(data || {}),
@@ -33,7 +32,6 @@ const VoziloForm = ({ data, onNext, onBack }) => {
   const [isUpdatingKm, setIsUpdatingKm] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
 
-  // Ako se korisnik vrati na korak i parent proslijedi nove podatke, ažuriraj local state
   useEffect(() => {
     setFormData({ ...initialState, ...(data || {}) });
   }, [data]);
@@ -51,15 +49,13 @@ const VoziloForm = ({ data, onNext, onBack }) => {
         return;
       }
       const vozilo = await response.json();
-      const godina =
-        vozilo.godinaproizvodnje_vozilo ?? vozilo.godinaproizvodnje_vozilo ?? "";
       setFormData((prev) => ({
         ...prev,
         marka_vozila: vozilo.marka_vozila ?? "",
         tip_vozila: vozilo.tip_vozila ?? "",
         drzavaregistracije_vozila: vozilo.drzavaregistracije_vozila ?? "",
         brojsasije_vozila: vozilo.brojsasije_vozila ?? "",
-        godinaproizvodnje_vozilo: godina,
+        godinaproizvodnje_vozilo: vozilo.godinaproizvodnje_vozilo ?? "",
       }));
       setIsLocked(true);
       setError("");
@@ -90,9 +86,7 @@ const VoziloForm = ({ data, onNext, onBack }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    if (name === "registarskaoznaka_vozila") {
-      setIsLocked(false);
-    }
+    if (name === "registarskaoznaka_vozila") setIsLocked(false);
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value.toUpperCase(),
@@ -139,7 +133,13 @@ const VoziloForm = ({ data, onNext, onBack }) => {
     }
     await updateKilometraza();
     setError("");
-    if (onNext) onNext(formData);
+    // Priprema za slanje: NE šalji imaPrikolicu property
+    const { imaPrikolicu, ...zaSlanje } = formData;
+    if (!formData.imaPrikolicu) {
+      delete zaSlanje.registracijskaoznaka_prikolica;
+      delete zaSlanje.drzavaregistracije_prikolica;
+    }
+    if (onNext) onNext(zaSlanje);
   };
 
   const handleInfoClick = (key, e) => {
@@ -152,48 +152,54 @@ const VoziloForm = ({ data, onNext, onBack }) => {
   };
 
   return (
-    <div className="nesreca-container">
       <form className="nesreca-form" onSubmit={handleSubmit}>
         <h2 className="nesreca-title">Podaci o vozilu</h2>
-        <div className="form-group">
-          <label htmlFor="registarskaoznaka_vozila" className="form-label">
-            Registarska oznaka: *
-            <button
-              type="button"
-              className="info-button-round"
-              onClick={(e) => handleInfoClick("reg", e)}
-              onBlur={() => handleInfoBlur("reg")}
-              tabIndex={0}
-              aria-label="Informacije o formatu registarske oznake"
-              onKeyDown={(e) => e.key === "Escape" && handleInfoBlur("reg")}
-            >
-              i
-              <span className={`info-tooltip${visibleTooltip.reg ? " info-tooltip-active" : ""}`} role="tooltip">
-                Primjer: <b>ZG1234AB</b>, <b>ST-123-A</b>, <b>RI123AA</b>
-              </span>
-            </button>
-          </label>
-          <input
-            type="text"
-            id="registarskaoznaka_vozila"
-            name="registarskaoznaka_vozila"
-            className="form-input"
-            value={formData.registarskaoznaka_vozila}
-            onChange={handleChange}
-            onBlur={handleRegBlur}
-            maxLength={20}
-            required
-            pattern={regexRegOznaka.source}
-            title="Unesite registarsku oznaku velikim slovima"
-            autoComplete="off"
-            style={{ textTransform: "uppercase" }}
-            placeholder="Unesi registarsku oznaku"
-          />
-        </div>
 
         <div className="form-group">
+            <label htmlFor="registarskaoznaka_vozila" className="form-label">
+              Registarska oznaka:*
+              <button
+                type="button"
+                className="info-button-round"
+                onClick={(e) => handleInfoClick("reg", e)}
+                onBlur={() => handleInfoBlur("reg")}
+                tabIndex={0}
+                aria-label="Informacije o formatu registarske oznake"
+                onKeyDown={(e) => e.key === "Escape" && handleInfoBlur("reg")}
+              >
+                i
+                <span className={`info-tooltip${visibleTooltip.reg ? " info-tooltip-active" : ""}`} role="tooltip">
+                  Primjer: <b>ZG1234AB</b>, <b>ST-123-A</b>, <b>RI123AA</b>
+                </span>
+              </button>
+            </label>
+            <input
+              type="text"
+              id="registarskaoznaka_vozila"
+              name="registarskaoznaka_vozila"
+              className="form-input"
+              value={formData.registarskaoznaka_vozila}
+              onChange={handleChange}
+              onBlur={handleRegBlur}
+              onKeyDown={e => {
+                if (e.key === "Enter") {
+                  e.preventDefault();             // SPRIJEČI SUBMIT!
+                  fetchVozilo(e.target.value);    // Samo automatski popuni vozilo
+                }
+              }}
+              maxLength={20}
+              required
+              pattern={regexRegOznaka.source}
+              title="Unesite registarsku oznaku velikim slovima"
+              autoComplete="off"
+              style={{ textTransform: "uppercase" }}
+              placeholder="Unesi registarsku oznaku"
+            />
+          </div>
+          
+        <div className="form-group">
           <label htmlFor="marka_vozila" className="form-label">
-            Marka: *
+            Marka:*
             <button
               type="button"
               className="info-button-round"
@@ -224,7 +230,7 @@ const VoziloForm = ({ data, onNext, onBack }) => {
 
         <div className="form-group">
           <label htmlFor="tip_vozila" className="form-label">
-            Tip vozila: *
+            Tip vozila:*
             <button
               type="button"
               className="info-button-round"
@@ -255,7 +261,7 @@ const VoziloForm = ({ data, onNext, onBack }) => {
 
         <div className="form-group">
           <label htmlFor="drzavaregistracije_vozila" className="form-label">
-            Država registracije: *
+            Država registracije:*
           </label>
           <input
             type="text"
@@ -274,7 +280,7 @@ const VoziloForm = ({ data, onNext, onBack }) => {
 
         <div className="form-group">
           <label htmlFor="brojsasije_vozila" className="form-label">
-            Broj šasije: *
+            Broj šasije:*
           </label>
           <input
             type="text"
@@ -295,7 +301,7 @@ const VoziloForm = ({ data, onNext, onBack }) => {
 
         <div className="form-group">
           <label htmlFor="kilometraza_vozila" className="form-label">
-            Kilometraža: *
+            Kilometraža:*
           </label>
           <input
             type="number"
@@ -314,7 +320,7 @@ const VoziloForm = ({ data, onNext, onBack }) => {
 
         <div className="form-group">
           <label htmlFor="godinaproizvodnje_vozilo" className="form-label">
-            Godina proizvodnje: *
+            Godina proizvodnje:*
           </label>
           <input
             type="number"
@@ -330,21 +336,14 @@ const VoziloForm = ({ data, onNext, onBack }) => {
           />
         </div>
 
-        <div
-          className="form-group checkbox-group"
-          style={{ display: "flex", justifyContent: "flex-start", width: "100%" }}
-        >
-          <label
-            className="checkbox-label"
-            style={{ display: "flex", alignItems: "center", gap: "6px", justifyContent: "flex-start" }}
-          >
+          <div className="form-group">
+          <label className="checkbox-label">
             <input
               type="checkbox"
               name="imaPrikolicu"
               checked={formData.imaPrikolicu}
               onChange={handleChange}
               className="checkbox-input"
-              style={{ margin: 0, flexShrink: 0 }}
             />
             Imam prikolicu
           </label>
@@ -403,7 +402,6 @@ const VoziloForm = ({ data, onNext, onBack }) => {
           </button>
         </div>
       </form>
-    </div>
   );
 };
 

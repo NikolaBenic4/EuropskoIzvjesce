@@ -107,21 +107,74 @@
 }
 
 @media (max-width: 720px) {
-  .progressbar-container,
+  html, body {
+    width: 100vw;
+    max-width: 100vw;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  .fullform-site {
+    width: 100vw;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
   .fullform-header,
+  .fullform-content,
+  .progressbar-container {
+    width: 100vw;
+    max-width: 100vw;
+    margin-top: 3vw;
+    padding: 0 0vw;         /* Daje malo prostora s lijeva/desna - možeš smanjiti ili povećati po želji */
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
   .fullform-content {
-    max-width: 99vw;
-    padding: 0 8px;  /* malo više nego desktop, ali i dalje jednako svakoj sekciji */
+    border-radius: 0;
+    box-shadow: none;
+    padding-top: 18px;
+    padding-bottom: 18px;
+    background: #fff;
+    margin-bottom: 0;
+    min-height: 50vh;
   }
-  .fullform-title {
-    font-size: 1.2em;
+
+  .progressbar-container::before {
+    left: 7vw;
+    right: 7vw;
+    top: 50%;
+    transform: translateY(-50%);
   }
+
+  .fullform-title,
   .fullform-desc {
-    font-size: 0.95em;
+    width: 100vw;
+    max-width: 100vw;
+    box-sizing: border-box;
+    margin-left: 0;
+    margin-right: 0;
+    text-align: center;
+    padding-left: 2vw;   /* Po želji za ravnanje teksta */
+    padding-right: 2vw;
+  }
+
+  .progress-step {
+    min-width: 0;
+    flex-shrink: 1;
+    flex-grow: 1;
   }
   .step-number {
-    width: 25px;
-    height: 25px;
-    font-size: 1em;
+    width: 22px;
+    height: 22px;
+    font-size: 0.92em;
   }
 }
+

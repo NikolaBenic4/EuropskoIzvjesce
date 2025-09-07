@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import '../css/NesrecaForm.css';
+import "../css/NesrecaForm.css";
 
 const initialState = {
   naziv_osiguranja: "",
@@ -10,15 +10,14 @@ const initialState = {
 };
 
 const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
-  // Session-friendly state!
   const [formData, setFormData] = useState(() => ({
     ...initialState,
     ...(data || {})
   }));
   const [suggestions, setSuggestions] = useState([]);
   const [autoFilled, setAutoFilled] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  // sinkronizacija iz parenta ako promijene korak
   useEffect(() => {
     setFormData({ ...initialState, ...(data || {}) });
   }, [data]);
@@ -37,11 +36,7 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
     if (value.length > 1) {
       try {
         const res = await fetch(`/api/osiguranje/suggestions?q=${encodeURIComponent(value)}`);
-        if (res.ok) {
-          setSuggestions(await res.json());
-        } else {
-          setSuggestions([]);
-        }
+        setSuggestions(res.ok ? await res.json() : []);
       } catch {
         setSuggestions([]);
       }
@@ -81,24 +76,33 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
     if (name === "naziv_osiguranja") setAutoFilled(false);
   };
 
-  // Form submit šalje sve parentu!
+  const validate = () => {
+    const errs = {};
+    if (!formData.naziv_osiguranja.trim()) errs.naziv_osiguranja = "Obavezno polje.";
+    if (!formData.adresa_osiguranja.trim()) errs.adresa_osiguranja = "Obavezno polje.";
+    if (!formData.drzava_osiguranja.trim()) errs.drzava_osiguranja = "Obavezno polje.";
+    if (!formData.mail_osiguranja.trim()) errs.mail_osiguranja = "Obavezno polje.";
+    if (!formData.kontaktbroj_osiguranja.trim()) errs.kontaktbroj_osiguranja = "Obavezno polje.";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validate()) return;
     if (onNext) onNext(formData);
   };
 
   return (
-    <div className="nesreca-container" style={{ position: "relative" }}>
       <form className="nesreca-form" onSubmit={handleSubmit}>
         <h2 className="nesreca-title">Osiguravajuće društvo</h2>
-
         <div className="form-group" style={{ position: "relative" }}>
           <label className="form-label">Naziv osiguravajućeg društva: *</label>
           <input
             type="text"
             name="naziv_osiguranja"
             maxLength={50}
-            className="form-input"
+            className={`form-input ${errors.naziv_osiguranja ? "input-error" : ""}`}
             value={formData.naziv_osiguranja}
             onChange={handleNazivChange}
             required
@@ -113,6 +117,7 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
               ))}
             </ul>
           )}
+          {errors.naziv_osiguranja && <div className="error-message">{errors.naziv_osiguranja}</div>}
         </div>
 
         <div className="form-group">
@@ -121,12 +126,13 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
             type="text"
             name="adresa_osiguranja"
             maxLength={50}
-            className="form-input"
+            className={`form-input ${errors.adresa_osiguranja ? "input-error" : ""}`}
             value={formData.adresa_osiguranja}
             onChange={handleChange}
             readOnly={autoFilled}
             required
           />
+          {errors.adresa_osiguranja && <div className="error-message">{errors.adresa_osiguranja}</div>}
         </div>
 
         <div className="form-group">
@@ -135,12 +141,13 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
             type="text"
             name="drzava_osiguranja"
             maxLength={100}
-            className="form-input"
+            className={`form-input ${errors.drzava_osiguranja ? "input-error" : ""}`}
             value={formData.drzava_osiguranja}
             onChange={handleChange}
             readOnly={autoFilled}
             required
           />
+          {errors.drzava_osiguranja && <div className="error-message">{errors.drzava_osiguranja}</div>}
         </div>
 
         <div className="form-group">
@@ -149,12 +156,13 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
             type="email"
             name="mail_osiguranja"
             maxLength={50}
-            className="form-input"
+            className={`form-input ${errors.mail_osiguranja ? "input-error" : ""}`}
             value={formData.mail_osiguranja}
             onChange={handleChange}
             readOnly={autoFilled}
             required
           />
+          {errors.mail_osiguranja && <div className="error-message">{errors.mail_osiguranja}</div>}
         </div>
 
         <div className="form-group">
@@ -163,12 +171,13 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
             type="text"
             name="kontaktbroj_osiguranja"
             maxLength={20}
-            className="form-input"
+            className={`form-input ${errors.kontaktbroj_osiguranja ? "input-error" : ""}`}
             value={formData.kontaktbroj_osiguranja}
             onChange={handleChange}
             readOnly={autoFilled}
             required
           />
+          {errors.kontaktbroj_osiguranja && <div className="error-message">{errors.kontaktbroj_osiguranja}</div>}
         </div>
 
         <div className="navigation-buttons">
@@ -189,7 +198,6 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
           </button>
         </div>
       </form>
-    </div>
   );
 };
 

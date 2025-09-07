@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import '../css/PolicaForm.css';
+import "../css/PolicaForm.css";
 
 const initialState = {
   brojpolice: "",
@@ -10,22 +10,21 @@ const initialState = {
 };
 
 const PolicaForm = ({ data, onNext, onBack }) => {
-  const [formData, setFormData] = useState(() => ({ ...initialState, ...(data || {}) }));
+  const [formData, setFormData] = useState(() => ({
+    ...initialState,
+    ...(data || {})
+  }));
+
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [errors, setErrors] = useState({});
+  const infoBtnRef = useRef(null);
+  const tooltipRef = useRef(null);
 
   useEffect(() => {
     setFormData({ ...initialState, ...(data || {}) });
   }, [data]);
 
-  const [tooltipOpen, setTooltipOpen] = useState(false);
-  const infoBtnRef = useRef(null);
-  const tooltipRef = useRef(null);
-
-  // Toggles info
-  const toggleTooltip = (e) => {
-    e.preventDefault();
-    setTooltipOpen((open) => !open);
-  };
-
+  // Gasi tooltip na klik izvan njega
   useEffect(() => {
     if (!tooltipOpen) return;
     const handleClickOutside = (e) => {
@@ -43,6 +42,7 @@ const PolicaForm = ({ data, onNext, onBack }) => {
     return () => window.removeEventListener('mousedown', handleClickOutside);
   }, [tooltipOpen]);
 
+  // Input handler
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -52,9 +52,25 @@ const PolicaForm = ({ data, onNext, onBack }) => {
     }));
   };
 
+  // Validacija obaveznih polja
+  const validate = () => {
+    const errs = {};
+    if (!formData.brojpolice.trim()) errs.brojpolice = "Obavezno polje.";
+    if (!formData.nazivdrustva.trim()) errs.nazivdrustva = "Obavezno polje.";
+    if (formData.zelena_karta && !formData.brojzelenekarte.trim()) errs.brojzelenekarte = "Unesite broj zelene karte.";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validate()) return;
     if (onNext) onNext(formData);
+  };
+
+  const toggleTooltip = (e) => {
+    e.preventDefault();
+    setTooltipOpen((open) => !open);
   };
 
   return (
@@ -72,16 +88,17 @@ const PolicaForm = ({ data, onNext, onBack }) => {
             id="brojpolice"
             minLength={8}
             maxLength={12}
-            className="form-input"
+            className={`form-input ${errors.brojpolice ? "input-error" : ""}`}
             value={formData.brojpolice}
             onChange={handleChange}
             required
           />
+          {errors.brojpolice && <div className="error-message">{errors.brojpolice}</div>}
         </div>
 
         <div className="form-group">
           <label htmlFor="nazivdrustva" className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Poslovnica(ured/posrednik):*
+            Poslovnica (ured/posrednik):*
             <button
               type="button"
               className="infobutton"
@@ -98,11 +115,12 @@ const PolicaForm = ({ data, onNext, onBack }) => {
             id="nazivdrustva"
             name="nazivdrustva"
             maxLength={50}
-            className="form-input"
+            className={`form-input ${errors.nazivdrustva ? "input-error" : ""}`}
             value={formData.nazivdrustva}
             onChange={handleChange}
             required
           />
+          {errors.nazivdrustva && <div className="error-message">{errors.nazivdrustva}</div>}
         </div>
 
         <span
@@ -135,10 +153,12 @@ const PolicaForm = ({ data, onNext, onBack }) => {
               type="text"
               name="brojzelenekarte"
               maxLength={20}
-              className="form-input"
+              className={`form-input ${errors.brojzelenekarte ? "input-error" : ""}`}
               value={formData.brojzelenekarte}
               onChange={handleChange}
+              required
             />
+            {errors.brojzelenekarte && <div className="error-message">{errors.brojzelenekarte}</div>}
           </div>
         )}
 

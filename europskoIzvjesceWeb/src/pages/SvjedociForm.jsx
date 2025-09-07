@@ -4,28 +4,28 @@ import AddressAutocomplete from "../components/AddressAutocomplete";
 import { fetchAddressesDGU } from "../services/addressService";
 
 export default function SvjedociForm({ data, onNext, onBack }) {
-  // 1. Lokalni state: uvijek iz parenta!
+  // Lokalni state, inicijaliziraj uvijek sa stringovima!
   const [formData, setFormData] = useState(() => ({
-    ozlijedeni: data?.ozlijedeni || false,
-    stetanastvarima: data?.stetanastvarima || false,
-    stetanavozilu: data?.stetanavozilu || false,
-    hasSvjedoci: data?.hasSvjedoci || false,
-    svjedokImePrezime: data?.svjedokImePrezime || "",
-    svjedokUlica: data?.svjedokUlica || "",
-    svjedokKontakt: data?.svjedokKontakt || ""
+    ozlijedeneososbe: !!data?.ozlijedeneososbe,
+    stetanastvarima: !!data?.stetanastvarima,
+    stetanavozilima: !!data?.stetanavozilima,
+    hasSvjedoci: !!data?.hasSvjedoci,
+    ime_prezime_svjedok: data?.ime_prezime_svjedok?.[0] || "",
+    adresa_svjedok: data?.adresa_svjedok?.[0] || "",
+    kontakt_svjedok: data?.kontakt_svjedok?.[0] || ""
   }));
   const [error, setError] = useState("");
 
-  // 2. Svaki put kad se `data` promijeni (povratak na korak ili session refresh), popuni local state
+  // Sync na promjenu props
   useEffect(() => {
     setFormData({
-      ozlijedeni: data?.ozlijedeni || false,
-      stetanastvarima: data?.stetanastvarima || false,
-      stetanavozilu: data?.stetanavozilu || false,
-      hasSvjedoci: data?.hasSvjedoci || false,
-      svjedokImePrezime: data?.svjedokImePrezime || "",
-      svjedokUlica: data?.svjedokUlica || "",
-      svjedokKontakt: data?.svjedokKontakt || ""
+      ozlijedeneososbe: !!data?.ozlijedeneososbe,
+      stetanastvarima: !!data?.stetanastvarima,
+      stetanavozilima: !!data?.stetanavozilima,
+      hasSvjedoci: !!data?.hasSvjedoci,
+      ime_prezime_svjedok: data?.ime_prezime_svjedok?.[0] || "",
+      adresa_svjedok: data?.adresa_svjedok?.[0] || "",
+      kontakt_svjedok: data?.kontakt_svjedok?.[0] || ""
     });
   }, [data]);
 
@@ -35,7 +35,10 @@ export default function SvjedociForm({ data, onNext, onBack }) {
   };
 
   const handleChange = (field, value) => {
-    setFormData((p) => ({ ...p, [field]: value }));
+    setFormData((p) => ({
+      ...p,
+      [field]: value || ""
+    }));
     setError("");
   };
 
@@ -44,31 +47,33 @@ export default function SvjedociForm({ data, onNext, onBack }) {
     setError("");
 
     if (formData.hasSvjedoci) {
-      const ulica = formData.svjedokUlica.trim();
-      const imaBroj = /\d/.test(ulica);
+      const imePrezime = (formData.ime_prezime_svjedok || "").trim();
+      const ulica = (formData.adresa_svjedok || "").trim();
+      const kontakt = (formData.kontakt_svjedok || "").trim();
 
-      if (
-        formData.svjedokImePrezime.trim() === "" ||
-        ulica === "" ||
-        formData.svjedokKontakt.trim() === ""
-      ) {
+      if (!imePrezime || !ulica || !kontakt) {
         setError("Molim te ispuni sva polja za svjedoka");
         return;
       }
-
-      if (!imaBroj) {
+      if (!/\d/.test(ulica)) {
         setError("Molim te još upiši kućni broj u adresu");
         return;
       }
     }
 
+    // Backend očekuje polja kao array (string[])
     const formToSend = {
-      ...formData,
-      svjedokAdresa: formData.svjedokUlica
+      ozlijedeneososbe: !!formData.ozlijedeneososbe,
+      stetanastvarima: !!formData.stetanastvarima,
+      stetanavozilima: !!formData.stetanavozilima,
+      ime_prezime_svjedok: formData.hasSvjedoci ? [formData.ime_prezime_svjedok] : [],
+      adresa_svjedok: formData.hasSvjedoci ? [formData.adresa_svjedok] : [],
+      kontakt_svjedok: formData.hasSvjedoci ? [formData.kontakt_svjedok] : []
     };
     onNext?.(formToSend);
   };
 
+  // Prikaži max 2 prijedloga
   const searchAddresses = async (query, setSug, setLoad, setShow) => {
     setLoad(true);
     try {
@@ -91,8 +96,8 @@ export default function SvjedociForm({ data, onNext, onBack }) {
           <input
             type="checkbox"
             className="checkbox-input"
-            checked={formData.ozlijedeni}
-            onChange={() => handleCheckbox("ozlijedeni")}
+            checked={formData.ozlijedeneososbe}
+            onChange={() => handleCheckbox("ozlijedeneososbe")}
           />
           Ozlijeđene osobe
         </label>
@@ -109,8 +114,8 @@ export default function SvjedociForm({ data, onNext, onBack }) {
           <input
             type="checkbox"
             className="checkbox-input"
-            checked={formData.stetanavozilu}
-            onChange={() => handleCheckbox("stetanavozilu")}
+            checked={formData.stetanavozilima}
+            onChange={() => handleCheckbox("stetanavozilima")}
           />
           Šteta na drugim vozilima
         </label>
@@ -134,8 +139,8 @@ export default function SvjedociForm({ data, onNext, onBack }) {
             <input
               type="text"
               className="form-input"
-              value={formData.svjedokImePrezime}
-              onChange={(e) => handleChange("svjedokImePrezime", e.target.value)}
+              value={formData.ime_prezime_svjedok}
+              onChange={(e) => handleChange("ime_prezime_svjedok", e.target.value)}
               placeholder="Unesite ime i prezime"
               required
             />
@@ -143,8 +148,8 @@ export default function SvjedociForm({ data, onNext, onBack }) {
           <div className="form-group">
             <label className="form-label">Ulica i kućni broj</label>
             <AddressAutocomplete
-              value={formData.svjedokUlica}
-              onChange={(val) => handleChange("svjedokUlica", val)}
+              value={formData.adresa_svjedok}
+              onChange={(val) => handleChange("adresa_svjedok", val)}
               placeholder="Primjer: Ilica 15"
               className="form-input"
               searchFunction={searchAddresses}
@@ -155,8 +160,8 @@ export default function SvjedociForm({ data, onNext, onBack }) {
             <input
               type="text"
               className="form-input"
-              value={formData.svjedokKontakt}
-              onChange={(e) => handleChange("svjedokKontakt", e.target.value)}
+              value={formData.kontakt_svjedok}
+              onChange={(e) => handleChange("kontakt_svjedok", e.target.value)}
               placeholder="Broj mobitela ili telefona"
               required
             />

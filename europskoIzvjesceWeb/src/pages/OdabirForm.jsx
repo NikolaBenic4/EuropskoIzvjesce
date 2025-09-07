@@ -34,7 +34,7 @@ export default function OdabirForm() {
     <br></br>
       <div className="entry-explanation">
         <p>
-          <strong>Unos prijave kao pojedinac:</strong> možeš prijaviti štetu za sebe ili za sebe i drugog sudionika nesreće.<br />
+          <strong>Unos kao pojedinac:</strong> možeš prijaviti štetu za sebe ili za sebe i drugog sudionika nesreće.<br />
           <br></br>
           <strong>Dvostruki unos (dvoje sudionika):</strong> svaki sudionik podnosi vlastitu prijavu štete. Za početak ispunjavanja prijave, potrebno je da jedan sudionik pritisne na gumb. Zatim će se pojaviti QR kod koji drugi sudionik treba skenirati i potom se otvaraju prijave za oba korisnika.
         </p>
@@ -42,10 +42,10 @@ export default function OdabirForm() {
 
       <div className="vertical-buttons">
         <button className="submit-button" onClick={handleOnePerson}>
-          Unos prijave kao pojedinac
+          Unos kao pojedinac
         </button>
         <button className="submit-button" onClick={handleTwoPersons}>
-          Dvostruki unos (dvoje sudionika)
+          Dvostruki unos
         </button>
       </div>
 

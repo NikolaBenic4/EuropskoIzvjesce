@@ -36,10 +36,10 @@ const VEHICLE_CONFIG = {
       { id: "back", label: "Stražnji dio" }
     ],
     arrowPositions: [
-      { top: "2px", left: "122px", rotate: 180 },    // Prednji dio
-      { top: "80px", left: "70px", rotate: 90 },     // Lijevi bok
-      { top: "80px", left: "175px", rotate: 270 },   // Desni bok
-      { top: "225px", left: "122px", rotate: 0 },    // Stražnji dio
+      { top: "2px", left: "122px", rotate: 180 },
+      { top: "80px", left: "70px", rotate: 90 },
+      { top: "80px", left: "175px", rotate: 270 },
+      { top: "225px", left: "122px", rotate: 0 },
     ],
     image: MotorbikePicture,
   },
@@ -53,12 +53,12 @@ const VEHICLE_CONFIG = {
       { id: "back", label: "Stražnji dio sanduka" }
     ],
     arrowPositions: [
-      { top: "2px", left: "122px", rotate: 180 },     // Kabina prednji
-      { top: "55px", left: "30px", rotate: 90 },      // Kabina lijevi
-      { top: "55px", left: "212px", rotate: 270 },    // Kabina desni
-      { top: "200px", left: "30px", rotate: 90 },     // Lijeva strana sanduka
-      { top: "200px", left: "212px", rotate: 270 },   // Desna strana sanduka
-      { top: "225px", left: "122px", rotate: 0 },     // Stražnji dio sanduka
+      { top: "2px", left: "122px", rotate: 180 },
+      { top: "55px", left: "30px", rotate: 90 },
+      { top: "55px", left: "212px", rotate: 270 },
+      { top: "200px", left: "30px", rotate: 90 },
+      { top: "200px", left: "212px", rotate: 270 },
+      { top: "225px", left: "122px", rotate: 0 },
     ],
     image: TruckPicture,
   }
@@ -112,19 +112,19 @@ const MjestoUdarcaVozilo = ({
       <select
         className="form-input"
         value={vehicleType}
-        style={{ marginBottom: "18px", maxWidth: 220 }}
         onChange={e => onVehicleTypeChange(e.target.value)}
       >
         <option value="car">Automobil</option>
         <option value="motorbike">Motocikl</option>
         <option value="truck">Kamion</option>
       </select>
+      <br />
       <label className="form-label">Mjesto udarca oštećenja</label>
       <div className="car-imagebox">
         <div style={{
           position: "relative",
           width: "280px",
-          height: "260px", // malo veće radi truck/motorbike
+          height: "260px",
           margin: "0 auto"
         }}>
           <img
@@ -134,8 +134,7 @@ const MjestoUdarcaVozilo = ({
           />
           {visibleArrows}
         </div>
-        <br></br>
-        <br></br>
+        <br />
       </div>
       <div className="car-points-grid">
         {points.map((point) => (
@@ -158,6 +157,18 @@ const MjestoUdarcaVozilo = ({
           </label>
         ))}
       </div>
+      {selectedPoints.length > 0 && (
+        <div className="odabrane-pozicije-lista" style={{ margin: "10px 0 0 0" }}>
+          <strong>Odabrane pozicije oštećenja:*</strong>
+          <ul style={{ paddingLeft: "18px", margin: "6px 0 0 0" }}>
+            {points
+              .filter(point => selectedPoints.includes(point.id))
+              .map(point => (
+                <li key={point.id}>{point.label}</li>
+              ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
