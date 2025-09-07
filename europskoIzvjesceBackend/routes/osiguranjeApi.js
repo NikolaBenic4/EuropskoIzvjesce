@@ -3,13 +3,13 @@ const router = express.Router();
 const pool = require('../db');
 
 // SUGGESTIONS: autocomplete lista naziva
-router.get('/osiguranje/suggestions', async (req, res) => {
+router.get('/suggestions', async (req, res) => {
   const { q } = req.query;
   if (!q || q.length < 2) return res.json([]);
   try {
     const result = await pool.query(
       'SELECT naziv_osiguranja FROM osiguranje WHERE LOWER(naziv_osiguranja) LIKE LOWER($1) ORDER BY naziv_osiguranja LIMIT 10',
-      [`${q}%`]
+      [`%${q}%`]
     );
     res.json(result.rows.map(row => row.naziv_osiguranja));
   } catch (e) {
@@ -18,7 +18,7 @@ router.get('/osiguranje/suggestions', async (req, res) => {
 });
 
 // DODAJ OVO: automatsko popunjavanje detalja
-router.get('/osiguranje', async (req, res) => {
+router.get('/', async (req, res) => {
   const { naziv } = req.query;
   if (!naziv) return res.status(400).json({});
   try {
