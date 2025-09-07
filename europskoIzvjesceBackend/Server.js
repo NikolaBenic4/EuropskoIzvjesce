@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fetch = require('node-fetch');
+const { apiKeyAuth, createPrijava } = require('./controllers/prijavaController');
 require('dotenv').config();
 
 // Import tvojih lokalnih routera
@@ -37,6 +38,8 @@ app.get("/api/google-details", async (req, res) => {
   const data = await googleRes.json();
   res.json(data);
 });
+
+app.post("/api/prijava", apiKeyAuth, createPrijava);
 
 // --- INTERNAL API ROUTES --- //
 app.use('/api/address', addressesRouter);
