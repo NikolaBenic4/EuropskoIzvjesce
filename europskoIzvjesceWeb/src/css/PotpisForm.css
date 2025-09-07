@@ -54,11 +54,8 @@ input[type="time"] {
   transition: border-color 0.18s, box-shadow 0.18s;
   box-shadow: none;
   outline: none;
-  /* proširi input na desktopu */
   max-width: 340px;
-  /* ↔ možeš povisiti ako treba, ali 340px je optimalno za IBAN */
 }
-
 .form-input:focus,
 input[type="date"]:focus,
 input[type="time"]:focus {
@@ -66,48 +63,59 @@ input[type="time"]:focus {
   box-shadow: 0 0 0 2px rgba(0,32,96,0.15);
 }
 
+/* SIGNATURE POLJE - PROFESIONALNI OKVIR */
+.signature-box {
+  background: #fcfdff;
+  border: 2px solid #003366;
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 10px;
+  max-width: 450px;
+  margin-left: auto;
+  margin-right: auto;
+}
 .sigCanvas {
+  width: 100% !important;
+  height: 150px !important;
   display: block;
-  margin: 0 auto;
   background-color: #fff;
+  border-radius: 6px;
+  border: none;
+  margin: 0 auto;
   touch-action: none;
 }
 
-/* Submit gumb općenito */
-.submit-button {
+/* Submit, Scan, Clear gumbi - svi jednaki! */
+.submit-button,
+.scan-button,
+.clear-button {
   display: block;
   width: 100%;
   padding: 0.8rem 2rem;
   font-size: 1rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #fff;
   background-color: #003366;
   border: none;
   border-radius: 5px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.2);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: background-color 0.2s, transform 0.2s;
   cursor: pointer;
   margin-top: 15px;
 }
-
-.submit-button:hover {
+.submit-button:hover,
+.scan-button:hover,
+.clear-button:hover {
   background: linear-gradient(90deg, #001f4d 0%, #003366 100%);
   box-shadow: 0 7px 36px rgba(0,32,96,0.13);
   transform: translateY(-2px);
 }
-
-.submit-button:active {
+.submit-button:active,
+.scan-button:active,
+.clear-button:active {
   transform: translateY(0);
-}
-
-/* Scan button - posebna boja po želji */
-.scan-button {
-  font-size: 0.9rem;
-  padding: 12px 0;
-  margin-top: 15px;
-  width: 100%; /* Gumb je ispod inputa i širok! */
 }
 
 /* SVE U KOLONI, NEMA FLEX-A! */
@@ -120,19 +128,38 @@ input[type="time"]:focus {
 /* Mobilna optimizacija */
 @media (max-width: 600px) {
   .potpis-form {
-    max-width: 95vw;
-    padding: 1.5rem 1rem;
+    max-width: 99vw;
+    padding: 1rem .7rem;
     border-radius: 10px;
   }
+  .signature-box {
+    padding: 4px;
+    max-width: 99vw;
+    min-width: 0;
+  }
   .sigCanvas {
+    min-width: 0;
     width: 100% !important;
-    height: 140px !important;
+    height: 120px !important;
+    border-radius: 7px;
   }
   .form-input {
     max-width: 100%;
+    padding: 10px;
+    font-size: 1.02rem;
+  }
+  .scan-button,
+  .clear-button,
+  .submit-button {
+    font-size: 1rem;
+    border-radius: 9px;
+    padding: 0.85rem 0 !important;
+    min-width: 0;
+    width: 100%;
   }
 }
 
+/* Scanner/video/overlay */
 .scanner-container {
   margin-top: 16px;
   border: 2px solid #003366;
@@ -140,18 +167,41 @@ input[type="time"]:focus {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
-
-/* Video is fully responsive */
 .scanner-container video {
   border-radius: 8px;
   width: 100%;
   height: auto;
 }
 
-.scan-area-rectangle {
-  box-shadow: 0 0 20px 2px rgba(50,255,50,0.3);
+.scan-area-overlay {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
+.scan-area-rectangle {
+  position: absolute;
+  left: 5%;
+  width: 90%;
+  top: 39%;     /* SREDINA VIDEO SLIKE */
+  height: 22%;
+  border: 2.5px solid #25c981;
+  border-radius: 10px;
+  background: rgba(36,215,157,0.11);
+  box-shadow: 0 0 20px 3px rgba(46,224,122,0.19), 0 0 20px 2px rgba(50,255,50,0.3);
+  transition: background 0.2s;
+}
+.scan-video {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
 /* NAVIGACIJSKI GUMBI: NAZAD i DALJE */
 .navigation-buttons {
   display: flex;
@@ -159,7 +209,6 @@ input[type="time"]:focus {
   gap: 12px;
   margin-top: 2rem;
 }
-
 .next-button,
 .back-button {
   display: inline-block;
@@ -176,87 +225,29 @@ input[type="time"]:focus {
   transition: background-color 0.2s ease, transform 0.2s ease;
   cursor: pointer;
 }
-
-.next-button:hover,
-.back-button:hover {
+.next-button:hover, .back-button:hover {
   background-color: #001f4d;
   transform: translateY(-2px);
 }
-
-.next-button:active,
-.back-button:active {
+.next-button:active, .back-button:active {
   background-color: #002060;
 }
-
-.back-button {
-  background-color: #476ca3;
-}
-.back-button:hover {
-  background-color: #3b587d;
-}
+.back-button { background-color: #476ca3; }
+.back-button:hover { background-color: #3b587d; }
 @media (max-width: 600px) {
-  .potpis-form {
-    max-width: 95vw; /* koristi skoro celu širinu ekrana */
-    padding: 1.5rem 1rem; /* manji padding za mobilne uređaje */
-    border-radius: 10px;
-    margin: 1rem auto;
-  }
-  .form-input {
-    max-width: 100%; /* input puni širinu kontejnera */
-    padding: 10px 12px; /* nešto manji padding da stane bolje */
-    font-size: 1rem; /* manji font za čitljivost */
-  }
-  .sigCanvas {
-    width: 100% !important; /* platno za potpis se širi preko cele širine */
-    height: 140px !important; /* visina fiksirana na 140px */
-    margin-bottom: 1rem;
-  }
-  .submit-button, .scan-button {
-    font-size: 1rem;
-    padding: 0.85rem 0;
-    border-radius: 10px;
-  }
   .navigation-buttons {
-    justify-content: space-between; /* rasporedi dugmadi na suprotne krajeve */
+    justify-content: space-between;
     gap: 8px;
     margin-top: 1.5rem;
     width: 100%;
   }
   .next-button,
   .back-button {
-    flex: 1; /* oba dugmeta zauzimaju jednaku širinu */
+    flex: 1;
     padding: 0.75rem 0;
     font-size: 1rem;
     border-radius: 8px;
-    box-shadow: none; /* pojednostavljena senka na mobilnim */
+    box-shadow: none;
   }
-  .next-button {
-    margin-left: 8px;
-  }
-}
-
-.clear-button
-{
-    display: block;
-  width: 100%;
-  padding: 0.8rem 2rem;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #ffffff;
-  background-color: #003366;
-  border: none;
-  border-radius: 5px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-  cursor: pointer;
-  margin-top: 15px;
-}
-
-
-.clear-button:hover {
-  background: linear-gradient(90deg, #001f4d 0%, #003366 100%);
-  box-shadow: 0 7px 36px rgba(0,32,96,0.13);
-  transform: translateY(-2px);
+  .next-button { margin-left: 8px; }
 }

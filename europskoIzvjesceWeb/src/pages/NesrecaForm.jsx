@@ -66,6 +66,13 @@ function MapRecenter({ center }) {
   return null;
 }
 
+// Parsiranje geolokacije u format pogodan za backend - kao objekt { x: lat, y: lng }
+function parseGeolokacijaToPoint(geoString) {
+  const coords = parseCoords(geoString);
+  if (!coords) return null;
+  return { x: coords[0], y: coords[1] };
+}
+
 const NesrecaForm = ({ data, onNext, onBack }) => {
   const navigate = useNavigate();
   const [nesrecaData, setNesrecaData] = useState(() => ({
@@ -80,7 +87,8 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [manualAddressMsg, setManualAddressMsg] = useState(""); // Za poruku korisniku
 
-  useAutoAddress(nesrecaData.geolokacija_nesrece,
+  useAutoAddress(
+    nesrecaData.geolokacija_nesrece,
     (adresa) =>
       setNesrecaData((prev) =>
         prev.mjesto_nesrece !== adresa && !!adresa
@@ -123,13 +131,13 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
       maxWidth: "90vw",
       boxSizing: "border-box",
       wordBreak: "break-word",
-      position: 'fixed',
-      top: '20px',
-      left: '50%',
-      transform: 'translateX(-50%)',
+      position: "fixed",
+      top: "20px",
+      left: "50%",
+      transform: "translateX(-50%)",
       zIndex: 10000,
-      padding: '10px 18px',
-      borderRadius: '8px',
+      padding: "10px 18px",
+      borderRadius: "8px",
       backgroundColor:
         type === "success"
           ? "#4caf50"
@@ -189,6 +197,7 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     if (!nesrecaData.datum_nesrece || nesrecaData.datum_nesrece.trim() === "") {
       showToast("Molimo unesite datum nesreće.", "error");
       return;
@@ -197,14 +206,25 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
       showToast("Molimo unesite vrijeme nesreće.", "error");
       return;
     }
-    // Mora biti popunjeno i custom mjesto (bez automatske poruke)
-    if (!nesrecaData.mjesto_nesrece ||
-        nesrecaData.mjesto_nesrece.trim() === "" ||
-        nesrecaData.mjesto_nesrece === "Adresa nije pronađena. Upišite ručno.") {
+    if (
+      !nesrecaData.mjesto_nesrece ||
+      nesrecaData.mjesto_nesrece.trim() === "" ||
+      nesrecaData.mjesto_nesrece === "Adresa nije pronađena. Upišite ručno."
+    ) {
       showToast("Molimo upišite mjesto nesreće.", "error");
       return;
     }
-    onNext(nesrecaData);
+
+    // Parsiraj geolokaciju u objekt {x: lat, y: lng} za backend
+    const parsedGeolokacija = parseGeolokacijaToPoint(nesrecaData.geolokacija_nesrece);
+
+    // Pripremi podatke za slanje, geolokaciju u formatu objekt
+    const sendData = {
+      ...nesrecaData,
+      geolokacija_nesrece: parsedGeolokacija,
+    };
+
+    onNext(sendData);
   };
 
   const mapCenter = nesrecaData.mapPosition || DEFAULT_CENTER;
@@ -262,14 +282,12 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
             />
           </div>
         </div>
-        <br></br>
+        <br />
         <div className="form-group">
           <label className="form-label" htmlFor="mjesto_nesrece">
             Mjesto nesreće: *
           </label>
-          {manualAddressMsg && (
-            <div className="manual-address-msg">{manualAddressMsg}</div>
-          )}
+          {manualAddressMsg && <div className="manual-address-msg">{manualAddressMsg}</div>}
           <textarea
             id="mjesto_nesrece"
             value={nesrecaData.mjesto_nesrece}

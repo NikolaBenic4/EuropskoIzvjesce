@@ -5,13 +5,15 @@ const FinalnaPotvrdaForm = ({
   osiguranik,
   osiguranje,
   onSend,
-  onBack
+  onBack,
 }) => {
-  // Mail je uvijek .mail u tvojoj aplikaciji!
-  const emailOsiguranika = osiguranik?.mail_osiguranika || osiguranik?.mail || "-";
-
-  // Debug - za razvoj makni u produkciji!
-  // console.log("osiguranik za potvrdu", osiguranik);
+  // Prvo provjeri mail_osiguranika, eventualno fallback na mail, inače prikaži 'Nije uneseno'
+  const emailOsiguranika =
+    osiguranik?.mail_osiguranika?.trim()
+      ? osiguranik.mail_osiguranika
+      : osiguranik?.mail?.trim()
+        ? osiguranik.mail
+        : "Nije uneseno";
 
   return (
     <div className="nesreca-container">

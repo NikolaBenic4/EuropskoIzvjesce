@@ -32,62 +32,58 @@ function extractStreetAddress(components) {
 }
 
 const OsiguranikInitial = {
-  ime: "",
-  prezime: "",
-  adresa: "",
-  postanskiBroj: "",
-  grad: "",
-  drzava: "",
-  kontakt: "",
-  mail: ""
+  ime_osiguranika: "",
+  prezime_osiguranika: "",
+  adresa_osiguranika: "",
+  postanskibroj_osiguranika: "",
+  drzava_osiguranika: "",
+  kontaktbroj_osiguranika: "",
+  mail_osiguranika: ""
 };
+
 const VozacInitial = {
-  ime: "",
-  prezime: "",
-  adresa: "",
-  postanskiBroj: "",
-  grad: "",
-  drzava: "",
-  kontakt: "",
-  mail: "",
-  brojVozacke: "",
-  kategorijaVozacke: "",
-  valjanostVozacke: ""
+  ime_vozaca: "",
+  prezime_vozaca: "",
+  adresa_vozaca: "",
+  postanskibroj_vozaca: "",
+  drzava_vozaca: "",
+  kontaktbroj_vozaca: "",
+  mail_vozaca: "",
+  brojvozackedozvole: "",
+  kategorijavozackedozvole: "",
+  valjanostvozackedozvole: ""
 };
 
 const placeholders = {
-  ime: "Unesite ime",
-  prezime: "Unesite prezime",
-  adresa: "Unesite adresu",
-  "poštanski broj": "Unesite poštanski broj",
-  postanskiBroj: "Unesite poštanski broj",
-  grad: "Unesite grad",
-  država: "Unesite državu",
-  drzava: "Unesite državu",
-  kontakt: "npr. +385 91 123 4567",
-  mail: "Unesite email",
-  brojVozacke: "Unesite broj vozačke dozvole",
-  kategorijaVozacke: "Odaberite kategoriju vozačke dozvole",
-  valjanostVozacke: "Odaberite valjanost vozačke dozvole"
+  ime_osiguranika: "Unesite ime",
+  prezime_osiguranika: "Unesite prezime",
+  adresa_osiguranika: "Unesite adresu",
+  postanskibroj_osiguranika: "Unesite poštanski broj",
+  drzava_osiguranika: "Unesite državu",
+  kontaktbroj_osiguranika: "npr. +385 91 123 4567",
+  mail_osiguranika: "Unesite email",
+  brojvozackedozvole: "Unesite broj vozačke dozvole",
+  kategorijavozackedozvole: "Odaberite kategoriju vozačke dozvole",
+  valjanostvozackedozvole: "Odaberite valjanost vozačke dozvole"
 };
 
 const HR_PHONE_PATTERN = "^\\+385 ?9[1-9][0-9] ?\\d{3,4} ?\\d{3,4}$";
 
 export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
-  // Controlled pristup: nema više lokalnog useState, sve dolazi iz props.data!
+  // Controlled pristup: nema lokalnog statea, sve u props.data
   const osiguranik = { ...OsiguranikInitial, ...(data?.osiguranik || {}) };
   const vozac = { ...VozacInitial, ...(data?.vozac || {}) };
   const isti = data?.isti ?? (
-    vozac.ime === osiguranik.ime && vozac.prezime === osiguranik.prezime
+    vozac.ime_vozaca === osiguranik.ime_osiguranika && vozac.prezime_vozaca === osiguranik.prezime_osiguranika
   );
   const error = data?.error || "";
 
-  // Change handlers
+  // Handleri promjena za osiguranika
   const handleOsiguranikChange = e => {
     const { name, value } = e.target;
     const updated = { ...osiguranik, [name]: value };
     let vozacUpdate = isti
-      ? { ...vozac, [name]: value }
+      ? { ...vozac, [name.replace("osiguranika", "vozaca")]: value }
       : vozac;
     onChange({
       osiguranik: updated,
@@ -95,6 +91,7 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
     });
   };
 
+  // Handleri promjena za vozača
   const handleVozacChange = e => {
     const { name, value } = e.target;
     onChange({
@@ -102,6 +99,7 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
     });
   };
 
+  // Checkbox isti vozač i osiguranik
   const handleIstiChange = e => {
     const jeIsti = e.target.checked;
     let vozacNew = jeIsti
@@ -110,15 +108,15 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
     onChange({ isti: jeIsti, vozac: vozacNew });
   };
 
-  // Validacija (po potrebi možeš dodati parent error handling)
+  // Validacija
   const validateForm = () => {
-    const imaBrojOsiguranik = /\d/.test(osiguranik.adresa.trim());
+    const imaBrojOsiguranik = /\d/.test(osiguranik.adresa_osiguranika.trim());
     if (!imaBrojOsiguranik) {
       onChange({ error: "Unesite kućni broj u adresu osiguranika." });
       return false;
     }
     if (!isti) {
-      const imaBrojVozac = /\d/.test(vozac.adresa.trim());
+      const imaBrojVozac = /\d/.test(vozac.adresa_vozaca.trim());
       if (!imaBrojVozac) {
         onChange({ error: "Unesite kućni broj u adresu vozača." });
         return false;
@@ -139,7 +137,11 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
   };
 
   const inputFields = [
-    'ime', 'prezime', 'adresa', 'poštanski broj', 'grad', 'država', 'kontakt', 'mail'
+    'ime_osiguranika', 'prezime_osiguranika', 'adresa_osiguranika', 'postanskibroj_osiguranika', 'drzava_osiguranika', 'kontaktbroj_osiguranika', 'mail_osiguranika'
+  ];
+
+  const vozacInputFields = [
+    'ime_vozaca', 'prezime_vozaca', 'adresa_vozaca', 'postanskibroj_vozaca', 'drzava_vozaca', 'kontaktbroj_vozaca', 'mail_vozaca'
   ];
 
   return (
@@ -148,13 +150,13 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
       {inputFields.map(field => (
         <div className="form-group" key={"osiguranik-" + field}>
           <label className="form-label">
-            {field === 'mail'
+            {field === 'mail_osiguranika'
               ? 'Email:*'
-              : `${field.charAt(0).toUpperCase() + field.slice(1)}:*`}
+              : `${field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, ' ')}:*`}
           </label>
-          {field === 'adresa' ? (
+          {field === 'adresa_osiguranika' ? (
             <AddressAutocomplete
-              value={osiguranik.adresa}
+              value={osiguranik.adresa_osiguranika}
               onChange={res => {
                 const components = res.address_components || [];
                 const addr = extractStreetAddress(components) || res.formatted_address || res.formatted || res.description || res;
@@ -163,72 +165,62 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
                 const drzava = extractCountry(components);
                 let updated = {
                   ...osiguranik,
-                  adresa: addr,
-                  postanskiBroj: postBroj,
+                  adresa_osiguranika: addr,
+                  postanskibroj_osiguranika: postBroj,
+                  drzava_osiguranika: drzava,
                   grad,
-                  drzava
                 };
                 let vozacUpdate = isti
-                  ? { ...vozac, adresa: addr, postanskiBroj: postBroj, grad, drzava }
+                  ? { ...vozac, adresa_vozaca: addr, postanskibroj_vozaca: postBroj, drzava_vozaca: drzava, grad }
                   : vozac;
                 onChange({
                   osiguranik: updated,
                   vozac: vozacUpdate
                 });
               }}
-              placeholder={placeholders.adresa}
+              placeholder={placeholders.adresa_osiguranika}
               className="form-input"
             />
-          ) : field === 'kontakt' ? (
+          ) : field === 'kontaktbroj_osiguranika' ? (
             <input
-              name="kontakt"
+              name="kontaktbroj_osiguranika"
               type="tel"
               className="form-input"
-              placeholder={placeholders.kontakt}
-              value={osiguranik.kontakt}
+              placeholder={placeholders.kontaktbroj_osiguranika}
+              value={osiguranik.kontaktbroj_osiguranika}
               onChange={handleOsiguranikChange}
               required
               pattern={HR_PHONE_PATTERN}
               title="Upišite hrvatski broj mobitela u formatu +385 91 123 4567"
               maxLength={17}
             />
-          ) : field === 'poštanski broj' ? (
+          ) : field === 'postanskibroj_osiguranika' ? (
             <input
-              name="postanskiBroj"
+              name="postanskibroj_osiguranika"
               type="text"
               className="form-input"
-              placeholder={placeholders.postanskiBroj}
-              value={osiguranik.postanskiBroj}
+              placeholder={placeholders.postanskibroj_osiguranika}
+              value={osiguranik.postanskibroj_osiguranika}
               onChange={handleOsiguranikChange}
               required
             />
-          ) : field === 'grad' ? (
+          ) : field === 'drzava_osiguranika' ? (
             <input
-              name="grad"
+              name="drzava_osiguranika"
               type="text"
               className="form-input"
-              placeholder={placeholders.grad}
-              value={osiguranik.grad}
-              onChange={handleOsiguranikChange}
-              required
-            />
-          ) : field === 'država' ? (
-            <input
-              name="drzava"
-              type="text"
-              className="form-input"
-              placeholder={placeholders.drzava}
-              value={osiguranik.drzava}
+              placeholder={placeholders.drzava_osiguranika}
+              value={osiguranik.drzava_osiguranika}
               onChange={handleOsiguranikChange}
               required
             />
           ) : (
             <input
-              name={field}
-              type={field === 'mail' ? 'email' : 'text'}
+              name="mail_osiguranika"
+              type="email"
               className="form-input"
               placeholder={placeholders[field] || ""}
-              value={osiguranik[field]}
+              value={osiguranik.mail_osiguranika}
               onChange={handleOsiguranikChange}
               required
             />
@@ -250,16 +242,16 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
       </div>
 
       <h2 className="nesreca-title">Podaci o vozaču</h2>
-      {!isti && inputFields.map(field => (
+      {!isti && vozacInputFields.map(field => (
         <div className="form-group" key={"vozac-" + field}>
           <label className="form-label">
-            {field === 'mail'
+            {field === 'mail_vozaca'
               ? 'Email:*'
-              : `${field.charAt(0).toUpperCase() + field.slice(1)}:*`}
+              : `${field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, ' ')}:*`}
           </label>
-          {field === 'adresa' ? (
+          {field === 'adresa_vozaca' ? (
             <AddressAutocomplete
-              value={vozac.adresa}
+              value={vozac.adresa_vozaca}
               onChange={res => {
                 const components = res.address_components || [];
                 const addr = extractStreetAddress(components) || res.formatted_address || res.formatted || res.description || res;
@@ -269,63 +261,53 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
                 onChange({
                   vozac: {
                     ...vozac,
-                    adresa: addr,
-                    postanskiBroj: postBroj,
+                    adresa_vozaca: addr,
+                    postanskibroj_vozaca: postBroj,
+                    drzava_vozaca: drzava,
                     grad,
-                    drzava
                   }
                 });
               }}
-              placeholder={placeholders.adresa}
+              placeholder={placeholders.adresa_vozaca}
               className="form-input"
             />
-          ) : field === 'kontakt' ? (
+          ) : field === 'kontaktbroj_vozaca' ? (
             <input
-              name="kontakt"
+              name="kontaktbroj_vozaca"
               type="tel"
               className="form-input"
-              placeholder={placeholders.kontakt}
-              value={vozac.kontakt}
+              placeholder={placeholders.kontaktbroj_vozaca}
+              value={vozac.kontaktbroj_vozaca}
               onChange={handleVozacChange}
               required
               pattern={HR_PHONE_PATTERN}
               title="Upišite hrvatski broj mobitela u formatu +385 91 123 4567"
               maxLength={17}
             />
-          ) : field === 'poštanski broj' ? (
+          ) : field === 'postanskibroj_vozaca' ? (
             <input
-              name="postanskiBroj"
+              name="postanskibroj_vozaca"
               type="text"
               className="form-input"
-              placeholder={placeholders.postanskiBroj}
-              value={vozac.postanskiBroj}
+              placeholder={placeholders.postanskibroj_vozaca}
+              value={vozac.postanskibroj_vozaca}
               onChange={handleVozacChange}
               required
             />
-          ) : field === 'grad' ? (
+          ) : field === 'drzava_vozaca' ? (
             <input
-              name="grad"
+              name="drzava_vozaca"
               type="text"
               className="form-input"
-              placeholder={placeholders.grad}
-              value={vozac.grad}
-              onChange={handleVozacChange}
-              required
-            />
-          ) : field === 'država' ? (
-            <input
-              name="drzava"
-              type="text"
-              className="form-input"
-              placeholder={placeholders.drzava}
-              value={vozac.drzava}
+              placeholder={placeholders.drzava_vozaca}
+              value={vozac.drzava_vozaca}
               onChange={handleVozacChange}
               required
             />
           ) : (
             <input
               name={field}
-              type={field === 'mail' ? 'email' : 'text'}
+              type={field === 'mail_vozaca' ? 'email' : 'text'}
               className="form-input"
               placeholder={placeholders[field] || ""}
               value={vozac[field]}
@@ -339,10 +321,10 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
       <div className="form-group">
         <label className="form-label">Broj vozačke dozvole:*</label>
         <input
-          name="brojVozacke"
+          name="brojvozackedozvole"
           className="form-input"
-          placeholder={placeholders.brojVozacke}
-          value={vozac.brojVozacke || ""}
+          placeholder={placeholders.brojVozackedozvole}
+          value={vozac.brojvozackedozvole || ""}
           onChange={handleVozacChange}
           required
           pattern="^[A-Za-z0-9]{7,12}$"
@@ -354,13 +336,13 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
       <div className="form-group">
         <label className="form-label">Kategorija vozačke dozvole:*</label>
         <select
-          name="kategorijaVozacke"
-          value={vozac.kategorijaVozacke || ""}
+          name="kategorijavozackedozvole"
+          value={vozac.kategorijavozackedozvole || ""}
           onChange={handleVozacChange}
           className="form-input"
           required
         >
-          <option value="">{placeholders.kategorijaVozacke}</option>
+          <option value="">{placeholders.kategorijaVozackedozvole}</option>
           {['AM', 'A1', 'A2', 'A', 'B', 'BE', 'C', 'CE', 'D', 'DE', 'F', 'G', 'M', 'H'].map(opt => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
@@ -370,11 +352,11 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
       <div className="form-group">
         <label className="form-label">Valjanost vozačke dozvole:*</label>
         <input
-          name="valjanostVozacke"
+          name="valjanostvozackedozvole"
           type="date"
           className="form-input"
-          placeholder={placeholders.valjanostVozacke}
-          value={vozac.valjanostVozacke || ""}
+          placeholder={placeholders.valjanostVozackedozvole}
+          value={vozac.valjanostvozackedozvole || ""}
           onChange={handleVozacChange}
           required
         />
