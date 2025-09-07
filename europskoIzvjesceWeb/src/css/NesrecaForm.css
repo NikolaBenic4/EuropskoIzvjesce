@@ -20,9 +20,6 @@ html, body {
   margin-right: auto;
   margin-top: 32px;
   margin-bottom: 32px;
-  /* Padding sa strane za sadržaj */
-  padding-left: 1rem;
-  padding-right: 1rem;
   box-sizing: border-box;
   /* Nema border, nema box-shadow */
   border: none;
@@ -239,59 +236,68 @@ html, body {
 /* NAVIGATION BUTTONS */
 .navigation-buttons {
   display: flex;
-  gap: 18px;
-  justify-content: center;
-  margin-top: 2.4rem;
-}
-.navigation-buttons .back-button,
-.navigation-buttons .next-button {
-  flex: 1 1 0;
-  min-width: 180px;
-  max-width: 350px;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 2rem;
   width: 100%;
-  padding: 0.8rem 0;
+}
+.back-button,
+.next-button {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.8rem 2rem;
   font-size: 1rem;
   font-weight: 700;
-  border-radius: 7px;
+  border-radius: 5px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border: none;
+  background-color: #002060;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  transition: background-color 0.2s, transform 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  outline: none;
-  background-color: #003366;
-  color: #fff;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-  transition: background-color 0.2s, color 0.18s, transform 0.15s;
 }
-.navigation-buttons .back-button:hover,
-.navigation-buttons .next-button:hover {
+
+.back-button:hover,
+.next-button:hover,
+.back-button:focus,
+.next-button:focus {
   background-color: #001f4d;
   transform: translateY(-2px);
+  outline: none;
 }
+
+.back-button:active,
+.next-button:active {
+  background-color: #003366;
+}
+
+/* MOBILNA OPTIMIZACIJA — 100% širina, gumbi ispod jednog drugog */
 @media (max-width: 600px) {
   .navigation-buttons {
     flex-direction: column;
     gap: 10px;
     margin-top: 1.5rem;
     justify-content: space-between;
-    flex-wrap: wrap;
-  }
-  .navigation-buttons .back-button,
-  .navigation-buttons .next-button {
-    min-width: 0;
-    max-width: 100%;
     width: 100%;
+  }
+  .back-button,
+  .next-button {
     padding: 1rem 0;
     font-size: 1.05rem;
     border-radius: 10px;
-    margin-top: 6px;
+    margin-top: 0;
     box-shadow: none;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
 }
-
 /* MAP SECTION */
 .map-section {
   background: #fff;

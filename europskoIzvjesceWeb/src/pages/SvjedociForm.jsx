@@ -4,28 +4,28 @@ import AddressAutocomplete from "../components/AddressAutocomplete";
 import { fetchAddressesDGU } from "../services/addressService";
 
 export default function SvjedociForm({ data, onNext, onBack }) {
-  // Lokalni state, inicijaliziraj uvijek sa stringovima!
+  // Lokalni state podudaranje s bazom!
   const [formData, setFormData] = useState(() => ({
-    ozlijedeneososbe: !!data?.ozlijedeneososbe,
-    stetanastvarima: !!data?.stetanastvarima,
-    stetanavozilima: !!data?.stetanavozilima,
-    hasSvjedoci: !!data?.hasSvjedoci,
-    ime_prezime_svjedok: data?.ime_prezime_svjedok?.[0] || "",
-    adresa_svjedok: data?.adresa_svjedok?.[0] || "",
-    kontakt_svjedok: data?.kontakt_svjedok?.[0] || ""
+    ozlijedeneososbe: data?.ozlijedeneososbe || false,
+    stetanastvarima: data?.stetanastvarima || false,
+    stetanavozilima: data?.stetanavozilima || false,
+    hasSvjedoci: data?.hasSvjedoci || false,
+    ime_prezime_svjedok: data?.ime_prezime_svjedok || [""],
+    adresa_svjedok: data?.adresa_svjedok || [""],
+    kontakt_svjedok: data?.kontakt_svjedok || [""]
   }));
   const [error, setError] = useState("");
 
   // Sync na promjenu props
   useEffect(() => {
     setFormData({
-      ozlijedeneososbe: !!data?.ozlijedeneososbe,
-      stetanastvarima: !!data?.stetanastvarima,
-      stetanavozilima: !!data?.stetanavozilima,
-      hasSvjedoci: !!data?.hasSvjedoci,
-      ime_prezime_svjedok: data?.ime_prezime_svjedok?.[0] || "",
-      adresa_svjedok: data?.adresa_svjedok?.[0] || "",
-      kontakt_svjedok: data?.kontakt_svjedok?.[0] || ""
+      ozlijedeneososbe: data?.ozlijedeneososbe || false,
+      stetanastvarima: data?.stetanastvarima || false,
+      stetanavozilima: data?.stetanavozilima || false,
+      hasSvjedoci: data?.hasSvjedoci || false,
+      ime_prezime_svjedok: data?.ime_prezime_svjedok || [""],
+      adresa_svjedok: data?.adresa_svjedok || [""],
+      kontakt_svjedok: data?.kontakt_svjedok || [""]
     });
   }, [data]);
 
@@ -34,10 +34,12 @@ export default function SvjedociForm({ data, onNext, onBack }) {
     if (field === "hasSvjedoci") setError("");
   };
 
+  // Unos za svjedoka (samo 1, možeš lako proširiti za više kasnije)
   const handleChange = (field, value) => {
+    // field: ime_prezime_svjedok, adresa_svjedok, kontakt_svjedok
     setFormData((p) => ({
       ...p,
-      [field]: value || ""
+      [field]: [value] // uvijek array (baza očekuje array/string[])
     }));
     setError("");
   };
@@ -47,9 +49,9 @@ export default function SvjedociForm({ data, onNext, onBack }) {
     setError("");
 
     if (formData.hasSvjedoci) {
-      const imePrezime = (formData.ime_prezime_svjedok || "").trim();
-      const ulica = (formData.adresa_svjedok || "").trim();
-      const kontakt = (formData.kontakt_svjedok || "").trim();
+      const imePrezime = (formData.ime_prezime_svjedok?.[0] || "").trim();
+      const ulica = (formData.adresa_svjedok?.[0] || "").trim();
+      const kontakt = (formData.kontakt_svjedok?.[0] || "").trim();
 
       if (!imePrezime || !ulica || !kontakt) {
         setError("Molim te ispuni sva polja za svjedoka");
@@ -61,19 +63,18 @@ export default function SvjedociForm({ data, onNext, onBack }) {
       }
     }
 
-    // Backend očekuje polja kao array (string[])
+    // Obavezna snake_case polja za backend!
     const formToSend = {
       ozlijedeneososbe: !!formData.ozlijedeneososbe,
       stetanastvarima: !!formData.stetanastvarima,
       stetanavozilima: !!formData.stetanavozilima,
-      ime_prezime_svjedok: formData.hasSvjedoci ? [formData.ime_prezime_svjedok] : [],
-      adresa_svjedok: formData.hasSvjedoci ? [formData.adresa_svjedok] : [],
-      kontakt_svjedok: formData.hasSvjedoci ? [formData.kontakt_svjedok] : []
+      ime_prezime_svjedok: formData.hasSvjedoci ? formData.ime_prezime_svjedok : [],
+      adresa_svjedok: formData.hasSvjedoci ? formData.adresa_svjedok : [],
+      kontakt_svjedok: formData.hasSvjedoci ? formData.kontakt_svjedok : [],
     };
     onNext?.(formToSend);
   };
 
-  // Prikaži max 2 prijedloga
   const searchAddresses = async (query, setSug, setLoad, setShow) => {
     setLoad(true);
     try {
@@ -139,7 +140,7 @@ export default function SvjedociForm({ data, onNext, onBack }) {
             <input
               type="text"
               className="form-input"
-              value={formData.ime_prezime_svjedok}
+              value={formData.ime_prezime_svjedok[0]}
               onChange={(e) => handleChange("ime_prezime_svjedok", e.target.value)}
               placeholder="Unesite ime i prezime"
               required
@@ -148,7 +149,7 @@ export default function SvjedociForm({ data, onNext, onBack }) {
           <div className="form-group">
             <label className="form-label">Ulica i kućni broj</label>
             <AddressAutocomplete
-              value={formData.adresa_svjedok}
+              value={formData.adresa_svjedok[0]}
               onChange={(val) => handleChange("adresa_svjedok", val)}
               placeholder="Primjer: Ilica 15"
               className="form-input"
@@ -160,7 +161,7 @@ export default function SvjedociForm({ data, onNext, onBack }) {
             <input
               type="text"
               className="form-input"
-              value={formData.kontakt_svjedok}
+              value={formData.kontakt_svjedok[0]}
               onChange={(e) => handleChange("kontakt_svjedok", e.target.value)}
               placeholder="Broj mobitela ili telefona"
               required

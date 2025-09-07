@@ -1,6 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import "../css/PotpisForm.css";
+import trimCanvas from 'trim-canvas';
+// ili bilo što slično!
+
 
 const initialState = {
   potpis: null,
@@ -21,53 +24,95 @@ const PotpisForm = ({ data, onNext, onBack }) => {
   const [errors, setErrors] = useState({});
 
   const sigCanvas = useRef(null);
+  const containerRef = useRef(null);
   const videoRef = useRef(null);
-  const scanIntervalRef = useRef(null);
-  const tesseractWorkerRef = useRef(null);
+  const [canvasDims, setCanvasDims] = useState({ width: 400, height: 150 });
+
+  // Responsive signature pad
+  const updateCanvasSize = useCallback(() => {
+    if (containerRef.current) {
+      const parentWidth = containerRef.current.offsetWidth;
+      let width = Math.max(260, Math.min(parentWidth - 4, 450));
+      let height = Math.round(width * 0.375);
+      setCanvasDims({ width, height });
+      if (sigCanvas.current) sigCanvas.current.clear();
+      setFormData(f => ({
+        ...f,
+        potpis: null,
+        datum_potpisa: null
+      }));
+    }
+  }, [setCanvasDims]);
+
+  useEffect(() => {
+    updateCanvasSize();
+    window.addEventListener("resize", updateCanvasSize);
+    return () => window.removeEventListener("resize", updateCanvasSize);
+  }, [updateCanvasSize]);
 
   useEffect(() => {
     setFormData({ ...initialState, ...(data || {}) });
   }, [data]);
 
-  // Novi način: frontend pita backend kad ima dovoljno IBAN znakova
+  // Kamera za skener IBAN-a
   useEffect(() => {
-  const fetchBanka = async () => {
-    // Ukloni sve razmake i spec. znakove iz IBAN-a jer backend radi isto!
-    const ibanClean = (formData.iban || "").replace(/\W/g, "").toUpperCase();
-    if (ibanClean.length >= 11 && ibanClean.startsWith("HR")) {
-      try {
-        const res = await fetch(`/api/banka/banka-za-iban?iban=${encodeURIComponent(formData.iban)}`);
-        if (res.ok) {
-          const { naziv_banke } = await res.json();
-          setFormData(prev => ({ ...prev, banka: naziv_banke || "" }));
-        } else {
+    let stream = null;
+    if (scanActive) {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal:1280 }, height: { ideal: 720 }} })
+        .then(function (medStream) {
+          stream = medStream;
+          if (videoRef.current) videoRef.current.srcObject = medStream;
+          setCameraError("");
+        })
+        .catch(() => setCameraError("Ne mogu otvoriti kameru."));
+    }
+    return () => {
+      if (videoRef.current) videoRef.current.srcObject = null;
+      if (stream) stream.getTracks().forEach(track => track.stop());
+    };
+  }, [scanActive]);
+
+  // Automatski fetch banke kad je IBAN validan
+  useEffect(() => {
+    const fetchBanka = async () => {
+      const ibanClean = (formData.iban || "").replace(/\W/g, "").toUpperCase();
+      if (ibanClean.length >= 11 && ibanClean.startsWith("HR")) {
+        try {
+          const res = await fetch(`/api/banka/banka-za-iban?iban=${encodeURIComponent(formData.iban)}`);
+          if (res.ok) {
+            const { naziv_banke } = await res.json();
+            setFormData(prev => ({ ...prev, banka: naziv_banke || "" }));
+          } else {
+            setFormData(prev => ({ ...prev, banka: "" }));
+          }
+        } catch {
           setFormData(prev => ({ ...prev, banka: "" }));
         }
-      } catch {
+      } else {
         setFormData(prev => ({ ...prev, banka: "" }));
       }
-    } else {
-      setFormData(prev => ({ ...prev, banka: "" }));
+    };
+    fetchBanka();
+    // eslint-disable-next-line
+  }, [formData.iban]);
+
+  // Potpis - DOZVOLJENE SAMO metode s canvas instance!
+const handleEndSignature = () => {
+  if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
+    let potpisUrl;
+    try {
+      potpisUrl = sigCanvas.current.getTrimmedCanvas().toDataURL("image/png");
+    } catch {
+      potpisUrl = sigCanvas.current.toDataURL("image/png");
     }
-  };
-  fetchBanka();
-}, [formData.iban]);
-
-
-  function extractIban(text) {
-    const match = text.replace(/\s+/g, "").match(/HR\d{19}/i);
-    return match ? match[0].replace(/(.{4})/g, "$1 ").trim() : "";
+    setFormData(f => ({
+      ...f,
+      potpis: potpisUrl,
+      datum_potpisa: new Date().toISOString()
+    }));
   }
+};
 
-  const handleEndSignature = () => {
-    if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
-      setFormData(f => ({
-        ...f,
-        potpis: sigCanvas.current.toDataURL(),
-        datum_potpisa: new Date().toISOString()
-      }));
-    }
-  };
 
   const handleClearSignature = () => {
     if (sigCanvas.current) {
@@ -79,8 +124,6 @@ const PotpisForm = ({ data, onNext, onBack }) => {
       }));
     }
   };
-
-  // Skeniranje putem OCR ostaje kao i prije
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -112,17 +155,28 @@ const PotpisForm = ({ data, onNext, onBack }) => {
         Potpis i podaci o banci
       </h2>
 
-      <div className="form-group">
+      <div className="form-group" ref={containerRef}>
         <label className="form-label">Potpis:</label>
         <SignatureCanvas
-          penColor="black"
-          canvasProps={{
-            width: 400,
-            height: 150,
-            className: "sigCanvas",
-            style: { border: "2px solid #003366", borderRadius: "8px" }
-          }}
           ref={sigCanvas}
+          penColor="#002060"
+          minWidth={2}
+          maxWidth={4.5}
+          backgroundColor="#fff"
+          canvasProps={{
+            width: canvasDims.width,
+            height: canvasDims.height,
+            className: "sigCanvas",
+            style: {
+              border: "2px solid #003366",
+              borderRadius: "8px",
+              background: "#fff",
+              width: "100%",
+              maxWidth: "100%",
+              display: "block",
+              touchAction: "none"
+            }
+          }}
           onEnd={handleEndSignature}
         />
         <button
@@ -135,8 +189,6 @@ const PotpisForm = ({ data, onNext, onBack }) => {
         </button>
         {errors.potpis && <div className="error-message">{errors.potpis}</div>}
       </div>
-
-      {/* datum_potpisa je skriveno polje, ne prikazuje se korisniku */}
 
       <div className="form-group scan-group">
         <label htmlFor="ibanInput" className="form-label">

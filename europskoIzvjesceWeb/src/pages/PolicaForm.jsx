@@ -74,8 +74,7 @@ const PolicaForm = ({ data, onNext, onBack }) => {
   };
 
   return (
-    <div className="nesreca-container" style={{ position: "relative" }}>
-      <form className="nesreca-form" onSubmit={handleSubmit}>
+     <form className="nesreca-form" onSubmit={handleSubmit}>
         <h2 className="nesreca-title">Polica osiguranja</h2>
 
         <div className="form-group">
@@ -197,7 +196,6 @@ const PolicaForm = ({ data, onNext, onBack }) => {
           </button>
         </div>
       </form>
-    </div>
   );
 };
 
