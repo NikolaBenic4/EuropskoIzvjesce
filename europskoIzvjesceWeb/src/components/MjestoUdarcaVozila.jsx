@@ -135,6 +135,7 @@ const MjestoUdarcaVozilo = ({
           {visibleArrows}
         </div>
         <br />
+        <br />
       </div>
       <div className="car-points-grid">
         {points.map((point) => (

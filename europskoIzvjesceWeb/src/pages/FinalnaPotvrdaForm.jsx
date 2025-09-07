@@ -8,7 +8,7 @@ const FinalnaPotvrdaForm = ({
   onBack
 }) => {
   // Mail je uvijek .mail u tvojoj aplikaciji!
-  const emailOsiguranika = osiguranik?.mail || "-";
+  const emailOsiguranika = osiguranik?.mail_osiguranika || osiguranik?.mail || "-";
 
   // Debug - za razvoj makni u produkciji!
   // console.log("osiguranik za potvrdu", osiguranik);

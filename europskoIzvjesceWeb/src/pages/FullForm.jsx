@@ -12,7 +12,6 @@ import PotpisForm from "./PotpisForm";
 import FinalnaPotvrdaForm from "./FinalnaPotvrdaForm";
 import "../css/FullForm.css";
 
-// Mapiraj osiguranika na nazivlja iz baze
 const mapOsiguranikToDb = (osiguranik) => ({
   ime_osiguranika: osiguranik.ime,
   prezime_osiguranika: osiguranik.prezime,
@@ -22,8 +21,6 @@ const mapOsiguranikToDb = (osiguranik) => ({
   mail_osiguranika: osiguranik.mail,
   kontaktbroj_osiguranika: osiguranik.kontakt,
 });
-
-// Po potrebi dodaj isto za vozača, osiguranje, polica...
 
 const stepKeys = [
   "nesreca",
@@ -47,6 +44,15 @@ const stepTitles = [
   "Potpis",
 ];
 
+function deepMergeVozacPolica(oldVal, partial) {
+  return {
+    ...oldVal,
+    ...partial,
+    osiguranik: { ...(oldVal?.osiguranik || {}), ...(partial?.osiguranik || {}) },
+    vozac: { ...(oldVal?.vozac || {}), ...(partial?.vozac || {}) },
+  };
+}
+
 export default function FullForm() {
   const [data, setData] = useState(() => {
     const stored = sessionStorage.getItem("fullFormData");
@@ -58,7 +64,6 @@ export default function FullForm() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Spremi svaki korak lokalno
   useEffect(() => {
     try {
       sessionStorage.setItem("fullFormData", JSON.stringify(data));
@@ -69,22 +74,46 @@ export default function FullForm() {
     setCompletedSteps((prev) => (prev.includes(step) ? prev : [...prev, step]));
   }, [step]);
 
-  // Funkcija za mapiranje svih podataka prije slanja backendu
+  // Dublji merge i za ručne promjene u step formama
+  const onStepChange = (stepKey, newFields) => {
+    setData(prev => {
+      const oldVal = prev[stepKey] || {};
+      let newVal = {};
+      if (stepKey === "vozacPolica") {
+        newVal = deepMergeVozacPolica(oldVal, newFields);
+      } else {
+        newVal = { ...oldVal, ...newFields };
+      }
+      return { ...prev, [stepKey]: newVal };
+    });
+  };
+
+  const next = (partial) => {
+    onStepChange(stepKeys[step], partial);
+    if (step === stepKeys.length - 1) {
+      navigate("/slanjePotvrde");
+    } else {
+      setStep((s) => Math.min(s + 1, stepKeys.length - 1));
+    }
+  };
+
+  const prev = () => setStep((s) => Math.max(s - 1, 0));
+  const goToStep = (idx) => {
+    if (completedSteps.includes(idx)) setStep(idx);
+  };
+
   const getMappedData = () => {
     const vozacPolica = data.vozacPolica || {};
     const osiguranikMapped = mapOsiguranikToDb(vozacPolica.osiguranik || {});
-    // Dodaj mapiranja za ostale entitete po potrebi
     return {
       ...data,
       vozacPolica: {
         ...vozacPolica,
         osiguranik: osiguranikMapped,
       },
-      // primjer: osiguranje: mapOsiguranjeToDb(data.osiguranje || {})
     };
   };
 
-  // Pošalji podatke na backend kad dođeš na /slanjePotvrde
   const sendAllDataToBackend = useCallback(async () => {
     const mappedData = getMappedData();
     try {
@@ -94,7 +123,6 @@ export default function FullForm() {
         body: JSON.stringify(mappedData),
       });
       if (!resp.ok) throw new Error("Greška pri slanju na server!");
-      // po želji dalje
     } catch (e) {
       alert(e.message || "Dogodila se pogreška!");
     }
@@ -106,82 +134,70 @@ export default function FullForm() {
     }
   }, [location.pathname, sendAllDataToBackend]);
 
-  // Navigacija kroz korake
-  const next = (partial) => {
-    setData((prev) => ({
-      ...prev,
-      [stepKeys[step]]: partial,
-    }));
-    if (step === stepKeys.length - 1) {
-      navigate("/slanjePotvrde");
-    } else {
-      setStep((s) => Math.min(s + 1, stepKeys.length - 1));
-    }
-  };
-  const prev = () => setStep((s) => Math.max(s - 1, 0));
-  const goToStep = (idx) => {
-    if (completedSteps.includes(idx)) setStep(idx);
-  };
-
-  // Prikaz koraka
   const forms = [
     <NesrecaForm
       key="nesreca"
       data={data.nesreca || {}}
       onNext={next}
       onBack={step > 0 ? prev : null}
+      onChange={(fields) => onStepChange("nesreca", fields)}
     />,
     <SvjedociForm
       key="svjedoci"
       data={data.svjedoci || {}}
       onNext={next}
       onBack={prev}
+      onChange={(fields) => onStepChange("svjedoci", fields)}
     />,
     <VozacOsiguranikForm
       key="vozacPolica"
       data={data.vozacPolica || {}}
       onNext={next}
       onBack={prev}
+      onChange={(fields) => onStepChange("vozacPolica", fields)}
     />,
     <OpisForm
       key="opis"
       data={data.opis || {}}
       onNext={next}
       onBack={prev}
+      onChange={(fields) => onStepChange("opis", fields)}
     />,
     <VoziloForm
       key="vozilo"
       data={data.vozilo || {}}
       onNext={next}
       onBack={prev}
+      onChange={(fields) => onStepChange("vozilo", fields)}
     />,
     <OsiguravajuceDrustvoForm
       key="osiguranje"
       data={data.osiguranje || {}}
       onNext={next}
       onBack={prev}
+      onChange={(fields) => onStepChange("osiguranje", fields)}
     />,
     <PolicaForm
       key="polica"
       data={data.polica || {}}
       onNext={next}
       onBack={prev}
+      onChange={(fields) => onStepChange("polica", fields)}
     />,
     <PotpisForm
       key="potpis"
       data={data.potpis || {}}
       onNext={next}
       onBack={prev}
+      onChange={(fields) => onStepChange("potpis", fields)}
     />,
   ];
 
-  // Prikaz završne potvrde na kraju
   if (location.pathname === "/slanjePotvrde") {
     const vozacPolica = data.vozacPolica || {};
-    const osiguranikMapped = mapOsiguranikToDb(vozacPolica.osiguranik || {});
+    const osiguranikOriginal = vozacPolica.osiguranik || {};
     const osiguranje = data.osiguranje || {};
 
-    // Funkcija za potvrdu slanja koja koristi mapirane podatke:
     const handleSend = async (mail) => {
       const mappedData = getMappedData();
       try {
@@ -200,6 +216,7 @@ export default function FullForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ mail, data: mappedData }),
         });
+        sessionStorage.removeItem("fullFormData");
         alert("Prijava uspješno poslana i PDF će stići na e-mail!");
         navigate("/");
       } catch (err) {
@@ -207,19 +224,16 @@ export default function FullForm() {
       }
     };
 
-    const handleBack = () => navigate(-1);
-
     return (
       <FinalnaPotvrdaForm
-        osiguranik={osiguranikMapped}
+        osiguranik={osiguranikOriginal}
         osiguranje={osiguranje}
         onSend={handleSend}
-        onBack={handleBack}
+        onBack={() => setStep(stepKeys.length - 1)}
       />
     );
   }
 
-  // Standardni prikaz forme po koracima
   return (
     <div className="fullform-site">
       <div className="fullform-header">

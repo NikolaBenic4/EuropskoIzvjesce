@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import '../css/VozacOsiguranikForm.css';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 
@@ -30,31 +30,6 @@ function extractStreetAddress(components) {
   if (street) return street.long_name;
   return "";
 }
-
-// Mapiraj prema tvojoj bazi
-const mapOsiguranikToDb = (o) => ({
-  ime_osiguranika: o.ime,
-  prezime_osiguranika: o.prezime,
-  adresa_osiguranika: o.adresa,
-  postanskibroj_osiguranika: o.postanskiBroj,
-  grad_osiguranika: o.grad,
-  drzava_osiguranika: o.drzava,
-  kontaktbroj_osiguranika: o.kontakt,
-  mail_osiguranika: o.mail,
-});
-const mapVozacToDb = (v) => ({
-  ime_vozaca: v.ime,
-  prezime_vozaca: v.prezime,
-  adresa_vozaca: v.adresa,
-  postanskibroj_vozaca: v.postanskiBroj,
-  grad_vozaca: v.grad,
-  drzava_vozaca: v.drzava,
-  kontaktbroj_vozaca: v.kontakt,
-  mail_vozaca: v.mail,
-  brojvozackedozvole: v.brojVozacke,
-  kategorijavozackedozvole: v.kategorijaVozacke,
-  valjanostvozackedozvole: v.valjanostVozacke,
-});
 
 const OsiguranikInitial = {
   ime: "",
@@ -96,82 +71,76 @@ const placeholders = {
   valjanostVozacke: "Odaberite valjanost vozačke dozvole"
 };
 
-// Regex: +385 (razmak opcionalan) 9xx (mobilni) (razmak opcionalan) znamenke (6-7 ukupno)
 const HR_PHONE_PATTERN = "^\\+385 ?9[1-9][0-9] ?\\d{3,4} ?\\d{3,4}$";
 
-export default function VozacPolicaForm({ data, onNext, onBack }) {
-  const [osiguranik, setOsiguranik] = useState({ ...OsiguranikInitial, ...(data?.osiguranik || {}) });
-  const [vozac, setVozac] = useState({ ...VozacInitial, ...(data?.vozac || {}) });
-  const [isti, setIsti] = useState(!(data && data.vozac && data.vozac.ime !== data.osiguranik?.ime));
-  const [error, setError] = useState("");
+export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
+  // Controlled pristup: nema više lokalnog useState, sve dolazi iz props.data!
+  const osiguranik = { ...OsiguranikInitial, ...(data?.osiguranik || {}) };
+  const vozac = { ...VozacInitial, ...(data?.vozac || {}) };
+  const isti = data?.isti ?? (
+    vozac.ime === osiguranik.ime && vozac.prezime === osiguranik.prezime
+  );
+  const error = data?.error || "";
 
-  useEffect(() => {
-    setOsiguranik({ ...OsiguranikInitial, ...(data?.osiguranik || {}) });
-    setVozac({ ...VozacInitial, ...(data?.vozac || {}) });
-    setIsti(!(data && data.vozac && data.vozac.ime !== data.osiguranik?.ime));
-  }, [data]);
-
-  useEffect(() => {
-    if (isti) {
-      setVozac(v => ({
-        ...v,
-        ime: osiguranik.ime,
-        prezime: osiguranik.prezime,
-        adresa: osiguranik.adresa,
-        postanskiBroj: osiguranik.postanskiBroj,
-        grad: osiguranik.grad,
-        drzava: osiguranik.drzava,
-        kontakt: osiguranik.kontakt,
-        mail: osiguranik.mail
-      }));
-    }
-  }, [isti, osiguranik]);
-
-  useEffect(() => {
-    if (!isti) setVozac(VozacInitial);
-  }, [isti]);
-
+  // Change handlers
   const handleOsiguranikChange = e => {
     const { name, value } = e.target;
-    setOsiguranik(o => ({ ...o, [name]: value }));
-    if (isti) setVozac(v => ({ ...v, [name]: value }));
+    const updated = { ...osiguranik, [name]: value };
+    let vozacUpdate = isti
+      ? { ...vozac, [name]: value }
+      : vozac;
+    onChange({
+      osiguranik: updated,
+      vozac: vozacUpdate
+    });
   };
 
   const handleVozacChange = e => {
     const { name, value } = e.target;
-    setVozac(v => ({ ...v, [name]: value }));
+    onChange({
+      vozac: { ...vozac, [name]: value }
+    });
   };
 
-  const handleIstiChange = e => setIsti(e.target.checked);
+  const handleIstiChange = e => {
+    const jeIsti = e.target.checked;
+    let vozacNew = jeIsti
+      ? { ...vozac, ...osiguranik }
+      : VozacInitial;
+    onChange({ isti: jeIsti, vozac: vozacNew });
+  };
 
+  // Validacija (po potrebi možeš dodati parent error handling)
   const validateForm = () => {
     const imaBrojOsiguranik = /\d/.test(osiguranik.adresa.trim());
     if (!imaBrojOsiguranik) {
-      setError("Unesite kućni broj u adresu osiguranika.");
+      onChange({ error: "Unesite kućni broj u adresu osiguranika." });
       return false;
     }
     if (!isti) {
       const imaBrojVozac = /\d/.test(vozac.adresa.trim());
       if (!imaBrojVozac) {
-        setError("Unesite kućni broj u adresu vozača.");
+        onChange({ error: "Unesite kućni broj u adresu vozača." });
         return false;
       }
     }
-    setError("");
+    onChange({ error: "" });
     return true;
   };
 
   const handleSubmit = e => {
     e.preventDefault();
     if (!validateForm()) return;
-    const zaSlanje = {
-      osiguranik: mapOsiguranikToDb(osiguranik),
-      vozac: mapVozacToDb(vozac)
-    };
-    onNext?.(zaSlanje);
+    onNext({
+      osiguranik,
+      vozac,
+      isti
+    });
   };
 
-  const inputFields = ['ime', 'prezime', 'adresa', 'poštanski broj', 'grad', 'država', 'kontakt', 'mail'];
+  const inputFields = [
+    'ime', 'prezime', 'adresa', 'poštanski broj', 'grad', 'država', 'kontakt', 'mail'
+  ];
 
   return (
     <form className="nesreca-form" onSubmit={handleSubmit}>
@@ -192,21 +161,20 @@ export default function VozacPolicaForm({ data, onNext, onBack }) {
                 const postBroj = extractPostalCode(components);
                 const grad = extractCity(components);
                 const drzava = extractCountry(components);
-                setOsiguranik(o => ({
-                  ...o,
+                let updated = {
+                  ...osiguranik,
                   adresa: addr,
                   postanskiBroj: postBroj,
-                  grad: grad,
-                  drzava: drzava
-                }));
-                if (isti)
-                  setVozac(v => ({
-                    ...v,
-                    adresa: addr,
-                    postanskiBroj: postBroj,
-                    grad: grad,
-                    drzava: drzava
-                  }));
+                  grad,
+                  drzava
+                };
+                let vozacUpdate = isti
+                  ? { ...vozac, adresa: addr, postanskiBroj: postBroj, grad, drzava }
+                  : vozac;
+                onChange({
+                  osiguranik: updated,
+                  vozac: vozacUpdate
+                });
               }}
               placeholder={placeholders.adresa}
               className="form-input"
@@ -298,13 +266,15 @@ export default function VozacPolicaForm({ data, onNext, onBack }) {
                 const postBroj = extractPostalCode(components);
                 const grad = extractCity(components);
                 const drzava = extractCountry(components);
-                setVozac(v => ({
-                  ...v,
-                  adresa: addr,
-                  postanskiBroj: postBroj,
-                  grad: grad,
-                  drzava: drzava
-                }));
+                onChange({
+                  vozac: {
+                    ...vozac,
+                    adresa: addr,
+                    postanskiBroj: postBroj,
+                    grad,
+                    drzava
+                  }
+                });
               }}
               placeholder={placeholders.adresa}
               className="form-input"
@@ -367,25 +337,25 @@ export default function VozacPolicaForm({ data, onNext, onBack }) {
       ))}
 
       <div className="form-group">
-      <label className="form-label">Broj vozačke dozvole:*</label>
-      <input
-        name="brojVozacke"
-        className="form-input"
-        placeholder={placeholders.brojVozacke}
-        value={vozac.brojVozacke}
-        onChange={handleVozacChange}
-        required
-        pattern="^[A-Za-z0-9]{7,12}$"
-        minLength={7}
-        maxLength={12}
-        title="Upišite 7-12 znamenki ili slova (bez razmaka i specijalnih znakova)"
-      />
-    </div>
+        <label className="form-label">Broj vozačke dozvole:*</label>
+        <input
+          name="brojVozacke"
+          className="form-input"
+          placeholder={placeholders.brojVozacke}
+          value={vozac.brojVozacke || ""}
+          onChange={handleVozacChange}
+          required
+          pattern="^[A-Za-z0-9]{7,12}$"
+          minLength={7}
+          maxLength={12}
+          title="Upišite 7-12 znamenki ili slova (bez razmaka i specijalnih znakova)"
+        />
+      </div>
       <div className="form-group">
         <label className="form-label">Kategorija vozačke dozvole:*</label>
         <select
           name="kategorijaVozacke"
-          value={vozac.kategorijaVozacke}
+          value={vozac.kategorijaVozacke || ""}
           onChange={handleVozacChange}
           className="form-input"
           required
@@ -404,7 +374,7 @@ export default function VozacPolicaForm({ data, onNext, onBack }) {
           type="date"
           className="form-input"
           placeholder={placeholders.valjanostVozacke}
-          value={vozac.valjanostVozacke}
+          value={vozac.valjanostVozacke || ""}
           onChange={handleVozacChange}
           required
         />

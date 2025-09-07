@@ -181,11 +181,11 @@ const handleEndSignature = () => {
         />
         <button
           type="button"
-          className="submit-button"
+          className="submmit-button clear-button"
           onClick={handleClearSignature}
           style={{ marginTop: "12px" }}
         >
-          Obriši potpis
+          OBRIŠI POTPIS
         </button>
         {errors.potpis && <div className="error-message">{errors.potpis}</div>}
       </div>
@@ -252,7 +252,7 @@ const handleEndSignature = () => {
                   left: "50%",
                   transform: "translateX(-50%)",
                   color: "#fff",
-                  background: "rgba(0,32,96,0.82)",
+                  background: "#002060d1",
                   padding: "8px 20px",
                   borderRadius: "8px",
                   fontWeight: 600,
