@@ -69,7 +69,7 @@ const placeholders = {
 
 const HR_PHONE_PATTERN = "^\\+385 ?9[1-9][0-9] ?\\d{3,4} ?\\d{3,4}$";
 
-export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
+export default function vozacOsiguranikForm({ data, onNext, onBack, onChange }) {
   // Controlled pristup: nema lokalnog statea, sve u props.data
   const osiguranik = { ...OsiguranikInitial, ...(data?.osiguranik || {}) };
   const vozac = { ...VozacInitial, ...(data?.vozac || {}) };
@@ -137,11 +137,15 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
   };
 
   const inputFields = [
-    'ime_osiguranika', 'prezime_osiguranika', 'adresa_osiguranika', 'postanskibroj_osiguranika', 'drzava_osiguranika', 'kontaktbroj_osiguranika', 'mail_osiguranika'
+    'ime_osiguranika', 'prezime_osiguranika',
+    'adresa_osiguranika', 'postanskibroj_osiguranika',
+    'drzava_osiguranika', 'kontaktbroj_osiguranika', 'mail_osiguranika'
   ];
 
   const vozacInputFields = [
-    'ime_vozaca', 'prezime_vozaca', 'adresa_vozaca', 'postanskibroj_vozaca', 'drzava_vozaca', 'kontaktbroj_vozaca', 'mail_vozaca'
+    'ime_vozaca', 'prezime_vozaca',
+    'adresa_vozaca', 'postanskibroj_vozaca',
+    'drzava_vozaca', 'kontaktbroj_vozaca', 'mail_vozaca'
   ];
 
   return (
@@ -214,13 +218,24 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
               onChange={handleOsiguranikChange}
               required
             />
-          ) : (
+          ) : field === 'mail_osiguranika' ? (
             <input
               name="mail_osiguranika"
               type="email"
               className="form-input"
-              placeholder={placeholders[field] || ""}
+              placeholder={placeholders.mail_osiguranika}
               value={osiguranik.mail_osiguranika}
+              onChange={handleOsiguranikChange}
+              required
+            />
+          ) : (
+            // Ova linija rješava unos za ime_osiguranika i prezime_osiguranika
+            <input
+              name={field}
+              type="text"
+              className="form-input"
+              placeholder={placeholders[field] || ""}
+              value={osiguranik[field]}
               onChange={handleOsiguranikChange}
               required
             />
@@ -304,10 +319,20 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
               onChange={handleVozacChange}
               required
             />
+          ) : field === 'mail_vozaca' ? (
+            <input
+              name="mail_vozaca"
+              type="email"
+              className="form-input"
+              placeholder={placeholders.mail_vozaca}
+              value={vozac.mail_vozaca}
+              onChange={handleVozacChange}
+              required
+            />
           ) : (
             <input
               name={field}
-              type={field === 'mail_vozaca' ? 'email' : 'text'}
+              type="text"
               className="form-input"
               placeholder={placeholders[field] || ""}
               value={vozac[field]}
@@ -323,7 +348,7 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
         <input
           name="brojvozackedozvole"
           className="form-input"
-          placeholder={placeholders.brojVozackedozvole}
+          placeholder={placeholders.brojvozackedozvole}
           value={vozac.brojvozackedozvole || ""}
           onChange={handleVozacChange}
           required
@@ -342,7 +367,7 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
           className="form-input"
           required
         >
-          <option value="">{placeholders.kategorijaVozackedozvole}</option>
+          <option value="">{placeholders.kategorijavozackedozvole}</option>
           {['AM', 'A1', 'A2', 'A', 'B', 'BE', 'C', 'CE', 'D', 'DE', 'F', 'G', 'M', 'H'].map(opt => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
@@ -355,7 +380,7 @@ export default function VozacPolicaForm({ data, onNext, onBack, onChange }) {
           name="valjanostvozackedozvole"
           type="date"
           className="form-input"
-          placeholder={placeholders.valjanostVozackedozvole}
+          placeholder={placeholders.valjanostvozackedozvole}
           value={vozac.valjanostvozackedozvole || ""}
           onChange={handleVozacChange}
           required

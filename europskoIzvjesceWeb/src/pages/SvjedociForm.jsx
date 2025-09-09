@@ -4,7 +4,6 @@ import AddressAutocomplete from "../components/AddressAutocomplete";
 import { fetchAddressesDGU } from "../services/addressService";
 
 export default function SvjedociForm({ data, onNext, onBack }) {
-  // Lokalni state podudaranje s bazom!
   const [formData, setFormData] = useState(() => ({
     ozlijedeneososbe: data?.ozlijedeneososbe || false,
     stetanastvarima: data?.stetanastvarima || false,
@@ -16,7 +15,6 @@ export default function SvjedociForm({ data, onNext, onBack }) {
   }));
   const [error, setError] = useState("");
 
-  // Sync na promjenu props
   useEffect(() => {
     setFormData({
       ozlijedeneososbe: data?.ozlijedeneososbe || false,
@@ -34,12 +32,22 @@ export default function SvjedociForm({ data, onNext, onBack }) {
     if (field === "hasSvjedoci") setError("");
   };
 
-  // Unos za svjedoka (samo 1, možeš lako proširiti za više kasnije)
   const handleChange = (field, value) => {
-    // field: ime_prezime_svjedok, adresa_svjedok, kontakt_svjedok
+    let textValue = value;
+    // Adresa: u inputu prikazujemo uvijek tekst, povuci iz objekta...
+    if (typeof value === "object" && value !== null) {
+      textValue =
+        value.formatted_address ||
+        value.formatted ||
+        value.address ||
+        value.description ||
+        value.label ||
+        value.value ||
+        "";
+    }
     setFormData((p) => ({
       ...p,
-      [field]: [value] // uvijek array (baza očekuje array/string[])
+      [field]: [textValue]
     }));
     setError("");
   };
@@ -47,12 +55,11 @@ export default function SvjedociForm({ data, onNext, onBack }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
-
     if (formData.hasSvjedoci) {
       const imePrezime = (formData.ime_prezime_svjedok?.[0] || "").trim();
       const ulica = (formData.adresa_svjedok?.[0] || "").trim();
       const kontakt = (formData.kontakt_svjedok?.[0] || "").trim();
-
+      const croNumRegex = /^\+385\d{8,9}$/;
       if (!imePrezime || !ulica || !kontakt) {
         setError("Molim te ispuni sva polja za svjedoka");
         return;
@@ -61,9 +68,11 @@ export default function SvjedociForm({ data, onNext, onBack }) {
         setError("Molim te još upiši kućni broj u adresu");
         return;
       }
+      if (!croNumRegex.test(kontakt)) {
+        setError("Kontakt broj mora biti u formatu +385XXXXXXXXX (bez razmaka, 11-12 znamenki)");
+        return;
+      }
     }
-
-    // Obavezna snake_case polja za backend!
     const formToSend = {
       ozlijedeneososbe: !!formData.ozlijedeneososbe,
       stetanastvarima: !!formData.stetanastvarima,
@@ -163,8 +172,10 @@ export default function SvjedociForm({ data, onNext, onBack }) {
               className="form-input"
               value={formData.kontakt_svjedok[0]}
               onChange={(e) => handleChange("kontakt_svjedok", e.target.value)}
-              placeholder="Broj mobitela ili telefona"
+              placeholder="Primjer: +385991234567"
               required
+              pattern="^\+385\d{8,9}$"
+              title="Broj mora biti u formatu +385XXXXXXXXX, bez razmaka"
             />
           </div>
         </div>

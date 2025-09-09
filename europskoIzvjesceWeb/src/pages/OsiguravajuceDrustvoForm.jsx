@@ -7,6 +7,7 @@ const initialState = {
   drzava_osiguranja: "",
   mail_osiguranja: "",
   kontaktbroj_osiguranja: "",
+  id_osiguranje: "",
 };
 
 const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
@@ -22,60 +23,75 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
     setFormData({ ...initialState, ...(data || {}) });
   }, [data]);
 
-  const handleNazivChange = async (e) => {
-    const value = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      naziv_osiguranja: value,
-      adresa_osiguranja: "",
-      drzava_osiguranja: "",
-      mail_osiguranja: "",
-      kontaktbroj_osiguranja: "",
-    }));
-    setAutoFilled(false);
-    if (value.length > 1) {
-      try {
-        const res = await fetch(`/api/osiguranje/suggestions?q=${encodeURIComponent(value)}`);
-        setSuggestions(res.ok ? await res.json() : []);
-      } catch {
+  const API_KEY = import.meta.env.VITE_API_KEY || "your_api_key";
+
+const handleNazivChange = async (e) => {
+  const value = e.target.value;
+  setFormData(prev => ({
+    ...prev,
+    naziv_osiguranja: value,
+    adresa_osiguranja: "",
+    drzava_osiguranja: "",
+    mail_osiguranja: "",
+    kontaktbroj_osiguranja: "",
+    id_osiguranje: "",
+  }));
+  setAutoFilled(false);
+  if (value.length > 1) {
+    try {
+      const res = await fetch(`/api/osiguranje/suggestions?q=${encodeURIComponent(value)}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY
+        }
+      });
+      if (res.status === 401) {
         setSuggestions([]);
+        setErrors(prev => ({
+          ...prev,
+          naziv_osiguranja: "Nemate pravo pristupa bazi (API ključ neispravan)."
+        }));
+        return;
       }
-    } else {
+      const arr = res.ok ? await res.json() : [];
+      setSuggestions(Array.isArray(arr) ? arr : []);
+    } catch {
       setSuggestions([]);
     }
-  };
+  } else {
+    setSuggestions([]);
+  }
+};
 
-  const handleSuggestionClick = async (naziv) => {
+  // Klikom na suggestion puniš formData sa svim poljima (i id-osiguranja)!
+  const handleSuggestionClick = (s) => {
     setFormData(prev => ({
       ...prev,
-      naziv_osiguranja: naziv
+      id_osiguranje: s.id_osiguranje,
+      naziv_osiguranja: s.naziv_osiguranja,
+      adresa_osiguranja: s.adresa_osiguranja || "",
+      drzava_osiguranja: s.drzava_osiguranja || "",
+      mail_osiguranja: s.mail_osiguranja || "",
+      kontaktbroj_osiguranja: s.kontaktbroj_osiguranja || ""
     }));
     setSuggestions([]);
-    try {
-      const res = await fetch(`/api/osiguranje?naziv=${encodeURIComponent(naziv)}`);
-      if (res.ok) {
-        const podaci = await res.json();
-        setFormData(prev => ({
-          ...prev,
-          adresa_osiguranja: podaci.adresa_osiguranja || "",
-          drzava_osiguranja: podaci.drzava_osiguranja || "",
-          mail_osiguranja: podaci.mail_osiguranja || "",
-          kontaktbroj_osiguranja: podaci.kontaktbroj_osiguranja || "",
-        }));
-        setAutoFilled(true);
-      }
-    } catch {}
+    setAutoFilled(true);
   };
 
+  // Promjene u inputima
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
-    if (name === "naziv_osiguranja") setAutoFilled(false);
+    if (name === "naziv_osiguranja") {
+      setAutoFilled(false);
+      setFormData(prev => ({ ...prev, id_osiguranje: "" })); // Resetiraj id!
+    }
   };
 
+  // Validacija: bez id_osiguranja nema submit!
   const validate = () => {
     const errs = {};
     if (!formData.naziv_osiguranja.trim()) errs.naziv_osiguranja = "Obavezno polje.";
@@ -83,6 +99,8 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
     if (!formData.drzava_osiguranja.trim()) errs.drzava_osiguranja = "Obavezno polje.";
     if (!formData.mail_osiguranja.trim()) errs.mail_osiguranja = "Obavezno polje.";
     if (!formData.kontaktbroj_osiguranja.trim()) errs.kontaktbroj_osiguranja = "Obavezno polje.";
+    if (!formData.id_osiguranje || !formData.id_osiguranje.trim())
+      errs.naziv_osiguranja = "Odaberite društvo iz liste prijedloga!";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -94,110 +112,110 @@ const OsiguravajuceDrustvoForm = ({ data, onNext, onBack }) => {
   };
 
   return (
-      <form className="nesreca-form" onSubmit={handleSubmit}>
-        <h2 className="nesreca-title">Osiguravajuće društvo</h2>
-        <div className="form-group" style={{ position: "relative" }}>
-          <label className="form-label">Naziv osiguravajućeg društva: *</label>
-          <input
-            type="text"
-            name="naziv_osiguranja"
-            maxLength={50}
-            className={`form-input ${errors.naziv_osiguranja ? "input-error" : ""}`}
-            value={formData.naziv_osiguranja}
-            onChange={handleNazivChange}
-            required
-            autoComplete="off"
-          />
-          {suggestions.length > 0 && (
-            <ul className="suggestions-list">
-              {suggestions.map(s => (
-                <li key={s} onClick={() => handleSuggestionClick(s)}>
-                  {s}
-                </li>
-              ))}
-            </ul>
-          )}
-          {errors.naziv_osiguranja && <div className="error-message">{errors.naziv_osiguranja}</div>}
-        </div>
+    <form className="nesreca-form" onSubmit={handleSubmit}>
+      <h2 className="nesreca-title">Osiguravajuće društvo</h2>
+      <div className="form-group" style={{ position: "relative" }}>
+        <label className="form-label">Naziv osiguravajućeg društva: *</label>
+        <input
+          type="text"
+          name="naziv_osiguranja"
+          maxLength={50}
+          className={`form-input ${errors.naziv_osiguranja ? "input-error" : ""}`}
+          value={formData.naziv_osiguranja}
+          onChange={handleNazivChange}
+          required
+          autoComplete="off"
+        />
+        {suggestions.length > 0 && (
+          <ul className="suggestions-list">
+            {suggestions.map(s => (
+              <li key={s.id_osiguranje} onClick={() => handleSuggestionClick(s)}>
+                {s.naziv_osiguranja}
+              </li>
+            ))}
+          </ul>
+        )}
+        {errors.naziv_osiguranja && <div className="error-message">{errors.naziv_osiguranja}</div>}
+      </div>
 
-        <div className="form-group">
-          <label className="form-label">Adresa: *</label>
-          <input
-            type="text"
-            name="adresa_osiguranja"
-            maxLength={50}
-            className={`form-input ${errors.adresa_osiguranja ? "input-error" : ""}`}
-            value={formData.adresa_osiguranja}
-            onChange={handleChange}
-            readOnly={autoFilled}
-            required
-          />
-          {errors.adresa_osiguranja && <div className="error-message">{errors.adresa_osiguranja}</div>}
-        </div>
+      <div className="form-group">
+        <label className="form-label">Adresa: *</label>
+        <input
+          type="text"
+          name="adresa_osiguranja"
+          maxLength={50}
+          className={`form-input ${errors.adresa_osiguranja ? "input-error" : ""}`}
+          value={formData.adresa_osiguranja}
+          onChange={handleChange}
+          readOnly={autoFilled}
+          required
+        />
+        {errors.adresa_osiguranja && <div className="error-message">{errors.adresa_osiguranja}</div>}
+      </div>
 
-        <div className="form-group">
-          <label className="form-label">Država: *</label>
-          <input
-            type="text"
-            name="drzava_osiguranja"
-            maxLength={100}
-            className={`form-input ${errors.drzava_osiguranja ? "input-error" : ""}`}
-            value={formData.drzava_osiguranja}
-            onChange={handleChange}
-            readOnly={autoFilled}
-            required
-          />
-          {errors.drzava_osiguranja && <div className="error-message">{errors.drzava_osiguranja}</div>}
-        </div>
+      <div className="form-group">
+        <label className="form-label">Država: *</label>
+        <input
+          type="text"
+          name="drzava_osiguranja"
+          maxLength={100}
+          className={`form-input ${errors.drzava_osiguranja ? "input-error" : ""}`}
+          value={formData.drzava_osiguranja}
+          onChange={handleChange}
+          readOnly={autoFilled}
+          required
+        />
+        {errors.drzava_osiguranja && <div className="error-message">{errors.drzava_osiguranja}</div>}
+      </div>
 
-        <div className="form-group">
-          <label className="form-label">Email: *</label>
-          <input
-            type="email"
-            name="mail_osiguranja"
-            maxLength={50}
-            className={`form-input ${errors.mail_osiguranja ? "input-error" : ""}`}
-            value={formData.mail_osiguranja}
-            onChange={handleChange}
-            readOnly={autoFilled}
-            required
-          />
-          {errors.mail_osiguranja && <div className="error-message">{errors.mail_osiguranja}</div>}
-        </div>
+      <div className="form-group">
+        <label className="form-label">Email: *</label>
+        <input
+          type="email"
+          name="mail_osiguranja"
+          maxLength={50}
+          className={`form-input ${errors.mail_osiguranja ? "input-error" : ""}`}
+          value={formData.mail_osiguranja}
+          onChange={handleChange}
+          readOnly={autoFilled}
+          required
+        />
+        {errors.mail_osiguranja && <div className="error-message">{errors.mail_osiguranja}</div>}
+      </div>
 
-        <div className="form-group">
-          <label className="form-label">Kontakt broj: *</label>
-          <input
-            type="text"
-            name="kontaktbroj_osiguranja"
-            maxLength={20}
-            className={`form-input ${errors.kontaktbroj_osiguranja ? "input-error" : ""}`}
-            value={formData.kontaktbroj_osiguranja}
-            onChange={handleChange}
-            readOnly={autoFilled}
-            required
-          />
-          {errors.kontaktbroj_osiguranja && <div className="error-message">{errors.kontaktbroj_osiguranja}</div>}
-        </div>
+      <div className="form-group">
+        <label className="form-label">Kontakt broj: *</label>
+        <input
+          type="text"
+          name="kontaktbroj_osiguranja"
+          maxLength={20}
+          className={`form-input ${errors.kontaktbroj_osiguranja ? "input-error" : ""}`}
+          value={formData.kontaktbroj_osiguranja}
+          onChange={handleChange}
+          readOnly={autoFilled}
+          required
+        />
+        {errors.kontaktbroj_osiguranja && <div className="error-message">{errors.kontaktbroj_osiguranja}</div>}
+      </div>
 
-        <div className="navigation-buttons">
-          {onBack && (
-            <button
-              type="button"
-              className="back-button"
-              onClick={onBack}
-            >
-              POVRATAK
-            </button>
-          )}
+      <div className="navigation-buttons">
+        {onBack && (
           <button
-            type="submit"
-            className="next-button"
+            type="button"
+            className="back-button"
+            onClick={onBack}
           >
-            DALJE
+            POVRATAK
           </button>
-        </div>
-      </form>
+        )}
+        <button
+          type="submit"
+          className="next-button"
+        >
+          DALJE
+        </button>
+      </div>
+    </form>
   );
 };
 

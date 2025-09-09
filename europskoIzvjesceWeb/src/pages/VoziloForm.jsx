@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "../css/VoziloForm.css";
 
+const API_KEY = import.meta.env.VITE_API_KEY || "your_api_key";
+
 const initialState = {
   registarskaoznaka_vozila: "",
   marka_vozila: "",
@@ -36,13 +38,24 @@ const VoziloForm = ({ data, onNext, onBack }) => {
     setFormData({ ...initialState, ...(data || {}) });
   }, [data]);
 
+  // API fetch s autorizacijom
   const fetchVozilo = async (oznaka) => {
     if (!oznaka || !regexRegOznaka.test(oznaka.trim())) {
       setIsLocked(false);
       return;
     }
     try {
-      const response = await fetch(`/api/vozilo/${oznaka.trim().toUpperCase()}`);
+      const response = await fetch(`/api/vozilo/${oznaka.trim().toUpperCase()}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY
+        }
+      });
+      if (response.status === 401) {
+        setError("Nemate pravo pristupa bazi (API ključ neispravan).");
+        setIsLocked(false);
+        return;
+      }
       if (!response.ok) {
         setError("Vozilo nije pronađeno u bazi.");
         setIsLocked(false);
@@ -72,7 +85,10 @@ const VoziloForm = ({ data, onNext, onBack }) => {
         `/api/vozilo/${formData.registarskaoznaka_vozila.trim().toUpperCase()}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": API_KEY
+          },
           body: JSON.stringify({ kilometraza_vozila: formData.kilometraza_vozila }),
         }
       );
@@ -100,6 +116,7 @@ const VoziloForm = ({ data, onNext, onBack }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Validacije
     if (!regexRegOznaka.test(formData.registarskaoznaka_vozila.trim())) {
       setError("Registarska oznaka nije u ispravnom formatu.");
       return;

@@ -148,3 +148,11 @@
   background: #005A9C;
 }
 
+.participant-indicator {
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.07em;
+  color: #005A9C;
+  margin-bottom: 9px;
+  letter-spacing: 1px;
+}

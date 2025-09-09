@@ -3,22 +3,31 @@ import SignatureCanvas from "react-signature-canvas";
 import Tesseract from "tesseract.js";
 import "../css/PotpisForm.css";
 
+const API_KEY = import.meta.env.VITE_API_KEY || "your_api_key";
+
 const initialState = {
   potpis: null,
   datum_potpisa: null,
-  iban: "",
+  iban_osiguranika: "",
   banka: ""
 };
 
 function cleanIban(str) {
-  return str.replace(/\s|-/g, "").replace(/O/gi, "0").toUpperCase();
+  return str
+    .replace(/\s|-/g, "")
+    .replace(/O/gi, "0")
+    .replace(/I/g, "1")
+    .replace(/Z/g, "2")
+    .replace(/B/g, "8")
+    .replace(/S/g, "5")
+    .toUpperCase();
 }
-const ibanRegex = /HR[\s\-]?[0-9Oo]{2,3}(?:[\s\-]?[0-9Oo]{4}){4}[\s\-]?[0-9Oo]{3,5}/i;
+const ibanRegex = /HR[\s\-]?\d{2}(?:[\s\-]?\d{4}){4}[\s\-]?\d{3}/i;
 
 function preprocessCanvasSmart(canvas, srcVideo) {
-  const cropHeight = Math.round(srcVideo.videoHeight * 0.26); // MORA odgovarati CSS height-u pravokutnika
-  const cropY = Math.round(srcVideo.videoHeight * 0.37);      // MORA odgovarati CSS top-u pravokutnika
-  const scale = 3; // 3 je najstabilnije za kartice (probaj i 2 ili 4 po potrebi)
+  const cropHeight = Math.round(srcVideo.videoHeight * 0.26);
+  const cropY = Math.round(srcVideo.videoHeight * 0.37);
+  const scale = 3;
   canvas.width = srcVideo.videoWidth * scale;
   canvas.height = cropHeight * scale;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -32,9 +41,8 @@ function preprocessCanvasSmart(canvas, srcVideo) {
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const { data } = imgData;
   for (let i = 0; i < data.length; i += 4) {
-    // Probaj 175-195 kao prag, 185 je univerzalno
     const avg = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-    let v = avg > 185 ? 0 : 255;
+    let v = avg > 170 ? 255 : 0;
     data[i] = data[i + 1] = data[i + 2] = v;
   }
   ctx.putImageData(imgData, 0, 0);
@@ -58,12 +66,6 @@ const PotpisForm = ({ data, onNext, onBack }) => {
       let width = Math.max(260, Math.min(parentWidth - 4, 450));
       let height = Math.round(width * 0.375);
       setCanvasDims({ width, height });
-      if (sigCanvas.current) sigCanvas.current.clear();
-      setFormData(f => ({
-        ...f,
-        potpis: null,
-        datum_potpisa: null
-      }));
     }
   }, []);
 
@@ -74,7 +76,7 @@ const PotpisForm = ({ data, onNext, onBack }) => {
   }, [updateCanvasSize]);
 
   useEffect(() => {
-    setFormData({ ...initialState, ...(data || {}) });
+    setFormData(prev => ({ ...prev, ...data }));
   }, [data]);
 
   useEffect(() => {
@@ -115,12 +117,8 @@ const PotpisForm = ({ data, onNext, onBack }) => {
       if (!scanActive || !videoRef.current || !running) return;
       const v = videoRef.current;
       setVideoDims({ w: v.videoWidth, h: v.videoHeight });
-      if (
-        !v.videoWidth ||
-        !v.videoHeight ||
-        v.videoWidth < 120 ||
-        v.videoHeight < 40
-      ) {
+
+      if (!v.videoWidth || !v.videoHeight || v.videoWidth < 120 || v.videoHeight < 40) {
         scanTimer.current = setTimeout(scan, 700);
         return;
       }
@@ -129,17 +127,19 @@ const PotpisForm = ({ data, onNext, onBack }) => {
       try {
         const { data: { text } } = await Tesseract.recognize(
           ocrCanvasRef.current,
-          "eng",
+          { lang: 'eng', tessedit_char_whitelist: "HR0123456789" },
           {
             tessedit_char_whitelist: "HR0123456789",
-            preserve_interword_spaces: 1
+            preserve_interword_spaces: 1,
+            oem: 3,
+            psm: 6
           }
         );
-        const match = text.match(ibanRegex);
+        const match = text.replace(/\n/g, ' ').match(ibanRegex);
         if (match) {
           const iban = cleanIban(match[0]);
           if (/^HR\d{19}$/.test(iban)) {
-            setFormData(f => ({ ...f, iban }));
+            setFormData(f => ({ ...f, iban_osiguranika: iban }));
             setScanActive(false);
             return;
           }
@@ -153,25 +153,39 @@ const PotpisForm = ({ data, onNext, onBack }) => {
 
   useEffect(() => {
     const fetchBanka = async () => {
-      const ibanClean = (formData.iban || "").replace(/\W/g, "").toUpperCase();
+      const ibanClean = (formData.iban_osiguranika || "").replace(/\W/g, "").toUpperCase();
       if (ibanClean.length >= 11 && ibanClean.startsWith("HR")) {
         try {
-          const res = await fetch(`/api/banka/banka-za-iban?iban=${encodeURIComponent(formData.iban)}`);
+          const res = await fetch(`/api/banka/banka-za-iban?iban=${encodeURIComponent(formData.iban_osiguranika)}`, {
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": API_KEY
+            }
+          });
+          if (res.status === 401) {
+            setFormData(prev => ({ ...prev, banka: "" }));
+            setErrors(prev => ({ ...prev, banka: "Nemate pravo pristupa bazi (API ključ neispravan)." }));
+            return;
+          }
           if (res.ok) {
             const { naziv_banke } = await res.json();
             setFormData(prev => ({ ...prev, banka: naziv_banke || "" }));
+            setErrors(prev => ({ ...prev, banka: "" }));
           } else {
             setFormData(prev => ({ ...prev, banka: "" }));
+            setErrors(prev => ({ ...prev, banka: "IBAN nije povezan s bankom." }));
           }
         } catch {
           setFormData(prev => ({ ...prev, banka: "" }));
+          setErrors(prev => ({ ...prev, banka: "Greška dohvata banke." }));
         }
       } else {
         setFormData(prev => ({ ...prev, banka: "" }));
+        setErrors(prev => ({ ...prev, banka: "" }));
       }
     };
     fetchBanka();
-  }, [formData.iban]);
+  }, [formData.iban_osiguranika]);
 
   const handleEndSignature = () => {
     if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
@@ -208,7 +222,7 @@ const PotpisForm = ({ data, onNext, onBack }) => {
   const validate = () => {
     const errObj = {};
     if (!formData.potpis) errObj.potpis = "Potpis je obavezan.";
-    if (!formData.iban) errObj.iban = "IBAN je obavezan.";
+    if (!formData.iban_osiguranika) errObj.iban_osiguranika = "IBAN je obavezan.";
     if (!formData.banka) errObj.banka = "Nevažeći ili neprepoznat IBAN!";
     setErrors(errObj);
     return Object.keys(errObj).length === 0;
@@ -216,7 +230,13 @@ const PotpisForm = ({ data, onNext, onBack }) => {
   const handleSubmit = e => {
     e.preventDefault();
     if (!validate()) return;
-    if (onNext) onNext(formData);
+    if (onNext) {
+      const dataForBackend = {
+        ...formData,
+        iban_osiguranika: cleanIban(formData.iban_osiguranika),
+      };
+      onNext(dataForBackend);
+    }
   };
 
   return (
@@ -244,16 +264,16 @@ const PotpisForm = ({ data, onNext, onBack }) => {
         {errors.potpis && <div className="error-message">{errors.potpis}</div>}
       </div>
       <div className="form-group scan-group">
-        <label htmlFor="ibanInput" className="form-label">IBAN za isplatu:</label>
-        <input id="ibanInput" name="iban" type="text"
-          className={`form-input${errors.iban ? " input-error" : ""}`}
-          value={formData.iban}
+        <label htmlFor="iban_osiguranika" className="form-label">IBAN za isplatu:</label>
+        <input id="iban_osiguranika" name="iban_osiguranika" type="text"
+          className={`form-input${errors.iban_osiguranika ? " input-error" : ""}`}
+          value={formData.iban_osiguranika}
           onChange={handleInputChange}
           placeholder="HR12 3456 7890 ..."
           autoComplete="off"
         />
-        {errors.iban && <div className="error-message">{errors.iban}</div>}
-        {!formData.iban && (
+        {errors.iban_osiguranika && <div className="error-message">{errors.iban_osiguranika}</div>}
+        {!formData.iban_osiguranika && (
           <button
             type="button"
             className="scan-button"

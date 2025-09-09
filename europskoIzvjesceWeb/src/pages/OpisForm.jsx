@@ -37,6 +37,7 @@ export default function OpisForm({ data, onNext, onBack }) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // Syncaj podatke iz parenta (npr. kod loadanja postojeće prijave)
   useEffect(() => {
     setFormData((prev) => ({
       ...initialState,
@@ -44,6 +45,7 @@ export default function OpisForm({ data, onNext, onBack }) {
     }));
   }, [data]);
 
+  // Dinamički generiraj prikaz položaja oštećenja prema tipu i označenim mjestima
   function formirajPoziciju() {
     const { points } = VEHICLE_CONFIG[formData.tip_vozila];
     return formData.odabrani_udarci
@@ -55,6 +57,7 @@ export default function OpisForm({ data, onNext, onBack }) {
       .join("; ");
   }
 
+  // Automatski updatej polozaj_ostecenja prilikom promjene tipa vozila ili odabira
   useEffect(() => {
     setFormData((staro) => ({
       ...staro,
@@ -63,6 +66,7 @@ export default function OpisForm({ data, onNext, onBack }) {
     // eslint-disable-next-line
   }, [formData.tip_vozila, formData.odabrani_udarci]);
 
+  // Klasični handler za inpute
   function promjenaVrijednosti(e) {
     const { name, value, type } = e.target;
     if (type !== "file") {
@@ -70,6 +74,7 @@ export default function OpisForm({ data, onNext, onBack }) {
     }
   }
 
+  // Kompresija slike, spremanje objekta (s pregled URL-om)
   async function dodajSlike(e) {
     e.preventDefault();
     const datoteke = Array.from(e.target.files);
@@ -96,6 +101,7 @@ export default function OpisForm({ data, onNext, onBack }) {
     e.target.value = null;
   }
 
+  // Uklanjanje slike (i revoke pregled URL-a)
   function ukloniSliku(idx) {
     URL.revokeObjectURL(formData.slike[idx].pregled);
     setModalIndeks(null);
@@ -103,6 +109,7 @@ export default function OpisForm({ data, onNext, onBack }) {
     setFormData((staro) => ({ ...staro, slike: azurirano }));
   }
 
+  // Full validacija
   function validate() {
     const noviErrors = {};
     if (formData.tip_okolnost.length === 0) {
@@ -124,6 +131,7 @@ export default function OpisForm({ data, onNext, onBack }) {
     return Object.keys(noviErrors).length === 0;
   }
 
+  // OnNext event (nakon validacije)
   function handleNext(e) {
     e.preventDefault();
     if (!validate()) return;
@@ -137,7 +145,7 @@ export default function OpisForm({ data, onNext, onBack }) {
   const toggleTooltip = () => setTooltipVisible((v) => !v);
   function onModalContentClick(e) { e.stopPropagation(); }
 
-  // MODERNI CHECKBOX UI ZA TIP OKOLNOSTI -----------------
+  // Checkbox UI za tip okolnosti (multi-select)
   function handleOkolnostCheckbox(opt) {
     setFormData(staro => ({
       ...staro,
@@ -151,6 +159,7 @@ export default function OpisForm({ data, onNext, onBack }) {
     <form className="nesreca-form" onSubmit={handleNext}>
       <h2 className="nesreca-title">Opis Nesreće</h2>
 
+      {/* Tip okolnosti */}
       <div className="form-group">
         <label htmlFor="tip_okolnost" className="form-label">
           Tip okolnosti:*
@@ -182,6 +191,7 @@ export default function OpisForm({ data, onNext, onBack }) {
         )}
       </div>
 
+      {/* Opis okolnosti */}
       <div className="form-group">
         <label htmlFor="opis_okolnost" className="form-label">
           Opis okolnosti:*
@@ -196,6 +206,7 @@ export default function OpisForm({ data, onNext, onBack }) {
         {errors.opis_okolnost && <div className="error-message">{errors.opis_okolnost}</div>}
       </div>
 
+      {/* Pozicija i vrsta udarca (custom komponente) */}
       <MjestoUdarcaVozilo
         vehicleType={formData.tip_vozila}
         selectedPoints={formData.odabrani_udarci}
@@ -214,6 +225,7 @@ export default function OpisForm({ data, onNext, onBack }) {
         }
       />
 
+      {/* Pozicija oštećenja */}
       <div className="form-group">
         <label htmlFor="polozaj_ostecenja" className="form-label">
           Pozicija oštećenja:*
@@ -228,6 +240,7 @@ export default function OpisForm({ data, onNext, onBack }) {
         {errors.polozaj_ostecenja && <div className="error-message">{errors.polozaj_ostecenja}</div>}
       </div>
 
+      {/* Opis oštećenja */}
       <div className="form-group">
         <label htmlFor="opis_ostecenja" className="form-label">
           Opis oštećenja:*
@@ -242,7 +255,7 @@ export default function OpisForm({ data, onNext, onBack }) {
         {errors.opis_ostecenja && <div className="error-message">{errors.opis_ostecenja}</div>}
       </div>
 
-      {/* Slikaj/Učitaj gumbi */}
+      {/* Upload i slikaj gumbi */}
       <div
         className="centered-container"
         style={{
@@ -288,12 +301,14 @@ export default function OpisForm({ data, onNext, onBack }) {
         </div>
       </div>
 
+      {/* Prikaz grešaka vezanih za slike */}
       {errors.slike && (
         <div className="error-message" style={{ textAlign: "center", marginBottom: 10 }}>
           {errors.slike}
         </div>
       )}
 
+      {/* Preview uploadanih slika */}
       <div className="uploaded-images-list">
         {formData.slike.map((slika, idx) => (
           <div
@@ -307,6 +322,7 @@ export default function OpisForm({ data, onNext, onBack }) {
         ))}
       </div>
 
+      {/* Modal za preview i uklanjanje slike */}
       {modalIndeks !== null && (
         <div
           className="modal"
@@ -352,6 +368,7 @@ export default function OpisForm({ data, onNext, onBack }) {
         </div>
       )}
 
+      {/* Navigacija */}
       <div className="navigation-buttons">
         {onBack && (
           <button type="button" className="back-button button-standard" onClick={onBack}>

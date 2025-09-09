@@ -3,116 +3,125 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 
-const ALLOWED_API_KEY = process.env.API_KEY || 'tajni-api-kljuc';
+const API_KEY = process.env.API_KEY || 'tajnikljucApi';
 
 function apiKeyAuth(req, res, next) {
   const apiKey = req.headers['x-api-key'];
-  if (!apiKey || apiKey !== ALLOWED_API_KEY) {
+  if (!apiKey || apiKey !== API_KEY) {
     return res.status(401).json({ error: "Neautorizirano - Nema ili je pogrešan API ključ." });
   }
   next();
 }
 
 function isValidIban(iban) {
-  return typeof iban === "string" && /^HR\d{19}$/.test(iban.replace(/\s/g,"").toUpperCase());
+  if (!iban) return false;
+  const normalizedIban = Array.isArray(iban) ? iban[0] : iban;
+  if (typeof normalizedIban !== 'string') return false;
+  const cleaned = normalizedIban.replace(/\s/g, "").toUpperCase();
+  return /^HR\d{19}$/.test(cleaned);
 }
 
 function validatePayload(payload) {
-  const requiredSegments = ['nesreca', 'vozilo', 'vozacPolica', 'polica', 'osiguranje', 'opis'];
-  for (const key of requiredSegments) {
-    if (!payload[key] || typeof payload[key] !== 'object') {
-      return `Nedostaje segment podataka: ${key}`;
+  const requiredSegments = ['nesreca', 'vozilo', 'vozacOsiguranik', 'polica', 'osiguranje', 'opis'];
+  for (const seg of requiredSegments) {
+    if (!payload[seg] || typeof payload[seg] !== 'object') {
+      return `Nedostaje segment podataka: ${seg}`;
     }
   }
-  const osig = payload.vozacPolica || {};
-  const osigReq = [
-    'ime_osiguranika', 'prezime_osiguranika', 'adresa_osiguranika', 'postanskibroj_osiguranika',
-    'drzava_osiguranika', 'mail_osiguranika', 'kontaktbroj_osiguranika', 'iban_osiguranika'
+  const osig = payload.vozacOsiguranik;
+  const requiredOsigFields = [
+    'ime_osiguranika', 'prezime_osiguranika', 'adresa_osiguranika',
+    'postanskibroj_osiguranika', 'drzava_osiguranika', 'mail_osiguranika',
+    'kontaktbroj_osiguranika', 'iban_osiguranika'
   ];
-  for (const key of osigReq) {
-    if (!osig[key]) return `Nedostaje podatak osiguranik.${key}`;
+  for (const field of requiredOsigFields) {
+    if (!osig[field]) return `Nedostaje podatak osiguranik.${field}`;
   }
-  if (!isValidIban(osig.iban_osiguranika)) return "Neispravan IBAN!";
+  if (!isValidIban(osig.iban_osiguranika)) {
+    return "Neispravan IBAN!";
+  }
+  if (!payload.nesreca.id_nesrece || typeof payload.nesreca.id_nesrece !== 'string') {
+    return "Nepostavljen id (id_nesrece/sessionId)";
+  }
+  if (!payload.osiguranje.id_osiguranje) {
+    return "Nedostaje id_osiguranje!";
+  }
   return null;
 }
 
 exports.apiKeyAuth = apiKeyAuth;
 
-exports.createPrijava = async (req, res) => {
-  const { nesreca, svjedoci, vozacPolica, vozac, opis, vozilo, osiguranje, polica, potpis, slike } = req.body;
+// Tvoja funkcija za unos prijave
+exports.createPrijava = async function (req, res) {
+  const {
+    nesreca, svjedoci, vozacOsiguranik, vozac, opis, vozilo,
+    polica, osiguranje, potpis, slike
+  } = req.body;
+
   const validationError = validatePayload(req.body);
   if (validationError) {
     return res.status(400).json({ error: validationError });
   }
+
   const client = await db.connect();
-
-  let vozacToStore = vozac;
-  if (!vozacToStore || Object.keys(vozacToStore).length === 0) {
-    vozacToStore = {
-      ime_vozaca: vozacPolica.ime_osiguranika,
-      prezime_vozaca: vozacPolica.prezime_osiguranika,
-      adresa_vozaca: vozacPolica.adresa_osiguranika,
-      postanskibroj_vozaca: vozacPolica.postanskibroj_osiguranika,
-      drzava_vozaca: vozacPolica.drzava_osiguranika,
-      mail_vozaca: vozacPolica.mail_osiguranika,
-      kontaktbroj_vozaca: vozacPolica.kontaktbroj_osiguranika,
-      brojvozackedozvole: vozacPolica.brojvozackedozvole || null,
-      kategorijavozackedozvole: vozacPolica.kategorijavozackedozvole || null,
-      valjanostvozackedozvole: vozacPolica.valjanostvozackedozvole || null
-    };
-  }
-
   try {
     await client.query('BEGIN');
 
-    // 1. NESRECA (upsert)
-    const nesrecaRes = await client.query(
+    let geoSQL = null;
+    if (nesreca.geolokacija_nesrece) {
+      if (
+        typeof nesreca.geolokacija_nesrece === 'object' &&
+        typeof nesreca.geolokacija_nesrece.x === 'number' &&
+        typeof nesreca.geolokacija_nesrece.y === 'number'
+      ) {
+        geoSQL = `(${nesreca.geolokacija_nesrece.x},${nesreca.geolokacija_nesrece.y})`;
+      } else if (typeof nesreca.geolokacija_nesrece === 'string') {
+        geoSQL = nesreca.geolokacija_nesrece;
+      }
+    }
+
+    await client.query(
       `INSERT INTO nesreca (
-        datum_nesrece, vrijeme_nesrece, mjesto_nesrece, geolokacija_nesrece,
+        id_nesrece, datum_nesrece, vrijeme_nesrece, mjesto_nesrece, geolokacija_nesrece,
         ozlijedeneososbe, stetanavozilima, stetanastvarima
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      ON CONFLICT (datum_nesrece, vrijeme_nesrece, mjesto_nesrece)
-      DO UPDATE SET
-        geolokacija_nesrece = EXCLUDED.geolokacija_nesrece,
-        ozlijedeneososbe = EXCLUDED.ozlijedeneososbe,
-        stetanavozilima = EXCLUDED.stetanavozilima,
-        stetanastvarima = EXCLUDED.stetanastvarima
-      RETURNING id_nesrece`,
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT (id_nesrece) DO NOTHING`,
       [
+        nesreca.id_nesrece,
         nesreca.datum_nesrece,
         nesreca.vrijeme_nesrece,
         nesreca.mjesto_nesrece,
-        nesreca.geolokacija_nesrece,
+        geoSQL,
         nesreca.ozlijedeneososbe ?? false,
         nesreca.stetanavozilima ?? false,
         nesreca.stetanastvarima ?? false
       ]
     );
-    const id_nesrece = nesrecaRes.rows[0].id_nesrece;
 
-    // 2. OPIS/OKOLNOST
+    const id_nesrece = nesreca.id_nesrece;
+
     await client.query(
       `INSERT INTO okolnost (tip_okolnost, opis_okolnost, id_nesrece)
-       VALUES ($1, $2, $3)
+       VALUES ($1,$2,$3)
        ON CONFLICT (id_nesrece)
        DO UPDATE SET opis_okolnost = EXCLUDED.opis_okolnost`,
-      ['glavna', opis.opis_okolnost || '', id_nesrece]
+      ['glavna', opis.opis_nesrece || '', id_nesrece]
     );
 
-    // 3. SVJEDOCI
-    if (svjedoci?.lista?.length) {
+    // Svjedoci
+    if (svjedoci && Array.isArray(svjedoci.lista)) {
       for (const s of svjedoci.lista) {
         await client.query(
-          `INSERT INTO svjedok (ime_prezime_svjedok, adresa_svjedok, kontakt_svjedok, id_nesrece)
+          `INSERT INTO svjedoci (ime_prezime_svjedoci, adresa_svjedoci, kontakt_svjedoci, id_nesrece)
            VALUES (ARRAY[$1], ARRAY[$2], ARRAY[$3], $4)
            ON CONFLICT DO NOTHING`,
-          [s.ime, s.adresa, s.kontakt, id_nesrece]
+          [s.ime || '', s.adresa || '', s.kontakt || '', id_nesrece]
         );
       }
     }
 
-    // 4. VOZILO
+    // Vozilo
     await client.query(
       `INSERT INTO vozilo (
         registarskaoznaka_vozila, marka_vozila, tip_vozila, drzavaregistracije_vozila,
@@ -138,125 +147,74 @@ exports.createPrijava = async (req, res) => {
       ]
     );
 
-    // 5. OSIGURANIK
+    // Osiguranik
+    let ibanDb = vozacOsiguranik.iban_osiguranika;
+    if (Array.isArray(ibanDb)) ibanDb = ibanDb;
+    else if (typeof ibanDb === 'string') ibanDb = [ibanDb.toUpperCase().replace(/\s+/g, '')];
+
     const osiguranikRes = await client.query(
       `INSERT INTO osiguranik (
         ime_osiguranika, prezime_osiguranika, adresa_osiguranika, postanskibroj_osiguranika,
-        drzava_osiguranika, mail_osiguranika, kontaktbroj_osiguranika
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-      ON CONFLICT (mail_osiguranika)
-      DO UPDATE SET
+        drzava_osiguranika, mail_osiguranika, kontaktbroj_osiguranika, iban_osiguranika
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      ON CONFLICT (mail_osiguranika) DO UPDATE SET
         ime_osiguranika = EXCLUDED.ime_osiguranika,
         prezime_osiguranika = EXCLUDED.prezime_osiguranika,
         adresa_osiguranika = EXCLUDED.adresa_osiguranika,
         postanskibroj_osiguranika = EXCLUDED.postanskibroj_osiguranika,
         drzava_osiguranika = EXCLUDED.drzava_osiguranika,
-        kontaktbroj_osiguranika = EXCLUDED.kontaktbroj_osiguranika
+        kontaktbroj_osiguranika = EXCLUDED.kontaktbroj_osiguranika,
+        iban_osiguranika = EXCLUDED.iban_osiguranika
       RETURNING id_osiguranika`,
       [
-        vozacPolica.ime_osiguranika,
-        vozacPolica.prezime_osiguranika,
-        vozacPolica.adresa_osiguranika,
-        vozacPolica.postanskibroj_osiguranika,
-        vozacPolica.drzava_osiguranika,
-        vozacPolica.mail_osiguranika,
-        vozacPolica.kontaktbroj_osiguranika
+        vozacOsiguranik.ime_osiguranika,
+        vozacOsiguranik.prezime_osiguranika,
+        vozacOsiguranik.adresa_osiguranika,
+        vozacOsiguranik.postanskibroj_osiguranika,
+        vozacOsiguranik.drzava_osiguranika,
+        vozacOsiguranik.mail_osiguranika,
+        vozacOsiguranik.kontaktbroj_osiguranika,
+        ibanDb
       ]
     );
     const id_osiguranika = osiguranikRes.rows[0].id_osiguranika;
 
-    // 6. VOZAČ
-    await client.query(
-      `INSERT INTO vozac (
-        ime_vozaca, prezime_vozaca, adresa_vozaca, postanskibroj_vozaca,
-        drzava_vozaca, mail_vozaca, kontaktbroj_vozaca,
-        brojvozackedozvole, kategorijavozackedozvole, valjanostvozackedozvole
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      ON CONFLICT (mail_vozaca)
-      DO UPDATE SET
-        ime_vozaca = EXCLUDED.ime_vozaca,
-        prezime_vozaca = EXCLUDED.prezime_vozaca,
-        adresa_vozaca = EXCLUDED.adresa_vozaca,
-        postanskibroj_vozaca = EXCLUDED.postanskibroj_vozaca,
-        drzava_vozaca = EXCLUDED.drzava_vozaca,
-        kontaktbroj_vozaca = EXCLUDED.kontaktbroj_vozaca,
-        brojvozackedozvole = EXCLUDED.brojvozackedozvole,
-        kategorijavozackedozvole = EXCLUDED.kategorijavozackedozvole,
-        valjanostvozackedozvole = EXCLUDED.valjanostvozackedozvole
-      `,
-      [
-        vozacToStore.ime_vozaca,
-        vozacToStore.prezime_vozaca,
-        vozacToStore.adresa_vozaca,
-        vozacToStore.postanskibroj_vozaca,
-        vozacToStore.drzava_vozaca,
-        vozacToStore.mail_vozaca,
-        vozacToStore.kontaktbroj_vozaca,
-        vozacToStore.brojvozackedozvole || null,
-        vozacToStore.kategorijavozackedozvole || null,
-        vozacToStore.valjanostvozackedozvole || null
-      ]
-    );
-
-    // 7. POLICA_OSIGURANJA
+    // Polica osiguranja UPIS s FK na osiguranje
     await client.query(
       `INSERT INTO polica_osiguranja (
-        brojpolice, brojzelenekarte, id_osiguranika, kaskopokrivastetu
-      ) VALUES ($1, $2, $3, $4)
-      ON CONFLICT (brojpolice)
-      DO UPDATE SET
+        brojpolice, brojzelenekarte, id_osiguranika, id_osiguranja, kaskopokrivastetu
+      ) VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (brojpolice) DO UPDATE SET
         brojzelenekarte = EXCLUDED.brojzelenekarte,
         id_osiguranika = EXCLUDED.id_osiguranika,
+        id_osiguranja = EXCLUDED.id_osiguranja,
         kaskopokrivastetu = EXCLUDED.kaskopokrivastetu
       `,
       [
         polica.brojpolice,
         polica.brojzelenekarte,
         id_osiguranika,
+        osiguranje.id_osiguranje, // lookup FK
         polica.kaskopokrivastetu ?? false
       ]
     );
 
-    // 8. OSIGURANJE
-    await client.query(
-      `INSERT INTO osiguranje (
-        id_osiguranje, naziv_osiguranja, adresa_osiguranja, drzava_osiguranja,
-        mail_osiguranja, kontaktbroj_osiguranja, id_osiguranika
-      ) VALUES (
-        DEFAULT, $1, $2, $3, $4, $5, $6
-      )
-      ON CONFLICT (naziv_osiguranja)
-      DO UPDATE SET
-        adresa_osiguranja = EXCLUDED.adresa_osiguranja,
-        drzava_osiguranja = EXCLUDED.drzava_osiguranja,
-        mail_osiguranja = EXCLUDED.mail_osiguranja,
-        kontaktbroj_osiguranja = EXCLUDED.kontaktbroj_osiguranja,
-        id_osiguranika = EXCLUDED.id_osiguranika
-      `,
-      [
-        osiguranje.naziv_osiguranja,
-        osiguranje.adresa_osiguranja,
-        osiguranje.drzava_osiguranja,
-        osiguranje.mail_osiguranja,
-        osiguranje.kontaktbroj_osiguranja,
-        id_osiguranika
-      ]
-    );
+    // NE radi INSERT/UPDATE osiguranja!
 
-    // 9. SLIKE (ako ih ima)
-    if (slike && Array.isArray(slike)) {
-      for (const slika of slike) {
-        const buffer = Buffer.from(slika.buffer, 'base64');
+    // Insert slike
+    if (Array.isArray(slike)) {
+      for (const s of slike) {
+        const buff = Buffer.from(s.buffer, 'base64');
         await client.query(
           `INSERT INTO slika (naziv_slike, podatak_slike, vrijeme_slikanja, id_nesrece)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT DO NOTHING`,
-          [slika.name, buffer, slika.vrijeme_slikanja, id_nesrece]
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT DO NOTHING`,
+          [s.naziv_slike, buff, s.vrijeme_slikanja, id_nesrece]
         );
       }
     }
 
-    // 10. POTPIS (ako postoji)
+    // Potpisi
     await client.query(
       `UPDATE nesreca SET potpis_a = $1, potpis_b = $2 WHERE id_nesrece = $3`,
       [
@@ -267,10 +225,12 @@ exports.createPrijava = async (req, res) => {
     );
 
     await client.query('COMMIT');
-    res.json({ success: true, nesrecaId: id_nesrece });
-  } catch (err) {
+    return res.json({ success: true, nesrecaId: id_nesrece });
+
+  } catch (error) {
     await client.query('ROLLBACK');
-    res.status(500).json({ error: err.message });
+    console.error(error);
+    return res.status(500).json({ error: error.message || "Greška na serveru" });
   } finally {
     client.release();
   }

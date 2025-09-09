@@ -14,16 +14,19 @@ export default defineConfig({
     proxy: {
       // sve što ide na /api šalje se na backend (bilo localhost ili IP)
       '/api': {
-        target: 'http://localhost:3000', // prilagodi port ako ti je backend negdje drugdje
+        target: 'https://localhost:3001', // prilagodi port ako ti je backend negdje drugdje
         changeOrigin: true,
         secure: false,
-      }
-    }
+      },
+    },
   },
   resolve: {
     alias: {
       react: path.resolve(__dirname, 'node_modules/react'),
       'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
-    }
-  }
+    },
+  },
+  optimizeDeps: {
+    include: ['socket.io-client'],
+  },
 });

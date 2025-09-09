@@ -1,3 +1,5 @@
+// NesrecaForm.jsx
+
 import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -20,7 +22,6 @@ function parseCoords(geo) {
   return [parseFloat(match[1]), parseFloat(match[2])];
 }
 
-// Ova funkcija sada uzima callback za postavljanje obavijesti
 async function reverseGeocode([lat, lng], setAddress, setManualAddressMsg) {
   if (lat == null || lng == null) {
     setAddress("");
@@ -44,17 +45,15 @@ async function reverseGeocode([lat, lng], setAddress, setManualAddressMsg) {
   }
 }
 
-// Hook uzima novi callback za postavljanje obavijesti
 function useAutoAddress(geolokacija_nesrece, setMjestoNesrece, setManualAddressMsg) {
   useEffect(() => {
     const coords = parseCoords(geolokacija_nesrece);
     if (coords) reverseGeocode(coords, setMjestoNesrece, setManualAddressMsg);
-    // Čisti poruku kad nema geolokacije
     else setManualAddressMsg("");
   }, [geolokacija_nesrece, setMjestoNesrece, setManualAddressMsg]);
 }
 
-const DEFAULT_CENTER = [45.815, 15.9819]; // Zagreb
+const DEFAULT_CENTER = [45.815, 15.9819];
 
 function MapRecenter({ center }) {
   const map = useMap();
@@ -64,13 +63,6 @@ function MapRecenter({ center }) {
     }
   }, [center, map]);
   return null;
-}
-
-// Parsiranje geolokacije u format pogodan za backend - kao objekt { x: lat, y: lng }
-function parseGeolokacijaToPoint(geoString) {
-  const coords = parseCoords(geoString);
-  if (!coords) return null;
-  return { x: coords[0], y: coords[1] };
 }
 
 const NesrecaForm = ({ data, onNext, onBack }) => {
@@ -85,7 +77,7 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
   }));
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [manualAddressMsg, setManualAddressMsg] = useState(""); // Za poruku korisniku
+  const [manualAddressMsg, setManualAddressMsg] = useState("");
 
   useAutoAddress(
     nesrecaData.geolokacija_nesrece,
@@ -178,6 +170,7 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
           vrijeme_nesrece: vrijeme,
           mapPosition: [lat, lng],
           showMap: true,
+          // Sprema kao string!
           geolokacija_nesrece: `(${lat.toFixed(4)}, ${lng.toFixed(4)})`,
         }));
       } catch {
@@ -215,13 +208,10 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
       return;
     }
 
-    // Parsiraj geolokaciju u objekt {x: lat, y: lng} za backend
-    const parsedGeolokacija = parseGeolokacijaToPoint(nesrecaData.geolokacija_nesrece);
-
-    // Pripremi podatke za slanje, geolokaciju u formatu objekt
+    // OVDJE šalji kao string bez objektne konverzije!
     const sendData = {
       ...nesrecaData,
-      geolokacija_nesrece: parsedGeolokacija,
+      geolokacija_nesrece: nesrecaData.geolokacija_nesrece,
     };
 
     onNext(sendData);
