@@ -6,7 +6,7 @@ import {
   FaMapMarkerAlt,
   FaLock,
   FaRegThumbsUp,
-  FaCarCrash
+  FaPenFancy
 } from 'react-icons/fa';
 import '../css/Home.css';
 
@@ -33,24 +33,6 @@ export default function Home() {
         <Link to="/odabir" className="cta-button">
           Započni prijavu
         </Link>
-
-      </section>
-
-      <section className="how-it-works">
-        <h2>Kako funkcionira?</h2>
-        <p className="how-desc">
-          Jednostavno i sigurno dokumentirajte prometnu nesreću online.<br />
-          Cijeli proces obavljate u nekoliko brzih koraka bez potrebe za papirologijom.
-        </p>
-        <ol className="how-steps">
-          <li>Unesite osnovne podatke o nesreći.</li>
-          <li>Dodajte informacije o sudionicima i vozilima.</li>
-          <li>Ako postoje, unesite podatke o svjedocima.</li>
-          <li>Opišite okolnosti nesreće.</li>
-          <li>Unesite podatke o polici.</li>
-          <li>Pregledajte i potvrdite izvješće digitalnim potpisom.</li>
-          <li>Pošaljite izvješće izravno osiguravajućem društvu.</li>
-        </ol>
       </section>
 
       <section className="benefits-section">
@@ -72,15 +54,30 @@ export default function Home() {
             <span>Sigurnost podataka</span>
           </div>
           <div className="benefit-item">
+            <FaPenFancy className="benefit-icon" />
+            <span>Digitalni potpis</span>
+          </div>
+          <div className="benefit-item">
             <FaRegThumbsUp className="benefit-icon" />
             <span>Jednostavnost unosa</span>
           </div>
-          <div className="benefit-item">
-            <FaCarCrash className="benefit-icon" />
-            <span>3D sken vozila</span>
-          </div>
         </div>
       </section>
+
+      <section className="how-it-works">
+        <h2>Kako funkcionira?</h2>
+        <p className="how-desc">
+          Ispunite jednostavan vodič kroz korake i pošaljite izvješće direktno osiguravajućem društvu – bez papirologije i čekanja.
+        </p>
+        <ol className="how-steps">
+          <li>Unesite osnovne podatke i sudionike.</li>
+          <li>Opišite okolnosti nesreće.</li>
+          <li>Potvrdite i digitalno potpišite izvješće.</li>
+          <li>Pošaljite izvješće izravno osiguranju.</li>
+        </ol>
+      </section>
+
+      
     </div>
   );
 }

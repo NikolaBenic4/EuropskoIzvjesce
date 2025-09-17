@@ -74,7 +74,7 @@ const PolicaForm = ({ data, onNext, onBack }) => {
   };
 
   return (
-     <form className="nesreca-form" onSubmit={handleSubmit}>
+   <form className="nesreca-form" onSubmit={handleSubmit}>
         <h2 className="nesreca-title">Polica osiguranja</h2>
 
         <div className="form-group">
@@ -183,7 +183,7 @@ const PolicaForm = ({ data, onNext, onBack }) => {
               className="back-button"
               aria-label="Nazad na prethodni korak"
               onClick={onBack}
-              style={{ marginRight: 12 }}
+              style={{ marginRight: 6 }}
             >
               NAZAD
             </button>

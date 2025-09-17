@@ -1,253 +1,102 @@
 /* RESET & BASE */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-html, body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #f7f7f7;
-  color: #000;
-  line-height: 1.6;
-}
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:#f7f7f7; color:#000; line-height:1.6 }
 
-/* MAIN FORM CARD */
+/* MAIN FORM */
 .potpis-form {
-  background: #fff;
-  max-width: 580px;
-  margin: 32px auto;
-  padding: 2.5rem 2rem;
-  border-radius: 14px;
-  box-shadow: 0 3px 12px rgba(0,32,96,0.09);
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  background:#fff;
+  max-width:580px;
+  margin:32px auto;
+  padding:2.5rem 2rem;
+  border-radius:14px;
+  box-shadow:0 3px 12px rgba(0,32,96,0.09);
+  display:flex;
+  flex-direction:column;
 }
 
-/* FORM FIELDS */
-.form-group {
-  width: 100%;
+/* FIELDS */
+.form-group { margin-bottom:1.7rem; }
+.form-label { display:block; margin-bottom:9px; color:#002060; font-weight:700; font-size:1.15rem; }
+.form-input {
+  width:100%;
+  padding:12px 16px;
+  background:#fcfdff;
+  color:#002060;
+  font-size:1.13rem;
+  border:2px solid #003366;
+  border-radius:8px;
+  transition:border-color .18s,box-shadow .18s;
+  outline:none;
+}
+.form-input:focus { border-color:#001f4d; box-shadow:0 0 0 2px rgba(0,32,96,.15); }
+.input-error { border-color:#c00!important; box-shadow:0 0 0 2px rgba(204,0,0,.15)!important; }
+
+/* SIGNATURE */
+.signature-box { padding:4px; }
+.sigCanvas {
+  width:100%!important;
+  background:#fff;
+  border-radius:6px;
+  border:none;
+  touch-action:none;
+}
+@media (min-width:601px) { .sigCanvas { height:180px!important } }
+@media (max-width:600px) { .sigCanvas { height:200px!important } }
+
+/* BUTTONS */
+.clear-button, .scan-button, .next-button, .back-button {
+  width:100%;
+  padding:.8rem 2rem;
+  margin-top:15px;
+  background:#003366;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+  font-weight:700;
+  text-transform:uppercase;
+  cursor:pointer;
+  transition:.2s;
+}
+.clear-button:hover, .scan-button:hover, .next-button:hover, .back-button:hover {
+  background:#001f4d;
+  transform:translateY(-2px);
+}
+.clear-button:active, .scan-button:active, .next-button:active, .back-button:active {
+  transform:translateY(0);
+}
+
+/* SCAN GROUP */
+.scan-group { display:flex; flex-direction:column; }
+.camera-note { text-align:center; margin-bottom:8px; font-size:.95rem; color:#002060; }
+
+/* STATUS & ERRORS */
+.status { text-align:center; margin-top:8px; font-weight:600; color:#002060; }
+.error-message { color:#c00; font-size:.9rem; margin-top:5px; }
+
+/* NAVIGATION */
+.navigation-buttons {
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  margin-top:2rem;
+}
+@media (max-width:600px) {
+  .navigation-buttons { justify-content:space-between; }
+}
+.signature-box {
+  background: #fcfdff;
+  border: 2px solid #003366;       /* Deblji obrub */
+  border-radius: 8px;
+  padding: 4px;                    /* Malo manje paddinga */
   margin-bottom: 1.7rem;
 }
 
-/* LABELS */
-.form-label {
-  display: block;
-  margin-bottom: 9px;
-  color: #002060;
-  font-weight: 700;
-  font-size: 1.15rem;
-  letter-spacing: 0.02em;
-}
-
-/* INPUTS AND TEXTAREA */
-.form-input,
-input[type="date"],
-input[type="time"] {
-  width: 100%;
-  padding: 12px 16px;
-  background: #fcfdff;
-  color: #002060;
-  font-size: 1.13rem;
-  border: 2px solid #003366;
-  border-radius: 8px;
-  transition: border-color 0.18s, box-shadow 0.18s;
-  box-shadow: none;
-  outline: none;
-  max-width: 340px;
-}
-.form-input:focus,
-input[type="date"]:focus,
-input[type="time"]:focus {
-  border-color: #001f4d;
-  box-shadow: 0 0 0 2px rgba(0,32,96,0.15);
-}
-
-/* SIGNATURE POLJE - PROFESIONALNI OKVIR */
-.signature-box {
-  background: #fcfdff;
-  border: 2px solid #003366;
-  border-radius: 8px;
-  padding: 8px;
-  margin-bottom: 10px;
-  max-width: 450px;
-  margin-left: auto;
-  margin-right: auto;
-}
 .sigCanvas {
   width: 100% !important;
-  height: 150px !important;
-  display: block;
+  height: auto !important;
+  min-height: 180px;               /* Osigurajte visinu za unos prstom */
   background-color: #fff;
   border-radius: 6px;
-  border: none;
-  margin: 0 auto;
-  touch-action: none;
-}
-
-/* Submit, Scan, Clear gumbi - svi jednaki! */
-.submit-button,
-.scan-button,
-.clear-button {
-  display: block;
-  width: 100%;
-  padding: 0.8rem 2rem;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #fff;
-  background-color: #003366;
-  border: none;
-  border-radius: 5px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: background-color 0.2s, transform 0.2s;
-  cursor: pointer;
-  margin-top: 15px;
-}
-.submit-button:hover,
-.scan-button:hover,
-.clear-button:hover {
-  background: linear-gradient(90deg, #001f4d 0%, #003366 100%);
-  box-shadow: 0 7px 36px rgba(0,32,96,0.13);
-  transform: translateY(-2px);
-}
-.submit-button:active,
-.scan-button:active,
-.clear-button:active {
-  transform: translateY(0);
-}
-
-/* SVE U KOLONI, NEMA FLEX-A! */
-.scan-group {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-/* Mobilna optimizacija */
-@media (max-width: 600px) {
-  .potpis-form {
-    max-width: 99vw;
-    padding: 1rem .7rem;
-    border-radius: 10px;
-  }
-  .signature-box {
-    padding: 4px;
-    max-width: 99vw;
-    min-width: 0;
-  }
-  .sigCanvas {
-    min-width: 0;
-    width: 100% !important;
-    height: 120px !important;
-    border-radius: 7px;
-  }
-  .form-input {
-    max-width: 100%;
-    padding: 10px;
-    font-size: 1.02rem;
-  }
-  .scan-button,
-  .clear-button,
-  .submit-button {
-    font-size: 1rem;
-    border-radius: 9px;
-    padding: 0.85rem 0 !important;
-    min-width: 0;
-    width: 100%;
-  }
-}
-
-/* Scanner/video/overlay */
-.scanner-container {
-  margin-top: 16px;
-  border: 2px solid #003366;
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-.scanner-container video {
-  border-radius: 8px;
-  width: 100%;
-  height: auto;
-}
-
-.scan-area-overlay {
-  position: absolute;
-  z-index: 3;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-.scan-area-rectangle {
-  position: absolute;
-  left: 5%;
-  width: 90%;
-  top: 39%;     /* SREDINA VIDEO SLIKE */
-  height: 22%;
-  border: 2.5px solid #25c981;
-  border-radius: 10px;
-  background: rgba(36,215,157,0.11);
-  box-shadow: 0 0 20px 3px rgba(46,224,122,0.19), 0 0 20px 2px rgba(50,255,50,0.3);
-  transition: background 0.2s;
-}
-.scan-video {
-  width: 100%;
-  border-radius: 8px;
-  display: block;
-}
-
-/* NAVIGACIJSKI GUMBI: NAZAD i DALJE */
-.navigation-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 2rem;
-}
-.next-button,
-.back-button {
-  display: inline-block;
-  padding: 0.8rem 2rem;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #fff;
-  background-color: #003366;
-  border: none;
-  border-radius: 5px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-  cursor: pointer;
-}
-.next-button:hover, .back-button:hover {
-  background-color: #001f4d;
-  transform: translateY(-2px);
-}
-.next-button:active, .back-button:active {
-  background-color: #002060;
-}
-.back-button { background-color: #476ca3; }
-.back-button:hover { background-color: #3b587d; }
-@media (max-width: 600px) {
-  .navigation-buttons {
-    justify-content: space-between;
-    gap: 8px;
-    margin-top: 1.5rem;
-    width: 100%;
-  }
-  .next-button,
-  .back-button {
-    flex: 1;
-    padding: 0.75rem 0;
-    font-size: 1rem;
-    border-radius: 8px;
-    box-shadow: none;
-  }
-  .next-button { margin-left: 8px; }
+  border: 2px;
+  touch-action: none;              /* Omogućuje crtanje prstom bez scrollanja */
 }

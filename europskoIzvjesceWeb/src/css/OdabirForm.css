@@ -11,22 +11,23 @@ body {
   line-height: 1.6;
 }
 
-/* CENTRAL CONTAINER (sve forme i odabiri) */
+/* CENTRAL CONTAINER */
 .odabir-container {
   max-width: 680px;
-  margin: 40px auto 0 auto;
-  padding: 1.5rem 1.5rem;
+  margin: 20px auto 0;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #fff; /* Dodano: bijela pozadina */
-  border-radius: 22px; /* Dodano: zaobljeni kutovi */
-  box-shadow: 0 3px 16px rgba(0,32,96,0.10); /* Dodano: suptilna sjena */
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 3px 16px rgba(0,32,96,0.10);
 }
-
 
 /* CENTRAL CARD */
 .odabir-card {
+  width: 100%;
+  max-width: 520px;
   background: #fff;
   padding: 2.5rem 2rem;
   border-radius: 14px;
@@ -34,12 +35,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
   align-items: center;
 }
 
+/* TITLE & DESCRIPTION */
 .odabir-title {
   font-size: 2rem;
   color: #002060;
@@ -47,24 +46,25 @@ body {
   text-align: center;
   margin-bottom: 16px;
 }
-
 .odabir-desc {
   font-size: 1.1rem;
   color: #002060;
-  margin-bottom: 10px;
   text-align: center;
+  margin-bottom: 10px;
 }
 
+/* SECTION */
 .odabir-section {
   width: 100%;
-  margin-bottom: 22px;
   text-align: center;
+  margin-bottom: 22px;
 }
 
-/* GUMB za odabir */
+/* BUTTON */
 .odabir-button {
   width: 100%;
   min-height: 48px;
+  padding: 0 28px;
   font-size: 1rem;
   font-weight: bold;
   color: #fff;
@@ -74,11 +74,8 @@ body {
   box-shadow: 0 2px 8px rgba(0,32,96,0.10);
   text-transform: uppercase;
   cursor: pointer;
-  margin-bottom: 14px;
   transition: background 0.22s, transform 0.18s;
-  padding-left: 28px;
-  padding-right: 28px;
-  box-sizing: border-box;
+  margin-bottom: 14px;
 }
 .odabir-button:hover {
   background: linear-gradient(90deg, #245094 0%, #153265 100%);
@@ -88,39 +85,57 @@ body {
   background: #112544;
 }
 
-/* Responsive za mobilne */
+/* VERTICAL BUTTONS GROUP */
+.vertical-buttons {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 1rem;
+}
+
+/* SUBMIT BUTTON OVERRIDE */
+.submit-button {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: 0.99rem;
+}
+
+/* RESPONSIVE */
 @media (max-width: 600px) {
   .odabir-container {
     max-width: 99vw;
-    padding: 0.4rem 0.4rem;
-    margin: 21px auto 0 auto;
-    background: #fff;       /* ostaje bijela i na mobitelu */
-    border-radius: 16px;    /* malo manji radius za mobitel */
+    margin: 18px auto 0;
+    padding: 0.5rem 0.8rem 1.1rem;
+    border-radius: 16px;
     box-shadow: 0 2px 12px rgba(0,32,96,0.12);
   }
   .odabir-card {
-    padding: 1.1rem 0.5rem;
+    padding: 1.2rem 0.6rem;
     border-radius: 11px;
     max-width: 99vw;
     box-shadow: 0 2px 8px rgba(0,32,96,0.13);
   }
-  .odabir-title { font-size: 1.25rem; }
-  .odabir-desc { font-size: 0.99rem; }
-  .odabir-section { margin-bottom: 13px;}
+  .odabir-title {
+    font-size: 1.25rem;
+  }
+  .odabir-desc {
+    font-size: 0.99rem;
+  }
+  .odabir-section {
+    margin-bottom: 13px;
+  }
   .odabir-button {
     width: 95vw;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.vertical-buttons {
-    width: 99vw;
-    gap: 12px;
+    margin: 0 auto 14px;
+  }
+  .vertical-buttons {
+    width: 95vw;
+    gap: 8px;
+    margin-top: 1rem;
+    margin: 0 auto;
   }
   .submit-button {
-    width: 95vw; /* skroz do ruba, ako želiš, ili ostavi 100% */
-    margin-left: auto;
-    margin-right: auto;
-    font-size: 0.99rem;
+    width: 100%;
   }
 }

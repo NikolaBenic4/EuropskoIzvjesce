@@ -209,7 +209,6 @@ const VoziloForm = ({ data, onNext, onBack }) => {
               pattern={regexRegOznaka.source}
               title="Unesite registarsku oznaku velikim slovima"
               autoComplete="off"
-              style={{ textTransform: "uppercase" }}
               placeholder="Unesi registarsku oznaku"
             />
           </div>
@@ -408,9 +407,9 @@ const VoziloForm = ({ data, onNext, onBack }) => {
 
         {error && <div style={{ color: "red", fontWeight: "bold", marginTop: 12 }}>{error}</div>}
 
-        <div className="navigation-buttons" style={{ marginTop: 20 }}>
+        <div className="navigation-buttons" style={{ marginTop:20 }}>
           {onBack && (
-            <button type="button" onClick={onBack} className="back-button" style={{ marginRight: 12 }}>
+            <button type="button" onClick={onBack} className="back-button" style={{ marginRight: 6 }}>
               NAZAD
             </button>
           )}

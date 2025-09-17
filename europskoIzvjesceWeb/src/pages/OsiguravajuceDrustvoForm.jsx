@@ -205,7 +205,7 @@ const handleNazivChange = async (e) => {
             className="back-button"
             onClick={onBack}
           >
-            POVRATAK
+            NAZAD
           </button>
         )}
         <button

@@ -399,7 +399,7 @@ export default function vozacOsiguranikForm({ data, onNext, onBack, onChange }) 
             type="button"
             className="back-button"
             onClick={onBack}
-            style={{ marginRight: 12 }}
+            style={{ marginRight: 6 }}
           >
             NAZAD
           </button>

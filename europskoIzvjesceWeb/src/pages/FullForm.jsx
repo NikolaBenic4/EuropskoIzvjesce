@@ -9,11 +9,12 @@ import OpisForm from "./OpisForm";
 import OsiguravajuceDrustvo from "./OsiguravajuceDrustvoForm";
 import PolicaForm from "./PolicaForm";
 import PotpisForm from "./PotpisForm";
-import FinalnaPotvrda from "./FinalnaPotvrdaForm";
+import FinalnaPotvrdaSingleForm from "./FinalnaPotvrdaSingleForm";
+import FinalnaPotvrdaDoubleForm from "./FinalnaPotvrdaDoubleForm";
 import "../css/FullForm.css";
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "https://192.168.1.246:3001"; // LAN IP!
+const SOCKET_URL = "https://192.168.1.246:3001";
 const API_KEY = import.meta.env.VITE_API_KEY || "your_api_key";
 
 function deepMergePolica(oldVal, partial) {
@@ -62,8 +63,12 @@ const stepNames = [
 
 export default function FullForm() {
   const [data, setData] = useState(() => {
-    const stored = sessionStorage.getItem("fullData");
-    return stored ? JSON.parse(stored) : {};
+    try {
+      const stored = sessionStorage.getItem("fullData");
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
   });
   const [step, setStep] = useState(() => {
     const s = sessionStorage.getItem("fullFormStep");
@@ -78,9 +83,11 @@ export default function FullForm() {
   });
   const [role, setRole] = useState(() => sessionStorage.getItem("role") || "");
   const [sessionId, setSessionId] = useState(() => {
-    return sessionStorage.getItem("session_id") ||
+    return (
+      sessionStorage.getItem("session_id") ||
       new URLSearchParams(window.location.search).get("session") ||
-      "";
+      ""
+    );
   });
   const [peerJoined, setPeerJoined] = useState(false);
   const socketRef = useRef(null);
@@ -98,11 +105,21 @@ export default function FullForm() {
   const currentEntryIndex = isMultiEntry ? singleEntries.length : 0;
   const totalEntries = isMultiEntry ? 2 : 1;
 
-  // Socket.IO inicijalizacija za dvostruki unos
   useEffect(() => {
-    if (!sessionId || socketRef.current) return;
-    socketRef.current = io(SOCKET_URL, { transports: ["websocket", "polling"] });
+    const params = new URLSearchParams(window.location.search);
+    const qrSession = params.get("session");
+    if (qrSession) {
+      if (sessionStorage.getItem("session_id") !== qrSession) {
+        sessionStorage.setItem("session_id", qrSession);
+        sessionStorage.setItem("mode", "double");
+        setSessionId(qrSession);
+      }
+    }
+  }, []);
 
+  useEffect(() => {
+    if (mode !== "double" || !sessionId || socketRef.current) return;
+    socketRef.current = io(SOCKET_URL, { transports: ["websocket", "polling"] });
     socketRef.current.emit("join-session", { sessionId });
     socketRef.current.on("role-assigned", ({ role }) => {
       setRole(role);
@@ -111,33 +128,34 @@ export default function FullForm() {
       sessionStorage.setItem("mode", "double");
     });
     socketRef.current.on("peer-joined", () => setPeerJoined(true));
-
     return () => {
-      socketRef.current.disconnect();
+      socketRef.current?.disconnect();
       socketRef.current = null;
     };
-  }, [sessionId]);
+  }, [sessionId, mode]);
 
-  // State i storage sync
+  // Spremanje u sessionStorage svaki put kad se data mijenjaju
   useEffect(() => {
-    try {
-      sessionStorage.setItem("fullData", JSON.stringify(data));
-    } catch {}
+    console.log("Spremanje u sessionStorage:", data); // DEBUG: za provjeru
+    sessionStorage.setItem("fullData", JSON.stringify(data));
   }, [data]);
+
   useEffect(() => {
     sessionStorage.setItem("completedSteps", JSON.stringify(completedSteps));
   }, [completedSteps]);
+
   useEffect(() => {
     sessionStorage.setItem("fullFormStep", String(step));
   }, [step]);
+
   useEffect(() => {
     sessionStorage.setItem("fullFormStatus", formStatus);
   }, [formStatus]);
+
   useEffect(() => {
     setCompletedSteps((prev) => (prev.includes(step) ? prev : [...prev, step]));
   }, [step]);
 
-  // --- AUTO ISPUNJAVANJE REGISTARSKE ---
   useEffect(() => {
     if (
       step === stepKeys.indexOf("vozilo") &&
@@ -154,19 +172,24 @@ export default function FullForm() {
     }
   }, [step, data.nesreca, data.vozilo]);
 
-  // --- HANDLERS ---
-  const onStepChange = (stepKey, newFields) => {
+  // POBOLJŠANA onStepChange funkcija
+  const onStepChange = useCallback((stepKey, newFields) => {
+    console.log(`Mijenjam ${stepKey}:`, newFields); // DEBUG: za praćenje promjena
     setData((prev) => {
       const oldVal = prev[stepKey] || {};
       let newVal = {};
+      
       if (stepKey === "vozacOsiguranik") {
         newVal = deepMergePolica(oldVal, newFields);
       } else {
         newVal = { ...oldVal, ...newFields };
       }
-      return { ...prev, [stepKey]: newVal };
+      
+      const updatedData = { ...prev, [stepKey]: newVal };
+      console.log("Nova data struktura:", updatedData); // DEBUG
+      return updatedData;
     });
-  };
+  }, []);
 
   const finishSingleEntry = useCallback(() => {
     const arr = [...singleEntries, { ...data }];
@@ -182,47 +205,56 @@ export default function FullForm() {
     }
   }, [data, singleEntries]);
 
-  const next = (partial) => {
-    onStepChange(stepKeys[step], partial);
+  const next = useCallback((partial) => {
+    // Spremi podatke prije prelaska na sljedeći korak
+    if (partial) {
+      onStepChange(stepKeys[step], partial);
+    }
+    
     if (step === stepKeys.length - 1) {
       if (mode === "single") {
-        finishSingleEntry();
+        navigate("/slanjePotvrde/single");
+      } else if (mode === "double") {
+        navigate("/slanjePotvrde/double");
       } else {
-        navigate("/slanjePotvrde");
+        navigate("/slanjePotvrde/single");
       }
     } else {
       const nextStep = Math.min(step + 1, stepKeys.length - 1);
       setStep(nextStep);
       sessionStorage.setItem("fullFormStep", String(nextStep));
     }
-  };
-  const prev = () => {
+  }, [step, mode, navigate, onStepChange]);
+
+  const prev = useCallback(() => {
     const prevStep = Math.max(step - 1, 0);
     setStep(prevStep);
     sessionStorage.setItem("fullFormStep", String(prevStep));
-  };
-  const goToStep = (idx) => {
+  }, [step]);
+
+  const goToStep = useCallback((idx) => {
     if (completedSteps.includes(idx)) {
       setStep(idx);
       sessionStorage.setItem("fullFormStep", String(idx));
     }
-  };
+  }, [completedSteps]);
 
-  // --- FINALNA POTVRDA HANDLER ---
-  const getMappedData = () => {
+  const getMappedData = useCallback(() => {
     const vozacOsiguranik = data.vozacOsiguranik || {};
     const osiguranikMapped = mapOsiguranik(vozacOsiguranik.osiguranik || {});
     return {
       ...data,
       vozacOsiguranik: {
         ...vozacOsiguranik,
-        osiguranik: osiguranikMapped,
+        ...osiguranikMapped, // Dodaj mapiranje direktno u vozacOsiguranik
+        osiguranik: osiguranikMapped, // Zadrži i originalni format
       },
     };
-  };
+  }, [data]);
 
-  const sendAllDataToBackend = useCallback(async () => {
+  const sendAllDataToBackendSingle = useCallback(async () => {
     const mappedData = getMappedData();
+    console.log("Šalje se na backend:", mappedData); // DEBUG
     try {
       const resp = await fetch("/api/prijava", {
         method: "POST",
@@ -237,81 +269,148 @@ export default function FullForm() {
     } catch (e) {
       alert(e.message || "Neuspjeh u slanju na server");
     }
-  }, [data]);
+  }, [getMappedData]);
+
+  const sendAllDataToBackendDouble = useCallback(async () => {
+    try {
+      const resp = await fetch("/api/prijava-dupli", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY,
+        },
+        body: JSON.stringify(singleEntries),
+        credentials: "include",
+      });
+      if (!resp.ok) throw new Error("Greška prilikom slanja na server");
+    } catch (e) {
+      alert(e.message || "Neuspjeh u slanju na server");
+    }
+  }, [singleEntries]);
 
   useEffect(() => {
-    if (location.pathname === "/slanjePotvrde") {
-      sendAllDataToBackend();
+    if (location.pathname === "/slanjePotvrde/single" && mode === "single") {
+      sendAllDataToBackendSingle();
     }
-  }, [location.pathname, sendAllDataToBackend]);
+    if (location.pathname === "/slanjePotvrde/double" && mode === "double") {
+      sendAllDataToBackendDouble();
+    }
+  }, [location.pathname, sendAllDataToBackendSingle, sendAllDataToBackendDouble, mode]);
 
-  // --- FORME ---
+  // POBOLJŠANE forme s boljim prosljeđivanjem podataka
   const forms = [
-    <NesrecaForm key="nesreca" data={data.nesreca || {}} onNext={next} onBack={step > 0 ? prev : null}
-      onChange={fields => onStepChange("nesreca", fields)} />,
-    <SvjedociForm key="svjedoci" data={data.svjedoci || {}} onNext={next} onBack={prev}
-      onChange={fields => onStepChange("svjedoci", fields)} />,
-    <VozacOsiguranikForm key="vozacOsiguranik" data={data.vozacOsiguranik || {}} onNext={next} onBack={prev}
-      onChange={fields => onStepChange("vozacOsiguranik", fields)} />,
-    <OpisForm key="opis" data={data.opis || {}} onNext={next} onBack={prev}
-      onChange={fields => onStepChange("opis", fields)} />,
-    <VoziloForm key="vozilo" data={data.vozilo || {}} onNext={next} onBack={prev}
-      onChange={fields => onStepChange("vozilo", fields)} />,
-    <OsiguravajuceDrustvo key="osiguranje" data={data.osiguranje || {}} onNext={next} onBack={prev}
-      onChange={fields => onStepChange("osiguranje", fields)} />,
-    <PolicaForm key="polica" data={data.polica || {}} onNext={next} onBack={prev}
-      onChange={fields => onStepChange("polica", fields)} />,
-    <PotpisForm key="potpis" data={data.potpis || {}} onNext={next} onBack={prev}
-      onChange={fields => onStepChange("potpis", fields)} />
+    <NesrecaForm 
+      key="nesreca" 
+      data={data.nesreca || {}} 
+      onNext={next} 
+      onBack={step > 0 ? prev : null}
+      onChange={(fields) => onStepChange("nesreca", fields)} 
+    />,
+    <SvjedociForm 
+      key="svjedoci" 
+      data={data.svjedoci || {}} 
+      onNext={next} 
+      onBack={prev}
+      onChange={(fields) => onStepChange("svjedoci", fields)} 
+    />,
+    <VozacOsiguranikForm 
+      key="vozacOsiguranik" 
+      data={data.vozacOsiguranik || {}} 
+      onNext={next} 
+      onBack={prev}
+      onChange={(fields) => onStepChange("vozacOsiguranik", fields)} 
+    />,
+    <OpisForm 
+      key="opis" 
+      data={data.opis || {}} 
+      onNext={next} 
+      onBack={prev}
+      onChange={(fields) => onStepChange("opis", fields)} 
+    />,
+    <VoziloForm 
+      key="vozilo" 
+      data={data.vozilo || {}} 
+      onNext={next} 
+      onBack={prev}
+      onChange={(fields) => onStepChange("vozilo", fields)} 
+    />,
+    <OsiguravajuceDrustvo 
+      key="osiguranje" 
+      data={data.osiguranje || {}} 
+      onNext={next} 
+      onBack={prev}
+      onChange={(fields) => onStepChange("osiguranje", fields)} 
+    />,
+    <PolicaForm 
+      key="polica" 
+      data={data.polica || {}} 
+      onNext={next} 
+      onBack={prev}
+      onChange={(fields) => onStepChange("polica", fields)} 
+    />,
+    <PotpisForm 
+      key="potpis" 
+      data={data.potpis || {}} 
+      onNext={next} 
+      onBack={prev}
+      onChange={(fields) => onStepChange("potpis", fields)} 
+    />
   ];
 
-  // --- FINALNA POTVRDA VIEW ---
-  if (location.pathname === "/slanjePotvrde") {
+  const handleGoHome = () => {
+    sessionStorage.clear();
+    localStorage.clear();
+    navigate("/");
+  };
+
+  // DEBUG funkcija za provjeru spremljenih podataka
+  const logSessionData = () => {
+    console.log("SessionStorage podaci:", {
+      fullData: JSON.parse(sessionStorage.getItem("fullData") || "{}"),
+      step: sessionStorage.getItem("fullFormStep"),
+      completedSteps: JSON.parse(sessionStorage.getItem("completedSteps") || "[]")
+    });
+  };
+
+  useEffect(() => {
+    logSessionData(); // Ispis podataka pri svakoj promjeni step-a
+  }, [step]);
+
+  if (location.pathname === "/slanjePotvrde/double" && mode === "double") {
+    const handleSendDouble = async () => {
+      await sendAllDataToBackendDouble();
+      sessionStorage.clear();
+      navigate("/");
+    };
+    return (
+      <FinalnaPotvrdaDoubleForm
+        allEntries={singleEntries}
+        onSend={handleSendDouble}
+        onBack={() => setStep(stepKeys.length - 1)}
+        onGoHome={handleGoHome}
+      />
+    );
+  }
+
+  if (
+    location.pathname === "/slanjePotvrde/single" ||
+    (location.pathname === "/slanjePotvrde/double" && mode !== "double")
+  ) {
     const vozacOsiguranik = data.vozacOsiguranik || {};
     const osiguranikOriginal = vozacOsiguranik.osiguranik || {};
     const osiguranje = data.osiguranje || {};
-
-    const handleSend = async (mail) => {
-      const mappedData = getMappedData();
-      try {
-        const resp = await fetch("/api/prijava", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": API_KEY,
-          },
-          body: JSON.stringify(mappedData),
-          credentials: "include",
-        });
-        if (!resp.ok) throw new Error("Neuspjeh u spremanju podataka");
-      } catch (err) {
-        alert("Neuspjeh u spremanju podataka: " + err.message);
-        return;
-      }
-      try {
-        const respPdf = await fetch("/api/generate-pdf-and-send", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": API_KEY,
-          },
-          body: JSON.stringify({ mail, data: mappedData }),
-          credentials: "include",
-        });
-        if (!respPdf.ok) throw new Error("Neuspjeh u slanju PDF-a");
-        alert("Uspješno poslano. Provjerite email.");
-        sessionStorage.removeItem("fullData");
-        navigate("/");
-      } catch (err) {
-        alert("Neuspjeh u kreiranju/slanju PDF-a: " + err.message);
-      }
+    const handleSend = async () => {
+      await sendAllDataToBackendSingle();
+      sessionStorage.clear();
+      navigate("/");
     };
     return (
-      <FinalnaPotvrda
+      <FinalnaPotvrdaSingleForm
         osiguranje={osiguranje}
         osiguranik={osiguranikOriginal}
         onSend={handleSend}
         onBack={() => setStep(stepKeys.length - 1)}
+        onGoHome={handleGoHome}
       />
     );
   }
@@ -331,7 +430,7 @@ export default function FullForm() {
         <h2 className="fullform-title">{stepNames[step]}</h2>
         <p className="fullform-desc">Korak {step + 1} od {stepNames.length}</p>
       </div>
-      <div className="fullform-content">{forms[step]}</div>
+      {forms[step]}
     </div>
   );
 }

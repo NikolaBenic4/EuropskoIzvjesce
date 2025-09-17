@@ -9,11 +9,20 @@ import "../css/NesrecaForm.css";
 
 const GOOGLE_API_KEY_MAP = "AIzaSyCWIaJB-eynUWVVq63fNioRuDGEIr-puRM";
 const DefaultIcon = L.divIcon({
-  html: "<span class='big-pin'>📍</span>",
-  iconSize: [30, 30],
-  className: "custom-div-icon",
+  html: `<span class='big-pin' style="
+    font-size: 1.65rem;
+    line-height: 1.65rem;
+    color: #d12424;
+    -webkit-text-stroke: 1px #fff;
+    filter: drop-shadow(0 1px 4px #2225);
+    text-shadow: 0 1px 3px #e228, 0 0 4px #fff;
+    ">📍</span>`,
+  iconSize: [26, 26],
+  iconAnchor: [13, 24],
+  className: "custom-div-icon"
 });
 L.Marker.prototype.options.icon = DefaultIcon;
+
 
 function parseCoords(geo) {
   if (!geo) return null;
@@ -220,13 +229,14 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
   const mapCenter = nesrecaData.mapPosition || DEFAULT_CENTER;
 
   return (
-    <div className={`nesreca-container ${isMobile ? "mobile" : "desktop"}`}>
+    <form className="nesreca-form" onSubmit={handleSubmit} noValidate>
       <h2 className="nesreca-title">Prijava prometne nesreće</h2>
+
       <button
         type="button"
         onClick={getCurrentLocation}
         disabled={loading}
-        className={`auto-load-button ${loading ? "loading" : ""}`}
+        className={`auto-load-button${loading ? " loading" : ""}`}
       >
         {loading ? (
           <>
@@ -238,115 +248,98 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
           </>
         )}
       </button>
-      <br />
-      <form onSubmit={handleSubmit} noValidate>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label" htmlFor="datum_nesrece">
-              Datum nesreće: *
-            </label>
-            <input
-              id="datum_nesrece"
-              type="date"
-              value={nesrecaData.datum_nesrece}
-              onChange={(e) =>
-                setNesrecaData((prev) => ({ ...prev, datum_nesrece: e.target.value }))
-              }
-              className="form-input"
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="vrijeme_nesrece">
-              Vrijeme nesreće: *
-            </label>
-            <input
-              id="vrijeme_nesrece"
-              type="time"
-              value={nesrecaData.vrijeme_nesrece}
-              onChange={(e) =>
-                setNesrecaData((prev) => ({ ...prev, vrijeme_nesrece: e.target.value }))
-              }
-              className="form-input"
-              required
-            />
-          </div>
-        </div>
-        <br />
+      <br></br>
+      <div className="form-row">
         <div className="form-group">
-          <label className="form-label" htmlFor="mjesto_nesrece">
-            Mjesto nesreće: *
-          </label>
-          {manualAddressMsg && <div className="manual-address-msg">{manualAddressMsg}</div>}
-          <textarea
-            id="mjesto_nesrece"
-            value={nesrecaData.mjesto_nesrece}
-            onChange={(e) =>
-              setNesrecaData((prev) => ({ ...prev, mjesto_nesrece: e.target.value }))
+          <label className="form-label" htmlFor="datum_nesrece">Datum nesreće: *</label>
+          <input
+            id="datum_nesrece"
+            type="date"
+            value={nesrecaData.datum_nesrece}
+            onChange={e =>
+              setNesrecaData(prev => ({ ...prev, datum_nesrece: e.target.value }))
             }
-            className="form-textarea"
-            placeholder="Unesi adresu ili opis mjesta nesreće..."
+            className="form-input"
             required
           />
         </div>
         <div className="form-group">
-          <label className="form-label" htmlFor="geolokacija_nesrece">
-            Geolokacija:
-          </label>
+          <label className="form-label" htmlFor="vrijeme_nesrece">Vrijeme nesreće: *</label>
           <input
-            id="geolokacija_nesrece"
-            type="text"
-            value={nesrecaData.geolokacija_nesrece}
-            readOnly
+            id="vrijeme_nesrece"
+            type="time"
+            value={nesrecaData.vrijeme_nesrece}
+            onChange={e =>
+              setNesrecaData(prev => ({ ...prev, vrijeme_nesrece: e.target.value }))
+            }
             className="form-input"
-            placeholder="Geolokacija će biti prikazana ovdje"
+            required
           />
         </div>
-        {nesrecaData.showMap && (
-          <div className="map-section">
-            <h3>Lokacija nesreće na karti:</h3>
-            <MapContainer
-              center={mapCenter}
-              zoom={isMobile ? 13 : 16}
-              scrollWheelZoom={false}
-              dragging={false}
-              doubleClickZoom={false}
-              tap={false}
-              touchZoom={false}
-              boxZoom={false}
-              keyboard={false}
-              style={{ height: isMobile ? 250 : 350, width: "100%", borderRadius: 12 }}
-            >
-              <MapRecenter center={mapCenter} />
-              <TileLayer
-                attribution="&copy; OpenStreetMap contributors"
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              {nesrecaData.mapPosition && (
-                <Marker position={nesrecaData.mapPosition}>
-                  <Popup>{nesrecaData.mjesto_nesrece}</Popup>
-                </Marker>
-              )}
-            </MapContainer>
-          </div>
-        )}
-        <div className="navigation-buttons">
-          {onBack ? (
-            <button type="button" className="back-button" onClick={onBack}>
-              POVRATAK
-            </button>
-          ) : (
-            <button type="button" className="back-button" onClick={() => navigate("/")}>
-              POVRATAK
-            </button>
-          )}
-          <button type="submit" className="next-button">
-            DALJE
-          </button>
+      </div>
+      <div className="form-group">
+        <label className="form-label" htmlFor="mjesto_nesrece">Mjesto nesreće: *</label>
+        {manualAddressMsg && <div className="manual-address-msg">{manualAddressMsg}</div>}
+        <textarea
+          id="mjesto_nesrece"
+          value={nesrecaData.mjesto_nesrece}
+          onChange={e =>
+            setNesrecaData(prev => ({ ...prev, mjesto_nesrece: e.target.value }))
+          }
+          className="form-textarea"
+          placeholder="Unesi adresu ili opis mjesta nesreće..."
+          required
+        />
+      </div>
+      <div className="form-group">
+        <label className="form-label" htmlFor="geolokacija_nesrece">Geolokacija:</label>
+        <input
+          id="geolokacija_nesrece"
+          type="text"
+          value={nesrecaData.geolokacija_nesrece}
+          readOnly
+          className="form-input"
+          placeholder="Geolokacija će biti prikazana ovdje"
+        />
+      </div>
+      {nesrecaData.showMap && (
+        <div className="map-section">
+          <h3>Lokacija nesreće na karti:</h3>
+          <MapContainer
+            center={mapCenter}
+            zoom={isMobile ? 13 : 16}
+            scrollWheelZoom={false}
+            dragging={true}
+            doubleClickZoom={false}
+            tap={false}
+            touchZoom={false}
+            boxZoom={false}
+            keyboard={false}
+            style={{ height: isMobile ? 250 : 350, width: "100%", borderRadius: 12 }}
+          >
+            <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <MapRecenter center={mapCenter} /> {/* OVO DODAJ */}
+            {nesrecaData.mapPosition && (
+              <Marker position={nesrecaData.mapPosition}>
+                <Popup>{nesrecaData.mjesto_nesrece}</Popup>
+              </Marker>
+            )}
+          </MapContainer>
         </div>
-      </form>
-    </div>
+      )}
+      <div className="navigation-buttons">
+        {onBack ? (
+          <button type="button" className="back-button" onClick={onBack}>
+            POVRATAK
+          </button>
+        ) : (
+          <button type="button" className="back-button" onClick={() => navigate("/")}>
+            POVRATAK
+          </button>
+        )}
+        <button type="submit" className="next-button">DALJE</button>
+      </div>
+    </form>
   );
 };
-
 export default NesrecaForm;

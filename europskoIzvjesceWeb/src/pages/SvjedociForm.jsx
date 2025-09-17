@@ -191,7 +191,7 @@ export default function SvjedociForm({ data, onNext, onBack }) {
             type="button"
             className="back-button"
             onClick={onBack}
-            style={{ marginRight: 12 }}
+            style={{ marginRight: 6 }}
           >
             NAZAD
           </button>

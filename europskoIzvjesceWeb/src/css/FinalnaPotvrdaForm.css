@@ -142,3 +142,19 @@ body {
     padding: 1.05rem 0;
   }
 }
+
+.navigation-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .navigation-buttons {
+    flex-direction: column;
+    gap: 9px;
+    margin-top: 1.3rem;
+  }
+}

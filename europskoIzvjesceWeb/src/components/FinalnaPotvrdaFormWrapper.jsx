@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import FinalnaPotvrdaForm from "../pages/FinalnaPotvrdaForm";
+import FinalnaPotvrdaSingleForm from "../pages/FinalnaPotvrdaSingleForm";
+import FinalnaPotvrdaDoubleForm from "../pages/FinalnaPotvrdaDoubleForm";
 import { v4 as uuidv4 } from "uuid";
 import { io } from "socket.io-client";
 
+// Helper funkcije
 const flattenVozacOsiguranik = (vozacOsiguranik) => ({
   ...(vozacOsiguranik.osiguranik || {}),
   ...(vozacOsiguranik.vozac || {}),
@@ -27,18 +29,20 @@ function canonicalOsiguranje(input) {
 }
 
 const API_KEY = import.meta.env.VITE_API_KEY || "tajni-api-kljuc";
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "https://localhost:3001"; // prilagodi prema potrebi
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "https://localhost:3001";
 
 const FinalnaPotvrdaWrapper = () => {
   const navigate = useNavigate();
 
-  // Dohvati podatke iz sessionStorage
+  // Dohvat podataka i mode iz sessionStorage
   const allData = JSON.parse(sessionStorage.getItem("fullData") || "{}");
+  const mode = sessionStorage.getItem("mode") || "single";
+  const singleEntries = JSON.parse(sessionStorage.getItem("single_entries") || "[]");
 
-  // --- Osiguranje: mapiranje na polja baze -----
+  // Normalizacija podatka osiguranja
   const osiguranje = canonicalOsiguranje(allData.osiguranje);
-  // ---------------------------------------------
 
+  // Osiguravanje postojanja ID nesreće (UUID u single mode-u)
   if (!allData.nesreca) allData.nesreca = {};
   if (!allData.nesreca.id_nesrece) {
     let sessionId = sessionStorage.getItem('sessionId');
@@ -50,10 +54,11 @@ const FinalnaPotvrdaWrapper = () => {
   }
   const sessionId = allData.nesreca.id_nesrece;
 
-  // 3. Transformacija vozacOsiguranik (merge, prioritet potpis forme)
+  // Normalizacija podataka o osiguraniku i vozaču
   const vozacOsiguranikSrc = allData.vozacOsiguranik || {};
   let vozacOsiguranik = flattenVozacOsiguranik(vozacOsiguranikSrc);
 
+  // Ako postoji podatak iz potpis forme, koristi ih kao primarne
   if (allData.potpis) {
     if (allData.potpis.iban_osiguranika) vozacOsiguranik.iban_osiguranika = allData.potpis.iban_osiguranika;
     if (allData.potpis.potpis) vozacOsiguranik.potpis = allData.potpis.potpis;
@@ -61,7 +66,7 @@ const FinalnaPotvrdaWrapper = () => {
     if (allData.potpis.banka) vozacOsiguranik.banka = allData.potpis.banka;
   }
 
-  // Prikazni segment (za summary, nije za backend)
+  // Prikazni set podataka osiguranika za UI
   const osiguranik = {
     ime_osiguranika: vozacOsiguranik.ime_osiguranika || "",
     prezime_osiguranika: vozacOsiguranik.prezime_osiguranika || "",
@@ -73,36 +78,32 @@ const FinalnaPotvrdaWrapper = () => {
     iban_osiguranika: vozacOsiguranik.iban_osiguranika || "",
   };
 
-  // Zajamčeno root-level objekti, nema nested!
+  // Finalni podatak za backend (nema nested osiguranik/vozac)
   let allDataMapped = {
     ...allData,
     vozacOsiguranik,
-    osiguranje, // PRAVI FORMAT
+    osiguranje,
   };
-  if ("osiguranik" in allDataMapped.vozacOsiguranik) {
-    delete allDataMapped.vozacOsiguranik.osiguranik;
-  }
-  if ("vozac" in allDataMapped.vozacOsiguranik) {
-    delete allDataMapped.vozacOsiguranik.vozac;
-  }
+  if ("osiguranik" in allDataMapped.vozacOsiguranik) delete allDataMapped.vozacOsiguranik.osiguranik;
+  if ("vozac" in allDataMapped.vozacOsiguranik) delete allDataMapped.vozacOsiguranik.vozac;
 
-  // ---- STATE ZA DVOSTRUKI UNOS ----
+  // Socket only for double mode
   const [socketStatus, setSocketStatus] = useState({});
-  const [role, setRole] = useState();
+  const [role, setRole] = useState(sessionStorage.getItem("role") || "");
   const [canSend, setCanSend] = useState(false);
   const socketRef = useRef();
 
+  // Socket handling for double mode
   useEffect(() => {
-    // Socket conn only once!
+    if (mode !== "double") return;
     if (!sessionId) return;
     const socket = io(SOCKET_URL, { transports: ["websocket"] });
-
     socketRef.current = socket;
-
     socket.emit("join-session", { sessionId });
 
     socket.on("role-assigned", ({ role }) => {
       setRole(role);
+      sessionStorage.setItem("role", role);
     });
 
     socket.on("peer-status-update", (status) => {
@@ -114,6 +115,7 @@ const FinalnaPotvrdaWrapper = () => {
     socket.on("pdf-sent", () => {
       alert("PDF je uspješno poslan svim sudionicima!");
       sessionStorage.removeItem("fullData");
+      sessionStorage.removeItem("single_entries");
       sessionStorage.removeItem("sessionId");
       navigate("/");
     });
@@ -121,17 +123,16 @@ const FinalnaPotvrdaWrapper = () => {
     return () => {
       socket.disconnect();
     };
-  }, [sessionId, navigate]);
+  }, [sessionId, navigate, mode]);
 
-  // Potvrdi da si gotov (korisnik pritisne "Potvrdi završetak")
+  // Potvrda završetka za double unos
   const handleConfirm = () => {
     socketRef.current?.emit("form-completed", { ...allDataMapped });
     socketRef.current?.emit("confirm-send-pdf");
-    // Poruka/prikaz možeš dodati po želji (npr. "čekamo drugog sudionika")
   };
 
-  // POŠALJI (zove backend kad oba sudionika potvrde)
-  const handleSend = async (mail) => {
+  // Slanje podataka backendu
+  const handleSend = async () => {
     try {
       const response = await fetch("/api/prijava", {
         method: "POST",
@@ -153,50 +154,76 @@ const FinalnaPotvrdaWrapper = () => {
       console.error("Greška pri slanju podataka:", err);
       return;
     }
-    try {
-      // Ovdje FE NE šalje PDF izravno, nego backend to radi nakon oba confirmed (vidi socket.io backend)
-      // Ako i dalje želiš ručno poslati, ostavi ovo. Inače, makni i rely only on socket pdf-sent event.
-      const responsePdf = await fetch("/api/generate-pdf-and-send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": API_KEY,
-        },
-        credentials: "include",
-        body: JSON.stringify({ mail, data: allDataMapped }),
-      });
-      if (!responsePdf.ok) throw new Error(responsePdf.statusText);
-      alert("Prijava uspješno poslana i PDF će stići na email!");
-      sessionStorage.removeItem("fullData");
-      sessionStorage.removeItem("sessionId");
-      navigate("/");
-    } catch (err) {
-      alert("PDF nije kreiran: " + err.message);
-      console.error("Greška pri generiranju/slanju PDF-a:", err);
-    }
+    // PDF šalje backend preko socket eventa nakon potvrde obje strane u double modu!
   };
 
   const handleBack = () => navigate(-1);
 
+  // Za dvostruki workflow prikaži uvijek
+  const canAddSecond = true;
+
+  // Handler za novi unos u single mode-u
+  const handleNewParticipant = () => {
+    sessionStorage.removeItem("fullData");
+    sessionStorage.removeItem("fullFormStep");
+    sessionStorage.removeItem("completedSteps");
+    // Ako imaš custom redirekciju na početak, koristi "/" ili početak forme
+    navigate("/");
+  };
+
+  // Evaluacija statusa za double formu
   const bothCompleted = socketStatus?.A?.completed && socketStatus?.B?.completed;
   const bothConfirmed = socketStatus?.A?.confirmed && socketStatus?.B?.confirmed;
 
-  return (
-    <FinalnaPotvrdaForm
-      osiguranje={osiguranje}
-      osiguranik={osiguranik}
-      mailOsiguranika={osiguranik.mail_osiguranika}
-      onSend={handleSend}
-      onBack={handleBack}
-      onConfirm={handleConfirm}
-      canAddSecond={true}
-      bothConfirmed={bothConfirmed}
-      peerWaiting={!bothConfirmed && bothCompleted}
-      disabledSend={!canSend}
-      role={role}
-      status={socketStatus}
-    />
-  );
+  if (mode === "double") {
+    if (!role)
+      return (
+        <div className="nesreca-container" style={{ padding: 32, textAlign: "center" }}>
+          Učitavam status sudionika...
+        </div>
+      );
+    let sviEmailovi = [];
+    if (Array.isArray(singleEntries)) {
+      singleEntries.forEach((p) => {
+        if (p?.vozacOsiguranik?.osiguranik?.mail_osiguranika)
+          sviEmailovi.push(p.vozacOsiguranik.osiguranik.mail_osiguranika);
+      });
+      sviEmailovi = sviEmailovi.filter(Boolean);
+    }
+    return (
+      <FinalnaPotvrdaDoubleForm
+        allEntries={singleEntries}
+        osiguranje={osiguranje}
+        osiguraniciEmails={sviEmailovi}
+        onSend={handleSend}
+        onBack={handleBack}
+        onConfirm={handleConfirm}
+        canAddSecond={canAddSecond}
+        bothConfirmed={bothConfirmed}
+        peerWaiting={!bothConfirmed && bothCompleted}
+        disabledSend={!canSend}
+        role={role}
+        status={socketStatus}
+      />
+    );
+  } else {
+    return (
+      <FinalnaPotvrdaSingleForm
+        osiguranje={osiguranje}
+        osiguranik={osiguranik}
+        mailOsiguranika={osiguranik.mail_osiguranika}
+        onSend={handleSend}
+        onBack={handleBack}
+        onNewParticipant={handleNewParticipant}
+        onConfirm={() => {}}
+        bothConfirmed={true}
+        peerWaiting={false}
+        disabledSend={false}
+        role={role}
+        status={{}}
+      />
+    );
+  }
 };
 
 export default FinalnaPotvrdaWrapper;
