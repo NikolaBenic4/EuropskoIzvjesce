@@ -100,7 +100,6 @@ export default function SvjedociForm({ data, onNext, onBack }) {
 
   return (
     <form className="nesreca-form" onSubmit={handleSubmit}>
-      <h2 className="nesreca-title">Podaci o šteti i svjedocima</h2>
       <div className="checkbox-group">
         <label className="checkbox-item">
           <input

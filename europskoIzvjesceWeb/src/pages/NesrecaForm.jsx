@@ -230,7 +230,6 @@ const NesrecaForm = ({ data, onNext, onBack }) => {
 
   return (
     <form className="nesreca-form" onSubmit={handleSubmit} noValidate>
-      <h2 className="nesreca-title">Prijava prometne nesreće</h2>
 
       <button
         type="button"

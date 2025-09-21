@@ -113,7 +113,6 @@ const handleNazivChange = async (e) => {
 
   return (
     <form className="nesreca-form" onSubmit={handleSubmit}>
-      <h2 className="nesreca-title">Osiguravajuće društvo</h2>
       <div className="form-group" style={{ position: "relative" }}>
         <label className="form-label">Naziv osiguravajućeg društva: *</label>
         <input

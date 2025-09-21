@@ -55,9 +55,9 @@ const stepNames = [
   "Svjedoci",
   "Osiguranik i vozač",
   "Opis nesreće",
-  "Podaci vozila",
+  "Podaci o vozilu",
   "Osiguravajuće društvo",
-  "Polica osiguranje",
+  "Polica osiguranja",
   "Potpis",
 ];
 

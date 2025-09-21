@@ -115,8 +115,6 @@ export default function OpisForm({ data, onNext, onBack }) {
 
   return (
     <form className="nesreca-form" onSubmit={handleNext}>
-      <h2 className="nesreca-title">Opis Nesreće</h2>
-
       {/* okolnosti */}
       <div className="form-group">
         <label className="form-label">Tip okolnosti:*</label>

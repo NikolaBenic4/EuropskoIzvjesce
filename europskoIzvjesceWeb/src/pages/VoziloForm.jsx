@@ -170,8 +170,6 @@ const VoziloForm = ({ data, onNext, onBack }) => {
 
   return (
       <form className="nesreca-form" onSubmit={handleSubmit}>
-        <h2 className="nesreca-title">Podaci o vozilu</h2>
-
         <div className="form-group">
             <label htmlFor="registarskaoznaka_vozila" className="form-label">
               Registarska oznaka:*

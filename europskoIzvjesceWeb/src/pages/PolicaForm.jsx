@@ -75,7 +75,6 @@ const PolicaForm = ({ data, onNext, onBack }) => {
 
   return (
    <form className="nesreca-form" onSubmit={handleSubmit}>
-        <h2 className="nesreca-title">Polica osiguranja</h2>
 
         <div className="form-group">
           <label htmlFor="brojpolice" className="form-label">
