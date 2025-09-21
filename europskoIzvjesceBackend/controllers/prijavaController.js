@@ -40,7 +40,7 @@ function validatePayload(payload) {
   if (!isValidIban(osig.iban_osiguranika)) {
     return "Neispravan IBAN!";
   }
-  if (!payload.nesreca.id_nesrece || typeof payload.nesreca.id_nesrece !== 'string') {
+  if (!payload.nesreca || !payload.nesreca.id_nesrece || typeof payload.nesreca.id_nesrece !== 'string') {
     return "Nepostavljen id (id_nesrece/sessionId)";
   }
   if (!payload.osiguranje.id_osiguranje) {
@@ -51,7 +51,6 @@ function validatePayload(payload) {
 
 exports.apiKeyAuth = apiKeyAuth;
 
-// Tvoja funkcija za unos prijave
 exports.createPrijava = async function (req, res) {
   const {
     nesreca, svjedoci, vozacOsiguranik, vozac, opis, vozilo,
@@ -68,7 +67,7 @@ exports.createPrijava = async function (req, res) {
     await client.query('BEGIN');
 
     let geoSQL = null;
-    if (nesreca.geolokacija_nesrece) {
+    if (nesreca?.geolokacija_nesrece) {
       if (
         typeof nesreca.geolokacija_nesrece === 'object' &&
         typeof nesreca.geolokacija_nesrece.x === 'number' &&
@@ -95,7 +94,7 @@ exports.createPrijava = async function (req, res) {
         geoSQL,
         nesreca.ozlijedeneososbe ?? false,
         nesreca.stetanavozilima ?? false,
-        nesreca.stetanastvarima ?? false
+        nesreca.stetanastvarima ?? false,
       ]
     );
 
@@ -103,13 +102,12 @@ exports.createPrijava = async function (req, res) {
 
     await client.query(
       `INSERT INTO okolnost (tip_okolnost, opis_okolnost, id_nesrece)
-       VALUES ($1,$2,$3)
+       VALUES ($1, $2, $3)
        ON CONFLICT (id_nesrece)
        DO UPDATE SET opis_okolnost = EXCLUDED.opis_okolnost`,
       ['glavna', opis.opis_nesrece || '', id_nesrece]
     );
 
-    // Svjedoci
     if (svjedoci && Array.isArray(svjedoci.lista)) {
       for (const s of svjedoci.lista) {
         await client.query(
@@ -121,7 +119,6 @@ exports.createPrijava = async function (req, res) {
       }
     }
 
-    // Vozilo
     await client.query(
       `INSERT INTO vozilo (
         registarskaoznaka_vozila, marka_vozila, tip_vozila, drzavaregistracije_vozila,
@@ -143,11 +140,10 @@ exports.createPrijava = async function (req, res) {
         vozilo.drzavaregistracije_vozila,
         vozilo.brojsasije_vozila,
         vozilo.kilometraza_vozila,
-        vozilo.godinaproizvodnje_vozilo
+        vozilo.godinaproizvodnje_vozilo,
       ]
     );
 
-    // Osiguranik
     let ibanDb = vozacOsiguranik.iban_osiguranika;
     if (Array.isArray(ibanDb)) ibanDb = ibanDb;
     else if (typeof ibanDb === 'string') ibanDb = [ibanDb.toUpperCase().replace(/\s+/g, '')];
@@ -174,12 +170,11 @@ exports.createPrijava = async function (req, res) {
         vozacOsiguranik.drzava_osiguranika,
         vozacOsiguranik.mail_osiguranika,
         vozacOsiguranik.kontaktbroj_osiguranika,
-        ibanDb
+        ibanDb,
       ]
     );
     const id_osiguranika = osiguranikRes.rows[0].id_osiguranika;
 
-    // Polica osiguranja UPIS s FK na osiguranje
     await client.query(
       `INSERT INTO polica_osiguranja (
         brojpolice, brojzelenekarte, id_osiguranika, id_osiguranja, kaskopokrivastetu
@@ -194,35 +189,34 @@ exports.createPrijava = async function (req, res) {
         polica.brojpolice,
         polica.brojzelenekarte,
         id_osiguranika,
-        osiguranje.id_osiguranje, // lookup FK
-        polica.kaskopokrivastetu ?? false
+        osiguranje.id_osiguranje,
+        polica.kaskopokrivastetu ?? false,
       ]
     );
 
-    // NE radi INSERT/UPDATE osiguranja!
-
-    // Insert slike
     if (Array.isArray(slike)) {
       for (const s of slike) {
+        if (!s.buffer || !s.naziv_slike) continue; // zaštita
         const buff = Buffer.from(s.buffer, 'base64');
         await client.query(
           `INSERT INTO slika (naziv_slike, podatak_slike, vrijeme_slikanja, id_nesrece)
-          VALUES ($1, $2, $3, $4)
-          ON CONFLICT DO NOTHING`,
-          [s.naziv_slike, buff, s.vrijeme_slikanja, id_nesrece]
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT DO NOTHING`,
+          [s.naziv_slike, buff, s.vrijeme_slikanja || new Date(), id_nesrece]
         );
       }
     }
 
-    // Potpisi
-    await client.query(
-      `UPDATE nesreca SET potpis_a = $1, potpis_b = $2 WHERE id_nesrece = $3`,
-      [
-        potpis?.potpis_a ? Buffer.from(potpis.potpis_a, 'base64') : null,
-        potpis?.potpis_b ? Buffer.from(potpis.potpis_b, 'base64') : null,
-        id_nesrece
-      ]
-    );
+    if (potpis) {
+      await client.query(
+        `UPDATE nesreca SET potpis_a = $1, potpis_b = $2 WHERE id_nesrece = $3`,
+        [
+          potpis.potpis_a ? Buffer.from(potpis.potpis_a, 'base64') : null,
+          potpis.potpis_b ? Buffer.from(potpis.potpis_b, 'base64') : null,
+          id_nesrece
+        ]
+      );
+    }
 
     await client.query('COMMIT');
     return res.json({ success: true, nesrecaId: id_nesrece });

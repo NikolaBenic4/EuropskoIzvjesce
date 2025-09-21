@@ -59,7 +59,7 @@ app.get("/api/google-details", async (req, res) => {
 });
 
 // GLAVNI API
-app.post("/api/prijava", apiKeyAuth, createPrijava);
+app.post("/api/create-prijava", apiKeyAuth, createPrijava);
 
 // Routeri
 app.use('/api/address', apiKeyAuth, addressesRouter);
