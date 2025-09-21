@@ -158,18 +158,6 @@ const MjestoUdarcaVozilo = ({
           </label>
         ))}
       </div>
-      {selectedPoints.length > 0 && (
-        <div className="odabrane-pozicije-lista" style={{ margin: "10px 0 0 0" }}>
-          <strong>Odabrane pozicije oštećenja:*</strong>
-          <ul style={{ paddingLeft: "18px", margin: "6px 0 0 0" }}>
-            {points
-              .filter(point => selectedPoints.includes(point.id))
-              .map(point => (
-                <li key={point.id}>{point.label}</li>
-              ))}
-          </ul>
-        </div>
-      )}
     </div>
   );
 };

@@ -3,7 +3,28 @@ import imageCompression from "browser-image-compression";
 import MjestoUdarcaVozilo, { VEHICLE_CONFIG } from "../components/MjestoUdarcaVozila";
 import "../css/OpisForm.css";
 
-const OKOLNOSTI_OPTIONS = [/* ... ista lista ... */];
+const OKOLNOSTI_OPTIONS = [
+  "Sudionik nije dao prednost prolaska",
+  "Neprepoznavanje prednosti prolaska",
+  "Prebrza vožnja",
+  "Nepropisno prestrojavanje",
+  "Nepropisno skretanje",
+  "Nepropisno uključivanje u promet",
+  "Neprilagođena brzina uvjetima na cesti",
+  "Nepropisno zaustavljanje ili parkiranje",
+  "Ometanje prometa",
+  "Nedavanje znakova namjere",
+  "Nepropisno korištenje svjetala",
+  "Neispunjavanje obveza sudionika prometne nesreće",
+  "Neodgovarajuća sigurnosna udaljenost",
+  "Nepridržavanje prometnih znakova i svjetala",
+  "Vožnja pod utjecajem alkohola ili droga",
+  "Vožnja prije stjecanja prava",
+  "Nepropisno pretjecanje",
+  "Vozilo nije bilo tehnički ispravno",
+  "Ostalo"
+];
+
 
 const initialState = {
   tip_okolnost: [],

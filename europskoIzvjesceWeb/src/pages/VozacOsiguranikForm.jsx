@@ -31,6 +31,20 @@ function extractStreetAddress(components) {
   return "";
 }
 
+// Funkcija za formatiranje labela kao "Ime osiguranika", "Kontakt broj vozača" itd.
+function getLabelName(field) {
+  let baseName = field.replace(/_/g, ' ');
+  if (field.includes('osiguranika')) {
+    baseName = baseName.replace('osiguranika', '').trim();
+    return baseName.charAt(0).toUpperCase() + baseName.slice(1) + ' osiguranika';
+  }
+  if (field.includes('vozaca')) {
+    baseName = baseName.replace('vozaca', '').trim();
+    return baseName.charAt(0).toUpperCase() + baseName.slice(1) + ' vozača';
+  }
+  return baseName.charAt(0).toUpperCase() + baseName.slice(1);
+}
+
 const OsiguranikInitial = {
   ime_osiguranika: "",
   prezime_osiguranika: "",
@@ -57,7 +71,7 @@ const VozacInitial = {
 const placeholders = {
   ime_osiguranika: "Unesite ime",
   prezime_osiguranika: "Unesite prezime",
-  adresa_osiguranika: "Unesite adresu",
+  adresa_osiguranika: "Unesite adresu i mjesto",
   postanskibroj_osiguranika: "Unesite poštanski broj",
   drzava_osiguranika: "Unesite državu",
   kontaktbroj_osiguranika: "npr. +385 91 123 4567",
@@ -156,11 +170,11 @@ export default function vozacOsiguranikForm({ data, onNext, onBack, onChange }) 
           <label className="form-label">
             {field === 'mail_osiguranika'
               ? 'Email:*'
-              : `${field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, ' ')}:*`}
+              : getLabelName(field) + ':*'}
           </label>
           {field === 'adresa_osiguranika' ? (
             <AddressAutocomplete
-              value={osiguranik.adresa_osiguranika}
+              value={osiguranik.adresa_osiguranika + "," + (osiguranik.grad ? ' ' + osiguranik.grad : '')}
               onChange={res => {
                 const components = res.address_components || [];
                 const addr = extractStreetAddress(components) || res.formatted_address || res.formatted || res.description || res;
@@ -229,7 +243,6 @@ export default function vozacOsiguranikForm({ data, onNext, onBack, onChange }) 
               required
             />
           ) : (
-            // Ova linija rješava unos za ime_osiguranika i prezime_osiguranika
             <input
               name={field}
               type="text"
@@ -262,11 +275,11 @@ export default function vozacOsiguranikForm({ data, onNext, onBack, onChange }) 
           <label className="form-label">
             {field === 'mail_vozaca'
               ? 'Email:*'
-              : `${field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, ' ')}:*`}
+              : getLabelName(field) + ':*'}
           </label>
           {field === 'adresa_vozaca' ? (
             <AddressAutocomplete
-              value={vozac.adresa_vozaca}
+              value={vozac.adresa_vozaca + "," +(vozac.grad ? ' ' + vozac.grad : '')}
               onChange={res => {
                 const components = res.address_components || [];
                 const addr = extractStreetAddress(components) || res.formatted_address || res.formatted || res.description || res;
