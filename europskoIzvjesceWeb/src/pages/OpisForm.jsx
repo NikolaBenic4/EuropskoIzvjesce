@@ -25,7 +25,6 @@ const OKOLNOSTI_OPTIONS = [
   "Ostalo"
 ];
 
-
 const initialState = {
   tip_okolnost: [],
   opis_okolnost: "",
@@ -39,7 +38,6 @@ const initialState = {
 export default function OpisForm({ data, onNext, onBack }) {
   const [formData, setFormData] = useState({ ...initialState, ...(data || {}) });
   const [modalIndeks, setModalIndeks] = useState(null);
-  const [tooltipVisible, setTooltipVisible] = useState(false);
   const [errors, setErrors] = useState({});
   const cameraInput = useRef(null);
   const fileInput = useRef(null);
@@ -80,12 +78,8 @@ export default function OpisForm({ data, onNext, onBack }) {
         });
       } catch {}
     }
-    setFormData(f => {
-      const sve = [...f.slike, ...kompr];
-      return { ...f, slike: sve };
-    });
+    setFormData(f => ({ ...f, slike: [...f.slike, ...kompr] }));
     e.target.value = null;
-    // Automatski ponovno otvori kameru dok nema 6 slika
     if (formData.slike.length + kompr.length < 6) {
       setTimeout(() => cameraInput.current.click(), 300);
     }
@@ -93,11 +87,8 @@ export default function OpisForm({ data, onNext, onBack }) {
 
   const ukloniSliku = idx => {
     URL.revokeObjectURL(formData.slike[idx].pregled);
+    setFormData(f => ({ ...f, slike: f.slike.filter((_, i) => i !== idx) }));
     setModalIndeks(null);
-    setFormData(f => ({
-      ...f,
-      slike: f.slike.filter((_, i) => i !== idx)
-    }));
   };
 
   const handleNext = e => {
@@ -119,7 +110,7 @@ export default function OpisForm({ data, onNext, onBack }) {
       <div className="form-group">
         <label className="form-label">Tip okolnosti:*</label>
         <div className="okolnosti-checkbox-group">
-          {OKOLNOSTI_OPTIONS.map((opt,i) => (
+          {OKOLNOSTI_OPTIONS.map((opt, i) => (
             <label key={i} className="okolnost-checkbox-row">
               <input
                 type="checkbox"
@@ -128,8 +119,8 @@ export default function OpisForm({ data, onNext, onBack }) {
                 onChange={() => setFormData(f => ({
                   ...f,
                   tip_okolnost: f.tip_okolnost.includes(opt)
-                    ? f.tip_okolnost.filter(x=>x!==opt)
-                    : [...f.tip_okolnost,opt]
+                    ? f.tip_okolnost.filter(x => x !== opt)
+                    : [...f.tip_okolnost, opt]
                 }))}
               />
               <span className="okolnost-label">{opt}</span>
@@ -143,7 +134,7 @@ export default function OpisForm({ data, onNext, onBack }) {
       <div className="form-group">
         <label className="form-label">Opis okolnosti:*</label>
         <textarea
-          className={`form-textarea ${errors.opis_okolnost?"input-error":""}`}
+          className={`form-textarea ${errors.opis_okolnost ? "input-error" : ""}`}
           name="opis_okolnost"
           value={formData.opis_okolnost}
           onChange={promjenaVrijednosti}
@@ -156,14 +147,14 @@ export default function OpisForm({ data, onNext, onBack }) {
         vehicleType={formData.tip_vozila}
         selectedPoints={formData.odabrani_udarci}
         onChange={pts => setFormData(f => ({ ...f, odabrani_udarci: pts }))}
-        onVehicleTypeChange={v => setFormData(f => ({ ...f, tip_vozila:v, odabrani_udarci:[] }))}
+        onVehicleTypeChange={v => setFormData(f => ({ ...f, tip_vozila: v, odabrani_udarci: [] }))}
       />
 
       {/* pozicija oštećenja */}
       <div className="form-group">
         <label className="form-label">Pozicija oštećenja:*</label>
         <input
-          className={`form-input ${errors.polozaj_ostecenja?"input-error":""}`}
+          className={`form-input ${errors.polozaj_ostecenja ? "input-error" : ""}`}
           value={formData.polozaj_ostecenja}
           readOnly
         />
@@ -174,7 +165,7 @@ export default function OpisForm({ data, onNext, onBack }) {
       <div className="form-group">
         <label className="form-label">Opis oštećenja:*</label>
         <textarea
-          className={`form-textarea ${errors.opis_ostecenja?"input-error":""}`}
+          className={`form-textarea ${errors.opis_ostecenja ? "input-error" : ""}`}
           name="opis_ostecenja"
           value={formData.opis_ostecenja}
           onChange={promjenaVrijednosti}
@@ -212,10 +203,14 @@ export default function OpisForm({ data, onNext, onBack }) {
 
       {/* gallery */}
       <div className="uploaded-images-list">
-        {Array.from({ length: Math.ceil(formData.slike.length/2) }).map((_,r)=>(
+        {Array.from({ length: Math.ceil(formData.slike.length / 2) }).map((_, r) => (
           <div key={r} className="image-row">
-            {formData.slike.slice(r*2,r*2+2).map((s,i)=>(
-              <div key={i} className="uploaded-image" onClick={()=>setModalIndeks(r*2+i)}>
+            {formData.slike.slice(r * 2, r * 2 + 2).map((s, i) => (
+              <div
+                key={i}
+                className="uploaded-image"
+                onClick={() => setModalIndeks(r * 2 + i)}
+              >
                 <img src={s.pregled} alt="" />
               </div>
             ))}
@@ -223,20 +218,35 @@ export default function OpisForm({ data, onNext, onBack }) {
         ))}
       </div>
 
-      {/* modal */}
-      {modalIndeks!==null && (
-        <div className="modal" onClick={()=>setModalIndeks(null)}>
-          <img
-            src={formData.slike[modalIndeks].pregled}
-            onClick={e=>e.stopPropagation()}
-            alt=""
-          />
-          <div style={{display:"flex",gap:12}}>
-            <button onClick={()=>setModalIndeks(null)}>Izlaz</button>
-            <button onClick={()=>ukloniSliku(modalIndeks)}>Ukloni</button>
-          </div>
-        </div>
-      )}
+      {/* inline popup on same page */}
+      {modalIndeks !== null && (
+  <div className="modal-overlay" onClick={() => setModalIndeks(null)}>
+    <div className="modal-content" onClick={e => e.stopPropagation()}>
+      <img
+        src={formData.slike[modalIndeks].pregled}
+        alt=""
+        className="modal-image"
+      />
+      <div className="modal-buttons">
+        <button
+          type="button"
+          className="next-button"
+          onClick={() => setModalIndeks(null)}
+        >
+          Izlaz
+        </button>
+        <button
+          type="button"
+          className="next-button"
+          onClick={() => ukloniSliku(modalIndeks)}
+        >
+          Ukloni
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* navigation */}
       <div className="navigation-buttons">

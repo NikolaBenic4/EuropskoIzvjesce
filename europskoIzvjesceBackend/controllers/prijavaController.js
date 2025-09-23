@@ -1,4 +1,4 @@
-// controllers/prijavaController.js
+// controllers/prijavaController.js - KOMPLETNO RIJEŠENJE
 
 const db = require("../db");
 
@@ -33,25 +33,15 @@ function isValidIban(iban) {
   return /^HR\d{19}$/.test(cleaned);
 }
 
-// NOVA FUNKCIJA - mapiranje string ID-a osiguranja u integer
+// Mapiranje string ID-a osiguranja u integer
 function mapOsiguranjeToId(osiguranjeId) {
   const mapping = {
     'o1': 1, 'o2': 2, 'o3': 3, 'o4': 4, 'o5': 5, 'o6': 6, 'o7': 7,
-    // Dodajte više mappinga ako je potrebno
   };
   
-  // Ako je već broj, vrati ga
-  if (typeof osiguranjeId === 'number') {
-    return osiguranjeId;
-  }
-  
-  // Ako je string broj, konvertiraj u broj
+  if (typeof osiguranjeId === 'number') return osiguranjeId;
   const parsed = parseInt(osiguranjeId);
-  if (!isNaN(parsed)) {
-    return parsed;
-  }
-  
-  // Koristi mapping za string ID-jeve
+  if (!isNaN(parsed)) return parsed;
   return mapping[osiguranjeId] || null;
 }
 
@@ -77,48 +67,31 @@ function validatePayload(p) {
 
 exports.apiKeyAuth = apiKeyAuth;
 
+// controllers/prijavaController.js - ISPRAVKA ZA SVJEDOKE I CHECKBOXOVE
+
+// ... (početak koda ostaje isti do exports.createPrijava funkcije)
+
 exports.createPrijava = async function (req, res) {
   const {
     nesreca, svjedoci, vozacOsiguranik, opis, vozilo,
     polica, osiguranje, potpis, slike, tip_sudionika
   } = req.body;
 
-  console.log('📥 Received vozacOsiguranik data:', JSON.stringify(vozacOsiguranik, null, 2));
+  console.log('📥 === POČETAK TRANSACTION ===');
+  console.log('📥 Received svjedoci data:', JSON.stringify(svjedoci, null, 2));
 
   const err = validatePayload(req.body);
-  if (err) return res.status(400).json({ error: err });
+  if (err) {
+    console.log('❌ Validation error:', err);
+    return res.status(400).json({ error: err });
+  }
 
   const client = await db.connect();
   try {
     await client.query("BEGIN");
 
-    // Funkcija za generiranje sljedećeg ID-a zahtjeva
-async function generateNextRequestId(client) {
-  try {
-    // Ažuriraj i dohvati sljedeći broj atomski
-    const result = await client.query(`
-      UPDATE zahtjev_brojac 
-      SET trenutni_broj = trenutni_broj + 1,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE naziv = 'zahtjev'
-      RETURNING trenutni_broj
-    `);
-    
-    if (result.rows.length === 0) {
-      throw new Error('Greška pri generiranju ID-a zahtjeva');
-    }
-    
-    const broj = result.rows[0].trenutni_broj;
-    return `Zahtjev#${broj.toString().padStart(6, '0')}`; // Zahtjev#001001
-    
-  } catch (error) {
-    console.error('❌ Greška pri generiranju ID zahtjeva:', error);
-    throw error;
-  }
-}
-
-
-    // 1) INSERT nesreca
+    // 1) INSERT nesreca - ISPRAVKA za boolean polja
+    console.log('🔄 Inserting nesreca...');
     let geo = null;
     if (nesreca.geolokacija_nesrece) {
       const g = nesreca.geolokacija_nesrece;
@@ -126,44 +99,96 @@ async function generateNextRequestId(client) {
         ? `(${g.x},${g.y})`
         : g;
     }
-    await client.query(
+    
+    // KLJUČNA ISPRAVA - uzmi boolean vrijednosti iz svjedoci objekta
+    const ozlijedene = svjedoci?.ozlijedeneosobe ?? nesreca?.ozlijedeneosobe ?? false;
+    const stetaVozila = svjedoci?.stetanavozilima ?? nesreca?.stetanavozilima ?? false;
+    const stetaStvarima = svjedoci?.stetanastvarima ?? nesreca?.stetanastvarima ?? false;
+    
+    console.log('📋 Boolean values:', { ozlijedene, stetaVozila, stetaStvarima });
+    
+    const nesrecaRes = await client.query(
       `INSERT INTO nesreca (
          id_nesrece, datum_nesrece, vrijeme_nesrece, mjesto_nesrece, geolokacija_nesrece,
          ozlijedeneososbe, stetanavozilima, stetanastvarima
        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-       ON CONFLICT (id_nesrece) DO NOTHING`,
+       ON CONFLICT (id_nesrece) DO UPDATE SET
+         datum_nesrece = EXCLUDED.datum_nesrece,
+         vrijeme_nesrece = EXCLUDED.vrijeme_nesrece,
+         mjesto_nesrece = EXCLUDED.mjesto_nesrece,
+         ozlijedeneososbe = EXCLUDED.ozlijedeneososbe,
+         stetanavozilima = EXCLUDED.stetanavozilima,
+         stetanastvarima = EXCLUDED.stetanastvarima
+       RETURNING id_nesrece`,
       [
-        nesreca.id_nesrece, nesreca.datum_nesrece, nesreca.vrijeme_nesrece,
-        nesreca.mjesto_nesrece, geo,
-        nesreca.ozlijedeneososbe ?? false,
-        nesreca.stetanavozilima ?? false,
-        nesreca.stetanastvarima ?? false
+        nesreca.id_nesrece, 
+        nesreca.datum_nesrece, 
+        nesreca.vrijeme_nesrece,
+        nesreca.mjesto_nesrece, 
+        geo,
+        ozlijedene,  // boolean
+        stetaVozila, // boolean
+        stetaStvarima // boolean
       ]
     );
+    console.log('✅ nesreca inserted/updated:', nesrecaRes.rows[0]);
 
     // 2) INSERT okolnost
-    await client.query(
+    console.log('🔄 Inserting okolnost...');
+    const okolnostRes = await client.query(
       `INSERT INTO okolnost (tip_okolnost, opis_okolnost, id_nesrece)
        VALUES ($1,$2,$3)
        ON CONFLICT (id_nesrece)
-       DO UPDATE SET opis_okolnost = EXCLUDED.opis_okolnost`,
+       DO UPDATE SET opis_okolnost = EXCLUDED.opis_okolnost
+       RETURNING id_okolnost`,
       ["glavna", opis.opis_nesrece || "", nesreca.id_nesrece]
     );
+    console.log('✅ okolnost inserted/updated:', okolnostRes.rows[0]);
 
-    // 3) INSERT svjedoci
-    if (Array.isArray(svjedoci?.lista)) {
-      for (const s of svjedoci.lista) {
-        await client.query(
+    // 3) INSERT svjedoci - ISPRAVKA za novi format
+    console.log('🔄 Inserting svjedoci...');
+    if (svjedoci?.lista && Array.isArray(svjedoci.lista) && svjedoci.lista.length > 0) {
+      console.log('📋 Broj svjedoka:', svjedoci.lista.length);
+      
+      for (let i = 0; i < svjedoci.lista.length; i++) {
+        const s = svjedoci.lista[i];
+        console.log(`📋 Inserting svjedok ${i + 1}:`, s);
+        
+        const svjedokRes = await client.query(
           `INSERT INTO svjedok (ime_prezime_svjedok, adresa_svjedok, kontakt_svjedok, id_nesrece)
            VALUES (ARRAY[$1], ARRAY[$2], ARRAY[$3], $4)
-           ON CONFLICT DO NOTHING`,
-          [s.ime||"", s.adresa||"", s.kontakt||"", nesreca.id_nesrece]
+           ON CONFLICT DO NOTHING
+           RETURNING id_svjedok`,
+          [s.ime || "", s.adresa || "", s.kontakt || "", nesreca.id_nesrece]
         );
+        console.log(`✅ svjedok ${i + 1} inserted:`, svjedokRes.rows[0]);
       }
+    } else if (svjedoci?.ime_prezime_svjedok && Array.isArray(svjedoci.ime_prezime_svjedok)) {
+      // Legacy format support
+      console.log('📋 Using legacy svjedoci format');
+      const imena = svjedoci.ime_prezime_svjedok;
+      const adrese = svjedoci.adresa_svjedok || [];
+      const kontakti = svjedoci.kontakt_svjedok || [];
+      
+      for (let i = 0; i < imena.length; i++) {
+        if (imena[i]) {
+          await client.query(
+            `INSERT INTO svjedok (ime_prezime_svjedok, adresa_svjedok, kontakt_svjedok, id_nesrece)
+             VALUES (ARRAY[$1], ARRAY[$2], ARRAY[$3], $4)
+             ON CONFLICT DO NOTHING`,
+            [imena[i], adrese[i] || "", kontakti[i] || "", nesreca.id_nesrece]
+          );
+        }
+      }
+    } else {
+      console.log('📋 No svjedoci to insert');
     }
 
+    // 4-11) Ostali INSERT-ovi ostaju isti...
+    
     // 4) INSERT vozilo
-    await client.query(
+    console.log('🔄 Inserting vozilo...');
+    const voziloRes = await client.query(
       `INSERT INTO vozilo (
          registarskaoznaka_vozila, marka_vozila, tip_vozila, drzavaregistracije_vozila,
          brojsasije_vozila, kilometraza_vozila, godinaproizvodnje_vozilo
@@ -174,16 +199,24 @@ async function generateNextRequestId(client) {
          drzavaregistracije_vozila = EXCLUDED.drzavaregistracije_vozila,
          brojsasije_vozila = EXCLUDED.brojsasije_vozila,
          kilometraza_vozila = EXCLUDED.kilometraza_vozila,
-         godinaproizvodnje_vozilo = EXCLUDED.godinaproizvodnje_vozilo`,
+         godinaproizvodnje_vozilo = EXCLUDED.godinaproizvodnje_vozilo
+       RETURNING registarskaoznaka_vozila`,
       [
         vozilo.registarskaoznaka_vozila, vozilo.marka_vozila, vozilo.tip_vozila,
         vozilo.drzavaregistracije_vozila, vozilo.brojsasije_vozila,
         vozilo.kilometraza_vozila, vozilo.godinaproizvodnje_vozilo
       ]
     );
+    console.log('✅ vozilo inserted/updated:', voziloRes.rows[0]);
 
-    // KLJUČNA ISPRAVA - prvo moramo dodati osiguranje u tablicu osiguranje
-    await client.query(
+    // 5) INSERT osiguranje PRVO
+    console.log('🔄 Inserting osiguranje...');
+    const osiguranjeIdInteger = mapOsiguranjeToId(osiguranje.id_osiguranje);
+    if (osiguranjeIdInteger === null) {
+      throw new Error(`Nepoznat ID osiguranja: ${osiguranje.id_osiguranje}`);
+    }
+
+    const osiguranjeRes = await client.query(
       `INSERT INTO osiguranje (
          id_osiguranje, naziv_osiguranja, adresa_osiguranja, 
          drzava_osiguranja, mail_osiguranja, kontaktbroj_osiguranja, id_osiguranika
@@ -193,26 +226,28 @@ async function generateNextRequestId(client) {
          adresa_osiguranja = EXCLUDED.adresa_osiguranja,
          drzava_osiguranja = EXCLUDED.drzava_osiguranja,
          mail_osiguranja = EXCLUDED.mail_osiguranja,
-         kontaktbroj_osiguranja = EXCLUDED.kontaktbroj_osiguranja`,
+         kontaktbroj_osiguranja = EXCLUDED.kontaktbroj_osiguranja
+       RETURNING id_osiguranje`,
       [
-        osiguranje.id_osiguranje, // String (npr. 'o7')
+        osiguranjeIdInteger,
         osiguranje.naziv_osiguranja,
         osiguranje.adresa_osiguranja,
         osiguranje.drzava_osiguranja,
         osiguranje.mail_osiguranja,
         osiguranje.kontaktbroj_osiguranja,
-        null // id_osiguranika se postavlja kasnije
+        null
       ]
     );
+    console.log('✅ osiguranje inserted/updated:', osiguranjeRes.rows[0]);
 
-    // 5) INSERT osiguranik
+    // 6) INSERT osiguranik
+    console.log('🔄 Inserting osiguranik...');
     let ibanDb = vozacOsiguranik.iban_osiguranika;
     if (typeof ibanDb === "string") {
       ibanDb = [cleanIban(ibanDb)];
     }
     
-    // ISPRAVA - dohvati podatke osiguranika iz pravilnog objekta
-    const osiguranik = vozacOsiguranik.osiguranik || {
+    const osiguranikData = vozacOsiguranik.osiguranik || {
       ime_osiguranika: vozacOsiguranik.ime_osiguranika,
       prezime_osiguranika: vozacOsiguranik.prezime_osiguranika,
       adresa_osiguranika: vozacOsiguranik.adresa_osiguranika,
@@ -222,9 +257,9 @@ async function generateNextRequestId(client) {
       mail_osiguranika: vozacOsiguranik.mail_osiguranika
     };
 
-    console.log('📝 Inserting osiguranik:', osiguranik);
+    console.log('📝 osiguranikData extracted:', osiguranikData);
 
-    const osRes = await client.query(
+    const osiguranikRes = await client.query(
       `INSERT INTO osiguranik (
          ime_osiguranika, prezime_osiguranika, adresa_osiguranika,
          postanskibroj_osiguranika, drzava_osiguranika,
@@ -240,57 +275,56 @@ async function generateNextRequestId(client) {
          iban_osiguranika = EXCLUDED.iban_osiguranika
        RETURNING id_osiguranika`,
       [
-        osiguranik.ime_osiguranika, osiguranik.prezime_osiguranika,
-        osiguranik.adresa_osiguranika, osiguranik.postanskibroj_osiguranika,
-        osiguranik.drzava_osiguranika, osiguranik.mail_osiguranika,
-        osiguranik.kontaktbroj_osiguranika, ibanDb
+        osiguranikData.ime_osiguranika, osiguranikData.prezime_osiguranika,
+        osiguranikData.adresa_osiguranika, osiguranikData.postanskibroj_osiguranika,
+        osiguranikData.drzava_osiguranika, osiguranikData.mail_osiguranika,
+        osiguranikData.kontaktbroj_osiguranika, ibanDb
       ]
     );
-    const id_osiguranika = osRes.rows[0].id_osiguranika;
+    const id_osiguranika = osiguranikRes.rows[0].id_osiguranika;
+    console.log('✅ osiguranik inserted/updated with ID:', id_osiguranika);
 
     // Ažuriraj osiguranje s id_osiguranika
     await client.query(
       `UPDATE osiguranje SET id_osiguranika = $1 WHERE id_osiguranje = $2`,
-      [id_osiguranika, osiguranje.id_osiguranje]
+      [id_osiguranika, osiguranjeIdInteger]
     );
 
-    // 6) INSERT vozac - ISPRAVKA ZA PODATKE VOZAČKE DOZVOLE
-    const vozac = vozacOsiguranik.vozac || {};
+    // 7) INSERT vozac
+    console.log('🔄 Inserting vozac...');
+    const vozacObj = vozacOsiguranik.vozac || {};
     const jeIsti = vozacOsiguranik.isti || false;
     
-    let vozacPodaci;
+    let vozacData;
     if (jeIsti) {
-      // KLJUČNA ISPRAVA - kopiraj podatke iz osiguranika u vozača, ALI ZADRŽI VOZAČKU DOZVOLU
-      vozacPodaci = {
-        ime_vozaca: osiguranik.ime_osiguranika,
-        prezime_vozaca: osiguranik.prezime_osiguranika,
-        adresa_vozaca: osiguranik.adresa_osiguranika,
-        postanskibroj_vozaca: osiguranik.postanskibroj_osiguranika,
-        drzava_vozaca: osiguranik.drzava_osiguranika,
-        kontaktbroj_vozaca: osiguranik.kontaktbroj_osiguranika,
-        mail_vozaca: osiguranik.mail_osiguranika,
-        // Podaci vozačke dozvole iz frontend-a
-        brojvozackedozvole: vozac.brojvozackedozvole || vozacOsiguranik.brojvozackedozvole,
-        kategorijavozackedozvole: vozac.kategorijavozackedozvole || vozacOsiguranik.kategorijavozackedozvole,
-        valjanostvozackedozvole: vozac.valjanostvozackedozvole || vozacOsiguranik.valjanostvozackedozvole
+      vozacData = {
+        ime_vozaca: osiguranikData.ime_osiguranika,
+        prezime_vozaca: osiguranikData.prezime_osiguranika,
+        adresa_vozaca: osiguranikData.adresa_osiguranika,
+        postanskibroj_vozaca: osiguranikData.postanskibroj_osiguranika,
+        drzava_vozaca: osiguranikData.drzava_osiguranika,
+        kontaktbroj_vozaca: osiguranikData.kontaktbroj_osiguranika,
+        mail_vozaca: osiguranikData.mail_osiguranika,
+        brojvozackedozvole: vozacObj.brojvozackedozvole || vozacOsiguranik.brojvozackedozvole,
+        kategorijavozackedozvole: vozacObj.kategorijavozackedozvole || vozacOsiguranik.kategorijavozackedozvole,
+        valjanostvozackedozvole: vozacObj.valjanostvozackedozvole || vozacOsiguranik.valjanostvozackedozvole
       };
     } else {
-      // Vozač nije isti kao osiguranik - koristi podatke vozača
-      vozacPodaci = {
-        ime_vozaca: vozac.ime_vozaca,
-        prezime_vozaca: vozac.prezime_vozaca,
-        adresa_vozaca: vozac.adresa_vozaca,
-        postanskibroj_vozaca: vozac.postanskibroj_vozaca,
-        drzava_vozaca: vozac.drzava_vozaca,
-        kontaktbroj_vozaca: vozac.kontaktbroj_vozaca,
-        mail_vozaca: vozac.mail_vozaca,
-        brojvozackedozvole: vozac.brojvozackedozvole,
-        kategorijavozackedozvole: vozac.kategorijavozackedozvole,
-        valjanostvozackedozvole: vozac.valjanostvozackedozvole
+      vozacData = {
+        ime_vozaca: vozacObj.ime_vozaca,
+        prezime_vozaca: vozacObj.prezime_vozaca,
+        adresa_vozaca: vozacObj.adresa_vozaca,
+        postanskibroj_vozaca: vozacObj.postanskibroj_vozaca,
+        drzava_vozaca: vozacObj.drzava_vozaca,
+        kontaktbroj_vozaca: vozacObj.kontaktbroj_vozaca,
+        mail_vozaca: vozacObj.mail_vozaca,
+        brojvozackedozvole: vozacObj.brojvozackedozvole,
+        kategorijavozackedozvole: vozacObj.kategorijavozackedozvole,
+        valjanostvozackedozvole: vozacObj.valjanostvozackedozvole
       };
     }
 
-    console.log('📝 Inserting vozac:', vozacPodaci);
+    console.log('📝 vozacData extracted:', vozacData);
 
     const vozacRes = await client.query(
       `INSERT INTO vozac (
@@ -310,17 +344,19 @@ async function generateNextRequestId(client) {
          valjanostvozackedozvole = EXCLUDED.valjanostvozackedozvole
        RETURNING id_vozaca`,
       [
-        vozacPodaci.ime_vozaca, vozacPodaci.prezime_vozaca,
-        vozacPodaci.adresa_vozaca, vozacPodaci.postanskibroj_vozaca,
-        vozacPodaci.drzava_vozaca, vozacPodaci.kontaktbroj_vozaca,
-        vozacPodaci.mail_vozaca, vozacPodaci.brojvozackedozvole,
-        vozacPodaci.kategorijavozackedozvole, vozacPodaci.valjanostvozackedozvole
+        vozacData.ime_vozaca, vozacData.prezime_vozaca,
+        vozacData.adresa_vozaca, vozacData.postanskibroj_vozaca,
+        vozacData.drzava_vozaca, vozacData.kontaktbroj_vozaca,
+        vozacData.mail_vozaca, vozacData.brojvozackedozvole,
+        vozacData.kategorijavozackedozvole, vozacData.valjanostvozackedozvole
       ]
     );
     const id_vozaca = vozacRes.rows[0].id_vozaca;
+    console.log('✅ vozac inserted/updated with ID:', id_vozaca);
 
-    // 7) INSERT polica_osiguranja 
-    await client.query(
+    // 8) INSERT polica_osiguranja 
+    console.log('🔄 Inserting polica_osiguranja...');
+    const policaRes = await client.query(
       `INSERT INTO polica_osiguranja (
          brojpolice, brojzelenekarte, id_osiguranika, id_osiguranje, kaskopokrivastetu
        ) VALUES ($1,$2,$3,$4,$5)
@@ -328,16 +364,19 @@ async function generateNextRequestId(client) {
          brojzelenekarte = EXCLUDED.brojzelenekarte,
          id_osiguranika = EXCLUDED.id_osiguranika,
          id_osiguranje = EXCLUDED.id_osiguranje,
-         kaskopokrivastetu = EXCLUDED.kaskopokrivastetu`,
+         kaskopokrivastetu = EXCLUDED.kaskopokrivastetu
+       RETURNING brojpolice`,
       [
         polica.brojpolice, polica.brojzelenekarte,
-        id_osiguranika, osiguranje.id_osiguranje,  // String vrijednost (npr. 'o7')
+        id_osiguranika, osiguranjeIdInteger,
         polica.kaskopokrivastetu ?? false
       ]
     );
+    console.log('✅ polica_osiguranja inserted/updated:', policaRes.rows[0]);
 
-    // 8) INSERT slike
-    if (Array.isArray(slike)) {
+    // 9) INSERT slike
+    if (Array.isArray(slike) && slike.length > 0) {
+      console.log('🔄 Inserting slike:', slike.length);
       for (const s of slike) {
         if (!s.buffer) continue;
         const buff = Buffer.from(s.buffer, "base64");
@@ -347,41 +386,29 @@ async function generateNextRequestId(client) {
           [s.naziv_slike, buff, s.vrijeme_slikanja || new Date(), nesreca.id_nesrece]
         );
       }
+      console.log('✅ slike inserted');
     }
 
-    // 9) ISPRAVLJENA LOGIKA ZA POTPISE
+    // 10) INSERT sudionik i potpis
+    console.log('🔄 Inserting sudionik...');
     const currentTip = tip_sudionika || "A";
     let potpisBuffer = null;
     let datumPotpisa = null;
     
-    // Određuj koji potpis koristiti na temelju frontend podataka
     if (potpis) {
       if (potpis.potpis) {
-        // Frontend šalje "potpis" property (iz PotpisForm)
         potpisBuffer = Buffer.from(potpis.potpis, "base64");
         datumPotpisa = potpis.datum_potpisa || new Date().toISOString();
       } else if (currentTip === "A" && potpis.potpis_a) {
-        // Legacy - potpis_a
         potpisBuffer = Buffer.from(potpis.potpis_a, "base64");
         datumPotpisa = potpis.datum_potpisa || new Date().toISOString();
       } else if (currentTip === "B" && potpis.potpis_b) {
-        // Legacy - potpis_b
         potpisBuffer = Buffer.from(potpis.potpis_b, "base64");
         datumPotpisa = potpis.datum_potpisa || new Date().toISOString();
       }
     }
 
-    // KLJUČNA ISPRAVA - konvertiramo string id_osiguranje u integer za sudionik tablicu
-    const osiguranjeIdInteger = mapOsiguranjeToId(osiguranje.id_osiguranje);
-    
-    if (osiguranjeIdInteger === null) {
-      throw new Error(`Nepoznat ID osiguranja: ${osiguranje.id_osiguranje}`);
-    }
-
-    console.log(`🔄 Mapiranje ID osiguranja: '${osiguranje.id_osiguranje}' -> ${osiguranjeIdInteger}`);
-
-    // INSERT u sudionik tablicu s integer vrijednošću
-    await client.query(
+    const sudionikRes = await client.query(
       `INSERT INTO sudionik
           (tip_sudionika, potpis_sudionika, datumpotpisa_sudionika, id_nesrece, 
            registarskaoznaka_vozila, id_vozaca, id_osiguranje)
@@ -392,19 +419,16 @@ async function generateNextRequestId(client) {
          datumpotpisa_sudionika = EXCLUDED.datumpotpisa_sudionika,
          registarskaoznaka_vozila = EXCLUDED.registarskaoznaka_vozila,
          id_vozaca = EXCLUDED.id_vozaca,
-         id_osiguranje = EXCLUDED.id_osiguranje`,
+         id_osiguranje = EXCLUDED.id_osiguranje
+      RETURNING tip_sudionika`,
       [
-          currentTip,
-          potpisBuffer,
-          datumPotpisa,
-          nesreca.id_nesrece,
-          vozilo.registarskaoznaka_vozila,
-          id_vozaca,
-          osiguranjeIdInteger  // INTEGER za sudionik tablicu
+          currentTip, potpisBuffer, datumPotpisa, nesreca.id_nesrece,
+          vozilo.registarskaoznaka_vozila, id_vozaca, osiguranjeIdInteger
       ]
     );
+    console.log('✅ sudionik inserted/updated:', sudionikRes.rows[0]);
 
-    // UPDATE nesreca s potpisima (oba tipa)
+    // 11) UPDATE nesreca s potpisima
     if (potpisBuffer) {
       if (currentTip === "A") {
         await client.query(
@@ -417,14 +441,25 @@ async function generateNextRequestId(client) {
           [potpisBuffer, nesreca.id_nesrece]
         );
       }
+      console.log(`✅ potpis updated for sudionik ${currentTip}`);
     }
 
     await client.query("COMMIT");
-    
-    console.log(`✅ Uspješno spremljen potpis za sudionika ${currentTip} u nesreći ${nesreca.id_nesrece}`);
-    console.log(`✅ Mapiranje ID osiguranja: '${osiguranje.id_osiguranje}' -> ${osiguranjeIdInteger}`);
-    console.log(`✅ Osiguranik inserted with ID: ${id_osiguranika}`);
-    console.log(`✅ Vozač inserted with ID: ${id_vozaca}`);
+    console.log('🎉 === COMMIT SUCCESSFUL ===');
+
+    // Verifikacija
+    console.log('🔍 === VERIFIKACIJA ===');
+    const verifyNesreca = await client.query(
+      'SELECT ozlijedeneososbe, stetanavozilima, stetanastvarima FROM nesreca WHERE id_nesrece = $1',
+      [nesreca.id_nesrece]
+    );
+    console.log('✅ Verify nesreca boolean fields:', verifyNesreca.rows[0]);
+
+    const verifySvjedoci = await client.query(
+      'SELECT * FROM svjedok WHERE id_nesrece = $1',
+      [nesreca.id_nesrece]
+    );
+    console.log('✅ Verify svjedoci count:', verifySvjedoci.rows.length);
     
     return res.json({ 
       success: true, 
@@ -433,11 +468,15 @@ async function generateNextRequestId(client) {
       potpis_spreman: !!potpisBuffer,
       osiguranje_id_mapped: osiguranjeIdInteger,
       id_osiguranika,
-      id_vozaca
+      id_vozaca,
+      boolean_fields: verifyNesreca.rows[0],
+      svjedoci_count: verifySvjedoci.rows.length,
+      message: "Svi podaci uspješno spremljeni u bazu"
     });
 
   } catch (e) {
     await client.query("ROLLBACK");
+    console.error('❌ === ROLLBACK ZBOG GREŠKE ===');
     console.error('❌ Database error:', e);
     return res.status(500).json({ error: e.message || "Greška na serveru" });
   } finally {

@@ -1,3 +1,4 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -15,7 +16,12 @@ const unosPrijaveBaza = require('./routes/unosPrijaveBaza');
 const bankaRouter = require('./routes/bankaRouter');
 const PDFApi = require('./routes/PDFApi');
 
-const initializeSocket = require('./Socket'); // Uvezi funkciju
+// **DODANO**
+const dashboardApi = require('./routes/dashboardApi');
+const emailApi = require('./routes/emailApi');
+const model3DApi = require('./routes/model3DApi');
+
+const initializeSocket = require('./Socket');
 
 const app = express();
 const PORT = process.env.SERVERPORT || 3001;
@@ -37,6 +43,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Google Autocomplete
 app.get("/api/google-autocomplete", async (req, res) => {
   const { input } = req.query;
   const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${GOOGLE_API_KEY}&language=hr&components=country:hr`;
@@ -44,6 +51,7 @@ app.get("/api/google-autocomplete", async (req, res) => {
   res.json(await googleRes.json());
 });
 
+// Google Details
 app.get("/api/google-details", async (req, res) => {
   const { place_id } = req.query;
   const url = `https://maps.googleapis.com/maps/api/geocode/json?place_id=${place_id}&key=${GOOGLE_API_KEY}&language=hr`;
@@ -51,8 +59,10 @@ app.get("/api/google-details", async (req, res) => {
   res.json(await googleRes.json());
 });
 
+// Prijava
 app.post("/api/create-prijava", apiKeyAuth, createPrijava);
 
+// Existing routes
 app.use('/api/address', apiKeyAuth, addressesRouter);
 app.use('/api/svjedok', apiKeyAuth, svjedokRouter);
 app.use('/api/osiguranje', apiKeyAuth, osiguranjeApi);
@@ -60,6 +70,11 @@ app.use('/api', apiKeyAuth, voziloRouter);
 app.use('/api/prijava', apiKeyAuth, unosPrijaveBaza);
 app.use('/api/banka', apiKeyAuth, bankaRouter);
 app.use('/api', apiKeyAuth, PDFApi);
+
+// **NOVE GRUPE RUTA**
+app.use('/api/dashboard', apiKeyAuth, dashboardApi);
+app.use('/api/mail', apiKeyAuth, emailApi);
+app.use('/api/3d', apiKeyAuth, model3DApi);
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
@@ -71,7 +86,7 @@ app.use((req, res) => {
 });
 
 const server = https.createServer(options, app);
-const io = initializeSocket(server); // Pozovi funkciju
+const io = initializeSocket(server);
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`HTTPS Express + Socket.IO server listening on port ${PORT}`);

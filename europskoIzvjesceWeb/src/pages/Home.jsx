@@ -1,3 +1,4 @@
+// Home.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -15,6 +16,10 @@ export default function Home() {
     <div className="home-container">
       <header className="site-header">
         <h1>Europsko Izvješće</h1>
+        {/* Desktop-only login link */}
+        <Link to="/login" className="login-desktop">
+          Prijava osiguranje
+        </Link>
       </header>
 
       <div className="hero-container">
@@ -76,8 +81,6 @@ export default function Home() {
           <li>Pošaljite izvješće izravno osiguranju.</li>
         </ol>
       </section>
-
-      
     </div>
   );
 }

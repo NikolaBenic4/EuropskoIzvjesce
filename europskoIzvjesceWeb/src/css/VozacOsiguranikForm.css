@@ -158,3 +158,54 @@ select.form-input option[disabled][value=""] {
 .suggestions-list li:hover {
   background: #eaf0fb;
 }
+
+/* Veći desktop kalendar za react-datepicker */
+.react-datepicker {
+  font-size: 1rem;
+  border: 2px solid #002060;
+  box-shadow: 0 3px 16px rgba(0, 32, 96, 0.10);
+}
+
+/* Širina kalendara */
+.react-datepicker__triangle {
+  left: 50px !important;
+}
+.react-datepicker-popper {
+  width: auto !important;
+}
+.react-datepicker__month-container {
+  width: 350px;
+}
+
+/* Zaglavlje mjeseca */
+.react-datepicker__header {
+  background-color: #002060;
+  color: #fff;
+  border-bottom: none;
+}
+
+/* Naslovi dana */
+.react-datepicker__day-name {
+  width: 2.5rem;
+  line-height: 2.5rem;
+}
+
+/* Polja dana */
+.react-datepicker__day {
+  width: 2.5rem;
+  height: 2.5rem;
+  line-height: 2.5rem;
+  margin: 0.2rem;
+}
+
+/* Istaknuti odabrani dan */
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  background-color: #1d82e8;
+  color: #fff;
+}
+
+/* Prev/Next gumbi */
+.react-datepicker__navigation {
+  top: 10px;
+}

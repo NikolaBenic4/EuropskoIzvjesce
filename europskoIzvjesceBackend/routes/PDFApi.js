@@ -1,3 +1,5 @@
+// routes/pdfRoutes.js - AŽURIRANI PDF GENERATOR
+
 const express = require("express");
 const PDFDocument = require("pdfkit");
 const nodemailer = require("nodemailer");
@@ -90,35 +92,6 @@ function drawSection(doc, title) {
     doc.fillColor(DARK_GRAY).fontSize(11).font('DejaVu-Regular');
 }
 
-// ISPRAVKA - nova funkcija drawField koja pokušava staviti sve u isti red
-function drawField(doc, label, value, inline = true) {
-    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-    
-    if (inline) {
-        // Pokušaj staviti sve u jedan red
-        const labelText = `${label}:`;
-        const fullText = `${labelText} ${value}`;
-        
-        // Provjeri stane li sve u jedan red
-        const fullTextWidth = doc.widthOfString(fullText, { font: 'DejaVu-Regular', fontSize: 11 });
-        
-        if (fullTextWidth <= pageWidth) {
-            // Sve stane u jedan red
-            doc.fillColor(DARK_GRAY).font('DejaVu-Bold').text(labelText, doc.page.margins.left, doc.y, { continued: true });
-            doc.fillColor('black').font('DejaVu-Regular').text(` ${value}`, { continued: false });
-        } else {
-            // Predugo za jedan red, prolomiti
-            doc.fillColor(DARK_GRAY).font('DejaVu-Bold').text(labelText, doc.page.margins.left, doc.y);
-            doc.fillColor('black').font('DejaVu-Regular').text(`   ${value}`, doc.page.margins.left, doc.y, { width: pageWidth });
-        }
-    } else {
-        // Force nova linija (za dugačke opise)
-        doc.fillColor(DARK_GRAY).font('DejaVu-Bold').text(`${label}:`);
-        doc.fillColor('black').font('DejaVu-Regular').text(`   ${value}`, doc.page.margins.left, doc.y, { width: pageWidth });
-    }
-    doc.moveDown(0.3);
-}
-
 function drawTable(doc, headers, rows) {
     if (!rows || rows.length === 0) return;
     
@@ -168,23 +141,12 @@ function drawTable(doc, headers, rows) {
     doc.y = currentTop + 10;
 }
 
-function drawDivider(doc) {
-    doc.moveDown(0.3);
-    doc.strokeColor(BORDER_GRAY)
-       .lineWidth(0.5)
-       .moveTo(doc.page.margins.left, doc.y)
-       .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-       .stroke();
-    doc.moveDown(0.5);
-}
-
-// POTPUNO REVIDIRANA funkcija za dohvaćanje podataka iz baze
+// AŽURIRANA FUNKCIJA ZA DOHVAĆANJE IZ BAZE
 async function fetchFullAccidentData(nesrecaId) {
     const client = await db.connect();
     try {
         console.log('🔍 Dohvaćam podatke za nesreću:', nesrecaId);
         
-        // Osnovni podaci nesreće
         const nesrecaQuery = await client.query(
             `SELECT * FROM nesreca WHERE id_nesrece = $1`,
             [nesrecaId]
@@ -195,23 +157,18 @@ async function fetchFullAccidentData(nesrecaId) {
         }
         
         const nesreca = nesrecaQuery.rows[0];
-        console.log('✅ Nesreća pronađena:', nesreca.id_nesrece);
         
-        // Okolnosti
         const okolnostQuery = await client.query(
             `SELECT * FROM okolnost WHERE id_nesrece = $1`,
             [nesrecaId]
         );
-        console.log('✅ Okolnosti:', okolnostQuery.rows.length);
         
-        // Svjedoci
         const svjedociQuery = await client.query(
             `SELECT * FROM svjedok WHERE id_nesrece = $1`,
             [nesrecaId]
         );
-        console.log('✅ Svjedoci:', svjedociQuery.rows.length);
         
-        // Jednostavan query - dohvati samo sudionika bez JOIN-ova
+        // KLJUČNA ISPRAVA - dohvati sudio.nike s JOIN-ovima
         const sudionikQuery = await client.query(`
             SELECT 
                 s.tip_sudionika,
@@ -220,115 +177,58 @@ async function fetchFullAccidentData(nesrecaId) {
                 s.id_nesrece,
                 s.registarskaoznaka_vozila,
                 s.id_vozaca,
-                s.id_osiguranje
+                s.id_osiguranje,
+                -- vozilo podaci
+                v.marka_vozila,
+                v.tip_vozila,
+                v.drzavaregistracije_vozila,
+                v.brojsasije_vozila,
+                v.kilometraza_vozila,
+                v.godinaproizvodnje_vozilo,
+                -- vozac podaci
+                vz.ime_vozaca,
+                vz.prezime_vozaca,
+                vz.adresa_vozaca,
+                vz.postanskibroj_vozaca,
+                vz.drzava_vozaca,
+                vz.kontaktbroj_vozaca,
+                vz.mail_vozaca,
+                vz.brojvozackedozvole,
+                vz.kategorijavozackedozvole,
+                vz.valjanostvozackedozvole,
+                -- osiguranje podaci
+                os.naziv_osiguranja,
+                os.adresa_osiguranja,
+                os.drzava_osiguranja,
+                os.mail_osiguranja,
+                os.kontaktbroj_osiguranja,
+                -- osiguranik podaci
+                osi.ime_osiguranika,
+                osi.prezime_osiguranika,
+                osi.adresa_osiguranika,
+                osi.postanskibroj_osiguranika,
+                osi.drzava_osiguranika,
+                osi.kontaktbroj_osiguranika,
+                osi.mail_osiguranika,
+                osi.iban_osiguranika,
+                -- polica podaci
+                p.brojpolice,
+                p.brojzelenekarte,
+                p.kaskopokrivastetu
             FROM sudionik s
+            LEFT JOIN vozilo v ON s.registarskaoznaka_vozila = v.registarskaoznaka_vozila
+            LEFT JOIN vozac vz ON s.id_vozaca = vz.id_vozaca
+            LEFT JOIN osiguranje os ON s.id_osiguranje = os.id_osiguranje
+            LEFT JOIN osiguranik osi ON os.id_osiguranika = osi.id_osiguranika
+            LEFT JOIN polica_osiguranja p ON (os.id_osiguranje = p.id_osiguranje AND osi.id_osiguranika = p.id_osiguranika)
             WHERE s.id_nesrece = $1
             ORDER BY s.tip_sudionika
         `, [nesrecaId]);
         
-        console.log('✅ Sudionici pronađeni:', sudionikQuery.rows.length);
-        
-        // Za svakog sudionika, dohvati povezane podatke zasebno
-        const sudionici = [];
-        for (const sudionik of sudionikQuery.rows) {
-            console.log(`📋 Procesuiranje sudionika ${sudionik.tip_sudionika}`);
-            
-            let sudionikData = { ...sudionik };
-            
-            // Vozilo
-            if (sudionik.registarskaoznaka_vozila) {
-                try {
-                    const voziloQuery = await client.query(
-                        'SELECT * FROM vozilo WHERE registarskaoznaka_vozila = $1',
-                        [sudionik.registarskaoznaka_vozila]
-                    );
-                    if (voziloQuery.rows.length > 0) {
-                        Object.assign(sudionikData, voziloQuery.rows[0]);
-                        console.log('✅ Vozilo spojeno');
-                    }
-                } catch (e) {
-                    console.warn('⚠️ Greška pri dohvaćanju vozila:', e.message);
-                }
-            }
-            
-            // Vozač
-            if (sudionik.id_vozaca) {
-                try {
-                    const vozacQuery = await client.query(
-                        'SELECT * FROM vozac WHERE id_vozaca = $1',
-                        [sudionik.id_vozaca]
-                    );
-                    if (vozacQuery.rows.length > 0) {
-                        Object.assign(sudionikData, vozacQuery.rows[0]);
-                        console.log('✅ Vozač spojen');
-                    }
-                } catch (e) {
-                    console.warn('⚠️ Greška pri dohvaćanju vozača:', e.message);
-                }
-            }
-            
-            // Osiguranje - SAMO ako id_osiguranje je broj, ne string
-            if (sudionik.id_osiguranje && typeof sudionik.id_osiguranje === 'number') {
-                try {
-                    // Konvertiramo integer u string za pretragu
-                    const osiguranjeQuery = await client.query(
-                        'SELECT * FROM osiguranje WHERE id_osiguranje = $1',
-                        [sudionik.id_osiguranje.toString()]
-                    );
-                    
-                    if (osiguranjeQuery.rows.length > 0) {
-                        const osiguranje = osiguranjeQuery.rows[0];
-                        Object.assign(sudionikData, osiguranje);
-                        console.log('✅ Osiguranje spojeno');
-                        
-                        // Osiguranik
-                        if (osiguranje.id_osiguranika) {
-                            try {
-                                const osiguranikQuery = await client.query(
-                                    'SELECT * FROM osiguranik WHERE id_osiguranika = $1',
-                                    [osiguranje.id_osiguranika]
-                                );
-                                if (osiguranikQuery.rows.length > 0) {
-                                    Object.assign(sudionikData, osiguranikQuery.rows[0]);
-                                    console.log('✅ Osiguranik spojen');
-                                }
-                            } catch (e) {
-                                console.warn('⚠️ Greška pri dohvaćanju osiguranika:', e.message);
-                            }
-                        }
-                        
-                        // Polica osiguranja
-                        if (osiguranje.id_osiguranika) {
-                            try {
-                                const policaQuery = await client.query(
-                                    'SELECT * FROM polica_osiguranja WHERE id_osiguranja = $1',
-                                    [osiguranje.id_osiguranje]
-                                );
-                                if (policaQuery.rows.length > 0) {
-                                    Object.assign(sudionikData, policaQuery.rows[0]);
-                                    console.log('✅ Polica spojena');
-                                }
-                            } catch (e) {
-                                console.warn('⚠️ Greška pri dohvaćanju police:', e.message);
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.warn('⚠️ Greška pri dohvaćanju osiguranja:', e.message);
-                }
-            } else {
-                console.warn('⚠️ id_osiguranje nije valjan broj:', sudionik.id_osiguranje);
-            }
-            
-            sudionici.push(sudionikData);
-        }
-        
-        // Slike
         const slikeQuery = await client.query(
             `SELECT naziv_slike, vrijeme_slikanja FROM slika WHERE id_nesrece = $1`,
             [nesrecaId]
         );
-        console.log('✅ Slike:', slikeQuery.rows.length);
         
         console.log('✅ Svi podaci uspješno dohvaćeni iz baze');
         
@@ -336,23 +236,23 @@ async function fetchFullAccidentData(nesrecaId) {
             nesreca,
             okolnosti: okolnostQuery.rows,
             svjedoci: svjedociQuery.rows,
-            sudionici: sudionici,
+            sudionici: sudionikQuery.rows,
             slike: slikeQuery.rows
         };
         
     } catch (error) {
         console.error('❌ Greška pri dohvaćanju podataka iz baze:', error);
-        console.error('❌ Stack trace:', error.stack);
         throw error;
     } finally {
         client.release();
     }
 }
 
-// Funkcija za popunjavanje PDF-a - ostaje ista
+// KLJUČNA ISPRAVA - fillPdfForEntry s fallback logikom
 function fillPdfForEntry(doc, data, dbData = null, idx = null) {
-    const useDbData = dbData && dbData.nesreca;
-    console.log('📄 Generiram PDF, koristim bazu:', useDbData);
+    console.log('📄 === POČETAK PDF GENERIRANJA ===');
+    console.log('📄 dbData available:', !!dbData);
+    console.log('📄 frontend data available:', !!data.vozacOsiguranik);
     
     if (idx !== null) {
         doc.addPage({ margin: 40 });
@@ -366,57 +266,38 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
     }
 
     // PODACI O NESREĆI
-    const n = useDbData ? dbData.nesreca : (data.nesreca || {});
+    const n = dbData?.nesreca || data.nesreca || {};
     drawSection(doc, 'PODACI O NESREĆI');
-    drawField(doc, 'ID nesreće', safe(n.id_nesrece));
-    drawField(doc, 'Datum nesreće', formatDate(n.datum_nesrece));
-    drawField(doc, 'Vrijeme nesreće', safe(n.vrijeme_nesrece));
-    drawField(doc, 'Mjesto nesreće', safe(n.mjesto_nesrece));
-    drawField(doc, 'Ozlijeđene osobe', daNeNije(n.ozlijedeneososbe));
-    drawField(doc, 'Šteta na vozilima', daNeNije(n.stetanavozilima));
-    drawField(doc, 'Šteta na stvarima', daNeNije(n.stetanastvarima));
-    
-    if (n.geolokacija_nesrece) {
-        drawField(doc, 'Geolokacija', safe(n.geolokacija_nesrece));
-    }
-    
-    drawDivider(doc);
+    drawTable(doc, ['Podatak', 'Vrijednost'], [
+        ['ID nesreće', safe(n.id_nesrece)],
+        ['Datum nesreće', formatDate(n.datum_nesrece)],
+        ['Vrijeme nesreće', safe(n.vrijeme_nesrece)],
+        ['Mjesto nesreće', safe(n.mjesto_nesrece)],
+        ['Ozlijeđene osobe', daNeNije(n.ozlijedeneososbe)],
+        ['Šteta na vozilima', daNeNije(n.stetanavozilima)],
+        ['Šteta na stvarima', daNeNije(n.stetanastvarima)],
+        ['Geolokacija', safe(n.geolokacija_nesrece)]
+    ]);
 
     // OKOLNOSTI NESREĆE
-    const okolnosti = useDbData ? dbData.okolnosti[0] : (data.opis || {});
+    const okolnosti = dbData?.okolnosti?.[0] || data.opis || {};
     drawSection(doc, 'OKOLNOSTI NESREĆE');
-    
-    if (okolnosti) {
-        drawField(doc, 'Opis okolnosti', safe(okolnosti.opis_okolnost), true);
-        if (Array.isArray(okolnosti.tip_okolnost)) {
-            drawField(doc, 'Tipovi okolnosti', okolnosti.tip_okolnost.join(', '));
-        } else {
-            drawField(doc, 'Tip okolnosti', safe(okolnosti.tip_okolnost));
-        }
-    }
-    
-    if (data.opis) {
-        drawField(doc, 'Pozicija oštećenja', safe(data.opis.polozaj_ostecenja));
-        drawField(doc, 'Opis oštećenja', safe(data.opis.opis_ostecenja), true);
-    }
-    
-    const brojSlika = useDbData ? dbData.slike.length : (data.opis?.slike ? data.opis.slike.length : 0);
-    drawField(doc, 'Broj slika', brojSlika);
-    
-    drawDivider(doc);
+    drawTable(doc, ['Podatak', 'Vrijednost'], [
+        ['Opis okolnosti', safe(okolnosti.opis_okolnost || okolnosti.opis_nesrece)],
+        ['Tip okolnosti', safe(okolnosti.tip_okolnost)],
+        ['Pozicija oštećenja', safe(data.opis?.polozaj_ostecenja)],
+        ['Opis oštećenja', safe(data.opis?.opis_ostecenja)],
+        ['Broj slika', dbData?.slike?.length || data.opis?.slike?.length || 0]
+    ]);
 
     // SVJEDOCI
     drawSection(doc, 'SVJEDOCI');
-    
-    if (useDbData && dbData.svjedoci.length > 0) {
-        console.log('📋 Koristim svjedoke iz baze');
+    if (dbData?.svjedoci?.length > 0) {
         const svjedociRows = [];
-        
         dbData.svjedoci.forEach(svjedok => {
             const imena = svjedok.ime_prezime_svjedok || [];
             const adrese = svjedok.adresa_svjedok || [];
             const kontakti = svjedok.kontakt_svjedok || [];
-            
             const maxLength = Math.max(imena.length, adrese.length, kontakti.length);
             
             for (let i = 0; i < maxLength; i++) {
@@ -428,14 +309,12 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
                 ]);
             }
         });
-        
         if (svjedociRows.length > 0) {
             drawTable(doc, ['#', 'Ime i prezime', 'Adresa', 'Kontakt'], svjedociRows);
         } else {
-            drawField(doc, 'Status', 'Nema unesenih svjedoka');
+            drawTable(doc, ['Status'], [['Nema unesenih svjedoka']]);
         }
-    } else if (data.svjedoci?.lista && data.svjedoci.lista.length > 0) {
-        console.log('📋 Koristim fallback svjedoke');
+    } else if (data.svjedoci?.lista?.length > 0) {
         const svjedociRows = data.svjedoci.lista.map((s, i) => [
             `Svjedok ${i + 1}`,
             safe(s.ime),
@@ -444,15 +323,15 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
         ]);
         drawTable(doc, ['#', 'Ime i prezime', 'Adresa', 'Kontakt'], svjedociRows);
     } else {
-        drawField(doc, 'Status', 'Nema unesenih svjedoka');
+        drawTable(doc, ['Status'], [['Nema unesenih svjedoka']]);
     }
 
-    // SUDIONIK IZ BAZE (ako dostupan)
+    // KLJUČNA ISPRAVA - PRIMARNO KORISTI BAZU, FALLBACK NA FRONTEND
     let currentSudionik = null;
-    if (useDbData && dbData.sudionici.length > 0) {
+    if (dbData?.sudionici?.length > 0) {
         const targetLetter = idx !== null ? String.fromCharCode(65 + idx) : 'A';
         currentSudionik = dbData.sudionici.find(s => s.tip_sudionika === targetLetter) || dbData.sudionici[0];
-        console.log(`📋 Koristim sudionika ${targetLetter}:`, currentSudionik ? 'pronađen' : 'nije pronađen');
+        console.log(`📋 Koristim sudionika iz baze ${targetLetter}:`, !!currentSudionik);
     }
 
     // NOVA STRANICA ZA PODATKE O OSIGURANIKU
@@ -463,6 +342,7 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
     
     let osiguranikData;
     if (currentSudionik) {
+        // KORISTI BAZU
         console.log('📋 Koristim podatke osiguranika iz baze');
         osiguranikData = [
             ['Ime', safe(currentSudionik.ime_osiguranika)],
@@ -475,29 +355,38 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
             ['IBAN račun', safe(Array.isArray(currentSudionik.iban_osiguranika) ? currentSudionik.iban_osiguranika.join(', ') : currentSudionik.iban_osiguranika)]
         ];
     } else {
-        console.log('📋 Koristim fallback podatke osiguranika');
+        // FALLBACK NA FRONTEND
+        console.log('📋 Koristim podatke osiguranika iz frontend-a');
         const os = data.vozacOsiguranik || {};
-        const osiguranik = os.osiguranik || os;
+        const osiguranik = os.osiguranik || {
+            ime_osiguranika: os.ime_osiguranika,
+            prezime_osiguranika: os.prezime_osiguranika,
+            adresa_osiguranika: os.adresa_osiguranika,
+            postanskibroj_osiguranika: os.postanskibroj_osiguranika,
+            drzava_osiguranika: os.drzava_osiguranika,
+            kontaktbroj_osiguranika: os.kontaktbroj_osiguranika,
+            mail_osiguranika: os.mail_osiguranika
+        };
         osiguranikData = [
-            ['Ime', safe(osiguranik.ime_osiguranika || osiguranik.ime)],
-            ['Prezime', safe(osiguranik.prezime_osiguranika || osiguranik.prezime)],
-            ['Adresa', safe(osiguranik.adresa_osiguranika || osiguranik.adresa)],
-            ['Poštanski broj', safe(osiguranik.postanskibroj_osiguranika || osiguranik.postanskiBroj)],
-            ['Država', safe(osiguranik.drzava_osiguranika || osiguranik.drzava)],
-            ['Email', safe(osiguranik.mail_osiguranika || osiguranik.email)],
-            ['Kontakt telefon', safe(osiguranik.kontaktbroj_osiguranika || osiguranik.kontakt)],
-            ['IBAN račun', safe(Array.isArray(os.iban_osiguranika) ? os.iban_osiguranika[0] : os.iban_osiguranika)]
+            ['Ime', safe(osiguranik.ime_osiguranika)],
+            ['Prezime', safe(osiguranik.prezime_osiguranika)],
+            ['Adresa', safe(osiguranik.adresa_osiguranika)],
+            ['Poštanski broj', safe(osiguranik.postanskibroj_osiguranika)],
+            ['Država', safe(osiguranik.drzava_osiguranika)],
+            ['Email', safe(osiguranik.mail_osiguranika)],
+            ['Kontakt telefon', safe(osiguranik.kontaktbroj_osiguranika)],
+            ['IBAN račun', safe(os.iban_osiguranika)]
         ];
     }
     
     drawTable(doc, ['Podatak', 'Vrijednost'], osiguranikData);
-    drawDivider(doc);
 
     // PODACI VOZAČA
     drawSection(doc, 'PODACI VOZAČA');
     
     let vozacData;
     if (currentSudionik) {
+        // KORISTI BAZU
         console.log('📋 Koristim podatke vozača iz baze');
         vozacData = [
             ['Ime', safe(currentSudionik.ime_vozaca)],
@@ -512,20 +401,33 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
             ['Valjanost dozvole', formatDate(currentSudionik.valjanostvozackedozvole)]
         ];
     } else {
-        console.log('📋 Koristim fallback podatke vozača');
+        // FALLBACK NA FRONTEND
+        console.log('📋 Koristim podatke vozača iz frontend-a');
         const os = data.vozacOsiguranik || {};
         const vozac = os.vozac || {};
-        const osiguranik = os.osiguranik || os;
+        const osiguranik = os.osiguranik || {
+            ime_osiguranika: os.ime_osiguranika,
+            prezime_osiguranika: os.prezime_osiguranika,
+            adresa_osiguranika: os.adresa_osiguranika,
+            postanskibroj_osiguranika: os.postanskibroj_osiguranika,
+            drzava_osiguranika: os.drzava_osiguranika,
+            kontaktbroj_osiguranika: os.kontaktbroj_osiguranika,
+            mail_osiguranika: os.mail_osiguranika
+        };
         const jeIsti = os.isti || false;
         
         if (jeIsti) {
             vozacData = [
-                ['Ime', safe(osiguranik.ime_osiguranika || osiguranik.ime)],
-                ['Prezime', safe(osiguranik.prezime_osiguranika || osiguranik.prezime)],
-                ['Adresa', safe(osiguranik.adresa_osiguranika || osiguranik.adresa)],
-                ['Broj vozačke dozvole', safe(vozac.brojvozackedozvole)],
-                ['Kategorija dozvole', safe(vozac.kategorijavozackedozvole)],
-                ['Valjanost dozvole', formatDate(vozac.valjanostvozackedozvole)],
+                ['Ime', safe(osiguranik.ime_osiguranika)],
+                ['Prezime', safe(osiguranik.prezime_osiguranika)],
+                ['Adresa', safe(osiguranik.adresa_osiguranika)],
+                ['Poštanski broj', safe(osiguranik.postanskibroj_osiguranika)],
+                ['Država', safe(osiguranik.drzava_osiguranika)],
+                ['Email', safe(osiguranik.mail_osiguranika)],
+                ['Kontakt telefon', safe(osiguranik.kontaktbroj_osiguranika)],
+                ['Broj vozačke dozvole', safe(vozac.brojvozackedozvole || os.brojvozackedozvole)],
+                ['Kategorija dozvole', safe(vozac.kategorijavozackedozvole || os.kategorijavozackedozvole)],
+                ['Valjanost dozvole', formatDate(vozac.valjanostvozackedozvole || os.valjanostvozackedozvole)],
                 ['Isti kao osiguranik', 'DA']
             ];
         } else {
@@ -533,6 +435,10 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
                 ['Ime', safe(vozac.ime_vozaca)],
                 ['Prezime', safe(vozac.prezime_vozaca)],
                 ['Adresa', safe(vozac.adresa_vozaca)],
+                ['Poštanski broj', safe(vozac.postanskibroj_vozaca)],
+                ['Država', safe(vozac.drzava_vozaca)],
+                ['Email', safe(vozac.mail_vozaca)],
+                ['Kontakt telefon', safe(vozac.kontaktbroj_vozaca)],
                 ['Broj vozačke dozvole', safe(vozac.brojvozackedozvole)],
                 ['Kategorija dozvole', safe(vozac.kategorijavozackedozvole)],
                 ['Valjanost dozvole', formatDate(vozac.valjanostvozackedozvole)],
@@ -551,6 +457,7 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
     
     let voziloData;
     if (currentSudionik) {
+        // KORISTI BAZU
         console.log('📋 Koristim podatke vozila iz baze');
         voziloData = [
             ['Registracija', safe(currentSudionik.registarskaoznaka_vozila)],
@@ -562,7 +469,8 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
             ['Godina proizvodnje', safe(currentSudionik.godinaproizvodnje_vozilo)]
         ];
     } else {
-        console.log('📋 Koristim fallback podatke vozila');
+        // FALLBACK NA FRONTEND
+        console.log('📋 Koristim podatke vozila iz frontend-a');
         const vozilo = data.vozilo || {};
         voziloData = [
             ['Registracija', safe(vozilo.registarskaoznaka_vozila)],
@@ -576,36 +484,38 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
     }
     
     drawTable(doc, ['Podatak', 'Vrijednost'], voziloData);
-    drawDivider(doc);
 
     // OSIGURANJE I POLICA
     drawSection(doc, 'OSIGURANJE I POLICA');
     
     let osiguranjePolicaData;
     if (currentSudionik) {
+        // KORISTI BAZU
         console.log('📋 Koristim podatke osiguranja iz baze');
         osiguranjePolicaData = [
             ['Naziv osiguranja', safe(currentSudionik.naziv_osiguranja)],
             ['ID osiguranja', safe(currentSudionik.id_osiguranje)],
             ['Broj police', safe(currentSudionik.brojpolice)],
             ['Broj zelene karte', safe(currentSudionik.brojzelenekarte)],
-            ['Poslovnica', safe(currentSudionik.poslovnica_polica)],
             ['Kasko osiguranje', daNeNije(currentSudionik.kaskopokrivastetu)],
             ['Adresa osiguranja', safe(currentSudionik.adresa_osiguranja)],
             ['Email osiguranja', safe(currentSudionik.mail_osiguranja)],
             ['Kontakt osiguranja', safe(currentSudionik.kontaktbroj_osiguranja)]
         ];
     } else {
-        console.log('📋 Koristim fallback podatke osiguranja');
+        // FALLBACK NA FRONTEND
+        console.log('📋 Koristim podatke osiguranja iz frontend-a');
         const osig = data.osiguranje || {};
         const polica = data.polica || {};
         osiguranjePolicaData = [
             ['Naziv osiguranja', safe(osig.naziv_osiguranja)],
+            ['ID osiguranja', safe(osig.id_osiguranje)],
             ['Broj police', safe(polica.brojpolice)],
             ['Broj zelene karte', safe(polica.brojzelenekarte)],
             ['Kasko osiguranje', daNeNije(polica.kaskopokrivastetu)],
             ['Adresa osiguranja', safe(osig.adresa_osiguranja)],
-            ['Email osiguranja', safe(osig.mail_osiguranja)]
+            ['Email osiguranja', safe(osig.mail_osiguranja)],
+            ['Kontakt osiguranja', safe(osig.kontaktbroj_osiguranja)]
         ];
     }
     
@@ -640,8 +550,7 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
                
         } catch (e) {
             console.error('❌ Greška pri dodavanju potpisa:', e);
-            doc.fillColor('red').font('DejaVu-Regular')
-               .text('Potpis: Greška pri učitavanju', doc.page.margins.left, doc.y);
+            drawTable(doc, ['Potpis'], [['Greška pri učitavanju potpisa']]);
         }
     } else if (data.potpis && (data.potpis.potpis_a || data.potpis.potpis_b || data.potpis.potpis)) {
         console.log('📋 Dodajem potpis iz frontend-a');
@@ -674,16 +583,18 @@ function fillPdfForEntry(doc, data, dbData = null, idx = null) {
                
         } catch (e) {
             console.error('❌ Greška pri dodavanju potpisa:', e);
-            doc.fillColor('red').font('DejaVu-Regular')
-               .text('Potpis: Greška pri učitavanju', doc.page.margins.left, doc.y);
+            drawTable(doc, ['Potpis'], [['Greška pri učitavanju potpisa']]);
         }
     }
+    
+    console.log('📄 === KRAJ PDF GENERIRANJA ===');
 }
 
 // PDF buffer generator
 async function generatePdfBuffer(data) {
     return new Promise(async (resolve, reject) => {
-        console.log('🚀 Generiram PDF buffer...');
+        console.log('🚀 === POČETAK PDF BUFFER GENERIRANJA ===');
+        console.log('🚀 nesrecaId:', data.nesreca?.id_nesrece);
         
         const doc = new PDFDocument({ 
             margin: 40,
@@ -723,7 +634,7 @@ async function generatePdfBuffer(data) {
                     console.log('✅ Podaci iz baze uspješno dohvaćeni');
                 } catch (dbError) {
                     console.warn('⚠️ Greška pri dohvaćanju iz baze, koristim frontend podatke:', dbError.message);
-                    dbData = null; // Sigurno postavi na null
+                    dbData = null;
                 }
             } else {
                 console.log('ℹ️ Nema ID nesreće, koristim frontend podatke');
@@ -745,7 +656,6 @@ async function generatePdfBuffer(data) {
                .text('• Dokument je generiran automatski sustavom digitalnog europskog izvješća.')
                .moveDown(2);
             
-            // Potpis na dnu stranice
             doc.fillColor(DARK_GRAY)
                .fontSize(12)
                .font('DejaVu-Bold')
@@ -785,7 +695,8 @@ router.post('/generate-pdf-and-send', async (req, res) => {
     try {
         const { mail, data } = req.body;
         
-        console.log('📧 Generiram i šaljem PDF za:', mail);
+        console.log('📧 === POČETAK PDF GENERIRANJA I SLANJA ===');
+        console.log('📧 Email destinacija:', mail);
         console.log('📊 Podaci:', {
             nesrecaId: data.nesreca?.id_nesrece,
             tipSudionika: data.tip_sudionika,
@@ -840,6 +751,7 @@ router.post('/generate-pdf-and-send', async (req, res) => {
         });
 
         console.log('✅ PDF uspješno poslan na email:', toField);
+        console.log('📧 === KRAJ PDF GENERIRANJA I SLANJA ===');
 
         res.json({ 
             success: true, 

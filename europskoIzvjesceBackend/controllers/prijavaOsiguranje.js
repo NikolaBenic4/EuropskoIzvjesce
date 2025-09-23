@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const secret = process.env.JWT_SECRET || 'tajni_kljuc';
 
-// Kreiraj Pool konekciju prema bazi (promijeni parametre po potrebi)
+// Kreiraj Pool konekciju prema bazi
 const pool = new Pool({
   user: process.env.PGUSER,
   password: process.env.PGPASSWORD,
@@ -13,54 +13,58 @@ const pool = new Pool({
 
 async function login(req, res) {
   let { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Nedostaju username ili password' });
+  }
   username = username.trim();
-  password = password.trim();
 
   try {
-    // Dohvaćanje podataka po naziv_osiguranja (korisnicko ime)
-    const query = 'SELECT id_osiguranje, naziv_osiguranja FROM osiguranje WHERE naziv_osiguranja = $1';
-    const { rows } = await pool.query(query, [username]);
+    // Dohvati red iz osiguranje po naziv_osiguranja
+    const { rows } = await pool.query(
+      'SELECT id_osiguranje, naziv_osiguranja FROM osiguranje WHERE naziv_osiguranja = $1',
+      [username]
+    );
 
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Neispravno korisničko ime' });
     }
 
-    const osiguranje = rows[0];
-    const expectedPassword = String(osiguranje.id_osiguranje) + osiguranje.naziv_osiguranja;
+    const { id_osiguranje, naziv_osiguranja } = rows[0];
 
+    // Očekivana lozinka: id_osiguranje + naziv_osiguranja
+    const expectedPassword = `${id_osiguranje}${naziv_osiguranja}`;
     if (password !== expectedPassword) {
       return res.status(401).json({ error: 'Neispravna lozinka' });
     }
 
-    const tokenPayload = {
-      username,
-      id_osiguranje: osiguranje.id_osiguranje,
-    };
+    // Generiraj JWT
+    const token = jwt.sign(
+      { username, id_osiguranje },
+      secret,
+      { expiresIn: '1h' }
+    );
 
-    const token = jwt.sign(tokenPayload, secret, { expiresIn: '1h' });
-
-    res.json({
+    return res.json({
       requiresTwoFactor: true,
       token,
     });
   } catch (err) {
-    console.error('Login error:', err.message);
-    res.status(500).json({ error: 'Greška na serveru' });
+    console.error('Login error:', err);
+    return res.status(500).json({ error: 'Greška na serveru' });
   }
 }
-
 
 async function verifyTwoFactor(req, res) {
   const { code } = req.body;
   const authHeader = req.headers.authorization;
-
-  if (!authHeader) return res.status(401).json({ error: 'Nema tokena' });
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Nema tokena' });
+  }
 
   const token = authHeader.split(' ')[1];
-
   try {
-    const decoded = jwt.verify(token, secret);
-    // Primjer provjere dvofaktorske autentifikacije (hardkodirani kod)
+    jwt.verify(token, secret);
+    // Hardkodirani 2FA kod
     if (code === '123456') {
       return res.json({ success: true });
     } else {
